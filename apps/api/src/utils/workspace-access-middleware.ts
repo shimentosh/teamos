@@ -2,6 +2,11 @@ import { and, eq, inArray } from "drizzle-orm";
 import type { Context, Next } from "hono";
 import { HTTPException } from "hono/http-exception";
 import db, { schema } from "../database";
+import {
+  assertProjectVisible,
+  assertTasksVisible,
+  taskViewer,
+} from "./task-visibility";
 import { validateWorkspaceAccess } from "./validate-workspace-access";
 
 type WorkspaceIdSource =
@@ -53,6 +58,9 @@ export function workspaceAccessMiddleware(
     }
 
     let workspaceId: string | null = null;
+    // What the workspace was resolved from, so task visibility can be
+    // checked against the same resource the handler will act on.
+    let resolved: { resource: string; ids: string[] } | null = null;
 
     for (const source of config.sources) {
       if (source.type === "query") {
@@ -64,16 +72,20 @@ export function workspaceAccessMiddleware(
       } else if (source.type === "param") {
         workspaceId = c.req.param(source.key) || null;
       } else if (source.type === "lookup") {
-        const body = await readJsonObjectBody(c);
-        const bodyId = body[source.idKey];
-        const idFromBody = typeof bodyId === "string" ? bodyId : null;
         // Only accept the id from the same place the handler will read it
         // (path param or JSON body). Accepting it from the query string let a
         // caller authorize against one resource (`?taskId=<mine>`) while the
         // handler acted on another (`{"taskId": "<someone else's>"}`).
-        const id = c.req.param(source.idKey) || idFromBody;
+        // The body is only read when the path has no id: reading a binary
+        // upload as JSON would leave the handler a text-decoded copy.
+        let id = c.req.param(source.idKey) || null;
+        if (!id) {
+          const bodyId = (await readJsonObjectBody(c))[source.idKey];
+          id = typeof bodyId === "string" ? bodyId : null;
+        }
         if (id) {
           workspaceId = await lookupWorkspaceId(source.resource, id);
+          if (workspaceId) resolved = { resource: source.resource, ids: [id] };
         }
       } else if (source.type === "lookupMany") {
         const body = await readJsonObjectBody(c);
@@ -103,6 +115,7 @@ export function workspaceAccessMiddleware(
               });
             }
             workspaceId = workspaceIds[0] ?? null;
+            resolved = { resource: "task", ids: taskIds };
           }
         }
       }
@@ -125,8 +138,51 @@ export function workspaceAccessMiddleware(
 
     c.set("workspaceId", workspaceId);
 
+    if (resolved) await assertVisible(c, resolved);
+
     return next();
   };
+}
+
+// Members without task:read_all reach only their own tasks, so every route
+// keyed by a task (or a comment, activity or time entry on one) is bounded
+// here rather than in each handler.
+async function assertVisible(
+  c: Context,
+  { resource, ids }: { resource: string; ids: string[] },
+) {
+  const [id] = ids;
+  if (!id) return;
+  switch (resource) {
+    case "task":
+      return assertTasksVisible(c, ids);
+    case "project":
+      return assertProjectVisible(c, id);
+    case "activity":
+    case "comment": {
+      const [row] = await db
+        .select({ taskId: schema.activityTable.taskId })
+        .from(schema.activityTable)
+        .where(eq(schema.activityTable.id, id))
+        .limit(1);
+      if (row?.taskId) await assertTasksVisible(c, [row.taskId]);
+      return;
+    }
+    case "timeEntry": {
+      const [row] = await db
+        .select({
+          taskId: schema.timeEntryTable.taskId,
+          userId: schema.timeEntryTable.userId,
+        })
+        .from(schema.timeEntryTable)
+        .where(eq(schema.timeEntryTable.id, id))
+        .limit(1);
+      // Your own time stays yours even after the task moves to someone else.
+      if (!row || row.userId === (await taskViewer(c))) return;
+      if (row.taskId) await assertTasksVisible(c, [row.taskId]);
+      return;
+    }
+  }
 }
 
 async function lookupWorkspaceId(

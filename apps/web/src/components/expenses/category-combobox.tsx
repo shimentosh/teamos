@@ -1,5 +1,5 @@
 import { Check, Plus } from "lucide-react";
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,6 +33,7 @@ export function CategoryCombobox({
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const [choosingIcon, setChoosingIcon] = useState(false);
+  const wrapper = useRef<HTMLDivElement>(null);
 
   const needle = value.trim().toLowerCase();
   const matches = categories.filter((c) =>
@@ -66,7 +67,19 @@ export function CategoryCombobox({
   };
 
   return (
-    <div className="relative">
+    // biome-ignore lint/a11y/noStaticElementInteractions: only notices focus leaving the whole control
+    <div
+      ref={wrapper}
+      className="relative"
+      // Close only when focus leaves the whole control, so Tab can reach
+      // the icon grid. Typed text that matches a category takes its name.
+      onBlur={(e) => {
+        if (wrapper.current?.contains(e.relatedTarget as Node | null)) return;
+        setOpen(false);
+        setChoosingIcon(false);
+        if (exact && exact.name !== value) onChange(exact.name);
+      }}
+    >
       <ExpenseCategoryIcon
         icon={current?.icon}
         className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-muted-foreground"
@@ -81,8 +94,12 @@ export function CategoryCombobox({
         value={value}
         className="pl-8"
         placeholder={t("expenses:categories.placeholder")}
+        aria-activedescendant={
+          open && rowCount > 0 && !choosingIcon
+            ? `${id}-option-${Math.min(active, rowCount - 1)}`
+            : undefined
+        }
         onFocus={() => setOpen(true)}
-        onBlur={() => setOpen(false)}
         onChange={(e) => {
           onChange(e.target.value);
           setOpen(true);
@@ -119,6 +136,7 @@ export function CategoryCombobox({
           {matches.map((category, index) => (
             <button
               key={category.id}
+              id={`${id}-option-${index}`}
               type="button"
               role="option"
               aria-selected={index === active}
@@ -139,6 +157,7 @@ export function CategoryCombobox({
           ))}
           {offerNew && !choosingIcon && (
             <button
+              id={`${id}-option-${matches.length}`}
               type="button"
               role="option"
               aria-selected={active === matches.length}

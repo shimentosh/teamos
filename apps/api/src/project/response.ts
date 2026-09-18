@@ -64,6 +64,10 @@ export const projectStatisticsSchema = z
 
 export const projectListItemSchema = projectSchema
   .extend({
+    memberIds: z.array(z.string()).openapi({
+      description:
+        "The project's team: people added to work on it, in the order they joined.",
+    }),
     statistics: projectStatisticsSchema,
     // Legacy, always empty. Fetch the board via GET /task/tasks/{id}.
     archivedTasks: z
@@ -79,3 +83,15 @@ export const projectListItemSchema = projectSchema
   .openapi("ProjectListItem");
 
 export const projectListSchema = z.array(projectListItemSchema);
+
+export const projectMemberSchema = z
+  .object({
+    userId: z.string(),
+    name: z.string(),
+    email: z.string(),
+    image: z.string().nullable(),
+    addedAt: responseTimestamp,
+  })
+  .openapi("ProjectMember");
+
+export const projectMembersSchema = z.array(projectMemberSchema);

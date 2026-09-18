@@ -2,11 +2,18 @@ import { createId } from "@paralleldrive/cuid2";
 import db from "../../database";
 import { notificationTable } from "../../database/schema";
 import { publishEvent } from "../../events";
-import { deliverNotification } from "../../notification-preferences/delivery";
 import {
-  eventEnabled,
+  deliverEmailOnly,
+  deliverNotification,
+} from "../../notification-preferences/delivery";
+import {
+  effectiveEventEnabled,
   eventKeyOf,
 } from "../../notification-preferences/events";
+import {
+  workspaceOfNotification,
+  workspacePolicy,
+} from "../../notification-preferences/policy";
 
 async function createNotification({
   userId,
@@ -35,7 +42,31 @@ async function createNotification({
       },
     );
 
-    if (!eventEnabled(eventKey, "inApp", preference)) {
+    // A workspace admin's rule can decide for everyone (Settings → Workspace
+    // → Notifications); otherwise the person's own switch applies.
+    const policy = await workspacePolicy(
+      await workspaceOfNotification({ eventData, resourceType, resourceId }),
+      eventKey,
+    );
+
+    if (!effectiveEventEnabled(eventKey, "inApp", preference, policy)) {
+      // In-app off doesn't mean email off: the two switches are separate.
+      if (effectiveEventEnabled(eventKey, "email", preference, policy)) {
+        void deliverEmailOnly({
+          id: createId(),
+          userId,
+          title: title ?? null,
+          content: content ?? null,
+          type: type || "info",
+          eventData: eventData ?? null,
+          resourceId: resourceId || null,
+          resourceType: resourceType || null,
+          isRead: false,
+          createdAt: new Date(),
+        } as typeof notificationTable.$inferSelect).catch((error) =>
+          console.error("Failed to email a notification", error),
+        );
+      }
       return null;
     }
   }

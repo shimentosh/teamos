@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { registerCompanyTools } from "./company-tools";
 
-type McpToolResult = {
+export type McpToolResult = {
   content: Array<{ type: "text"; text: string }>;
   isError?: boolean;
 };
@@ -39,7 +40,7 @@ export function toMcpToolRegistrar(server: ShapeToolServer): McpToolRegistrar {
   };
 }
 
-class ApiClient {
+export class ApiClient {
   constructor(
     private baseUrl: string,
     private token: string,
@@ -87,11 +88,11 @@ function textResult(data: unknown, isError = false): McpToolResult {
   return { content: [{ type: "text", text }], isError };
 }
 
-function errorResult(message: string): McpToolResult {
+export function errorResult(message: string): McpToolResult {
   return textResult({ error: message }, true);
 }
 
-function run(fn: () => Promise<unknown>): Promise<McpToolResult> {
+export function run(fn: () => Promise<unknown>): Promise<McpToolResult> {
   return fn()
     .then((data) => textResult(data))
     .catch((e: unknown) =>
@@ -954,4 +955,6 @@ export function registerMcpTools(
     },
     async () => run(() => client.json("/api/notification")),
   );
+
+  registerCompanyTools(server, baseUrl, token);
 }

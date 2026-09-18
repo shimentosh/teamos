@@ -62,6 +62,9 @@ export function useUserWebSocket() {
           if (message.type === "NOTIFICATION_CREATED") {
             queryClient.invalidateQueries({ queryKey: ["notifications"] });
           }
+          if (message.type === "PRESENCE_CHANGED") {
+            queryClient.invalidateQueries({ queryKey: ["people-live"] });
+          }
         } catch {
           // Ignore malformed messages
         }

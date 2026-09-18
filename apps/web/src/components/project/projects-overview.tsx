@@ -1,15 +1,12 @@
 import { differenceInCalendarDays, startOfToday } from "date-fns";
-import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TableCell } from "@/components/ui/table";
 import icons from "@/constants/project-icons";
 import type useGetProjects from "@/hooks/queries/project/use-get-projects";
-import { useGetActiveWorkspaceUsers } from "@/hooks/queries/workspace-users/use-get-active-workspace-users";
 import { cn } from "@/lib/cn";
 import { formatDateShort, formatRelativeTime } from "@/lib/format";
 import { formatHours } from "@/lib/format-duration";
-import { getInitials } from "@/lib/get-initials";
+import { ProjectTeam } from "./project-team";
 
 export type ProjectItem = NonNullable<
   ReturnType<typeof useGetProjects>["data"]
@@ -145,47 +142,6 @@ export function ProjectsSummary({ projects }: { projects: ProjectItem[] }) {
   );
 }
 
-/** Who works on a project, as overlapping faces. */
-function Team({ workspaceId, ids }: { workspaceId: string; ids: string[] }) {
-  const { data } = useGetActiveWorkspaceUsers(workspaceId);
-  const people = useMemo(() => {
-    const byId = new Map(
-      (data?.members ?? []).map((m) => [m.userId, m.user] as const),
-    );
-    return ids.flatMap((id) => {
-      const user = byId.get(id);
-      return user ? [{ id, name: user.name ?? "", image: user.image }] : [];
-    });
-  }, [data, ids]);
-
-  if (people.length === 0) {
-    return <span className="text-xs text-muted-foreground">—</span>;
-  }
-  return (
-    <div className="flex items-center">
-      <div className="flex -space-x-1.5">
-        {people.slice(0, 4).map((p) => (
-          <Avatar
-            key={p.id}
-            title={p.name}
-            className="size-6 ring-2 ring-background"
-          >
-            <AvatarImage src={p.image ?? ""} alt={p.name} />
-            <AvatarFallback className="bg-muted text-[9px] font-semibold">
-              {getInitials(p.name)}
-            </AvatarFallback>
-          </Avatar>
-        ))}
-      </div>
-      {people.length > 4 && (
-        <span className="ms-1.5 text-xs text-muted-foreground">
-          +{people.length - 4}
-        </span>
-      )}
-    </div>
-  );
-}
-
 function NextDue({ date, open }: { date: string | null; open: number }) {
   const { t } = useTranslation();
   if (!date || open === 0) {
@@ -289,7 +245,12 @@ export function ProjectRowCells({
         </span>
       </TableCell>
       <TableCell className="py-3">
-        <Team workspaceId={workspaceId} ids={s.assigneeIds} />
+        <ProjectTeam
+          workspaceId={workspaceId}
+          projectId={project.id}
+          memberIds={project.memberIds}
+          assigneeIds={s.assigneeIds}
+        />
       </TableCell>
       <TableCell className="py-3">
         <NextDue date={s.nextDueDate} open={s.openTasks} />

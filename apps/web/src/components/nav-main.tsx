@@ -7,6 +7,7 @@ import {
   FolderKanban,
   FolderOpen,
   House,
+  LayoutDashboard,
   MessagesSquare,
   Receipt,
   Users,
@@ -50,6 +51,13 @@ export function NavMain() {
 
   const base = `/dashboard/workspace/${workspace.id}`;
   const navItems = [
+    {
+      icon: LayoutDashboard,
+      title: t("navigation:sidebar.dashboard"),
+      url: `${base}/dashboard`,
+      isActive: window.location.pathname === `${base}/dashboard`,
+      badge: null,
+    },
     {
       icon: House,
       title: t("navigation:sidebar.myWork"),

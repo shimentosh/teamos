@@ -22,17 +22,28 @@ import { useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { produce } from "immer";
 import { Archive, ChevronRight, Clock, Flag, Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/components/providers/auth-provider/hooks/use-auth";
 import { priorityColorsTaskCard } from "@/constants/priority-colors";
 import { useUpdateTask } from "@/hooks/mutations/task/use-update-task";
 import { useRegisterShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { useWorkspacePermission } from "@/hooks/use-workspace-permission";
 import { cn } from "@/lib/cn";
+import { toast } from "@/lib/toast";
 import useBacklogBulkSelectionStore from "@/store/backlog-bulk-selection";
 import useProjectStore from "@/store/project";
 import type { ProjectWithTasks } from "@/types/project";
 import type Task from "@/types/task";
 import BacklogBulkToolbar from "../bulk-selection/backlog-bulk-toolbar";
+import { LIST_GRID, type StatusOption } from "../list-view/cells";
+import {
+  LIST_FILTERS,
+  type ListFilter,
+  ListToolbar,
+  matchesListFilter,
+  matchesQuery,
+} from "../list-view/list-toolbar";
 import CreateTaskModal from "../shared/modals/create-task-modal";
 import BacklogTaskRow from "./backlog-task-row";
 
@@ -66,6 +77,98 @@ function BacklogListView({
   });
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [activeColumn, setActiveColumn] = useState<string | null>(null);
+  const [filter, setFilter] = useState<ListFilter>("all");
+  const [query, setQuery] = useState("");
+  const { user } = useAuth();
+  const { canUpdateTasks } = useWorkspacePermission();
+  const canEdit = Boolean(canUpdateTasks());
+  // Reordering a filtered list would renumber tasks the person can't see.
+  const narrowed = filter !== "all" || query.trim() !== "";
+
+  // Backlog tasks can stay planned, be archived, or go onto the board.
+  const statusOptions: StatusOption[] = useMemo(
+    () => [
+      {
+        id: "planned",
+        slug: "planned",
+        name: t("tasks:backlog.sections.planned"),
+        isFinal: false,
+        icon: null,
+      },
+      ...(project?.columns ?? []).map((column) => ({
+        id: column.id,
+        slug: column.slug,
+        name: column.name,
+        isFinal: column.isFinal,
+        icon: column.icon,
+      })),
+      {
+        id: "archived",
+        slug: "archived",
+        name: t("tasks:backlog.sections.archived"),
+        isFinal: false,
+        icon: null,
+      },
+    ],
+    [project?.columns, t],
+  );
+
+  const counts = useMemo(() => {
+    const result = Object.fromEntries(
+      LIST_FILTERS.map((value) => [value, 0]),
+    ) as Record<ListFilter, number>;
+    for (const task of project?.plannedTasks ?? []) {
+      for (const value of LIST_FILTERS) {
+        if (matchesListFilter(task, value, user?.id, false)) result[value] += 1;
+      }
+    }
+    return result;
+  }, [project?.plannedTasks, user?.id]);
+
+  const visible = (tasks: Task[], archived: boolean) =>
+    tasks.filter(
+      (task) =>
+        matchesListFilter(task, filter, user?.id, archived) &&
+        matchesQuery(task, project?.slug ?? "", query),
+    );
+
+  // Inline edits show at once, then save through the drag-and-drop mutation.
+  const changeTask = (task: Task, patch: Partial<Task>) => {
+    if (!project) return;
+    const next = { ...task, ...patch };
+    setProject(
+      produce(project, (draft) => {
+        const lists = [draft.plannedTasks, draft.archivedTasks];
+        const source = lists.find((list) =>
+          list?.some((t) => t.id === task.id),
+        );
+        if (!source) return;
+        const index = source.findIndex((t) => t.id === task.id);
+        if (!patch.status || patch.status === task.status) {
+          source[index] = next as (typeof source)[number];
+          return;
+        }
+        source.splice(index, 1);
+        const moved = next as (typeof source)[number];
+        if (patch.status === "planned") draft.plannedTasks.push(moved);
+        else if (patch.status === "archived") draft.archivedTasks.push(moved);
+        else
+          draft.columns
+            .find((column) => column.slug === patch.status)
+            ?.tasks.push(
+              moved as (typeof draft.columns)[number]["tasks"][number],
+            );
+      }),
+    );
+    updateTask(next, {
+      onError: (error) =>
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : t("tasks:listView.updateError"),
+        ),
+    });
+  };
 
   useEffect(() => {
     if (project) {
@@ -310,6 +413,7 @@ function BacklogListView({
     });
 
     const showDropIndicator = activeId && overColumnId === sectionId;
+    const shown = visible(tasks, sectionId === "archived");
 
     return (
       <div
@@ -318,31 +422,27 @@ function BacklogListView({
           showDropIndicator && "border-l-4 border-l-ring bg-accent/35",
         )}
       >
-        <div className="flex items-center justify-between py-2 px-4 bg-muted/60 border-b border-border/50">
+        <div className="flex items-center justify-between border-border/50 border-b bg-muted/60 px-4 py-2">
           <button
             type="button"
             onClick={() => toggleSection(sectionId)}
-            className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-2 font-medium text-foreground text-sm"
           >
             <ChevronRight
               className={cn(
-                "w-3 h-3 transition-transform",
+                "size-3 text-muted-foreground transition-transform",
                 expandedSections[sectionId] && "rotate-90",
               )}
             />
-            <div className="flex items-center gap-2 h-4">
-              <IconComponent className="w-4 h-4 flex-shrink-0 text-muted-foreground" />
-              <div className="flex items-center gap-1">
-                <span className="mt-1 mr-1">
-                  {t(`tasks:backlog.sections.${sectionId}`, {
-                    defaultValue: title,
-                  })}
-                </span>
-                <span className="text-xs text-muted-foreground mt-0.5">
-                  {tasks.length}
-                </span>
-              </div>
-            </div>
+            <IconComponent className="size-4 shrink-0 text-muted-foreground" />
+            <span>
+              {t(`tasks:backlog.sections.${sectionId}`, {
+                defaultValue: title,
+              })}
+            </span>
+            <span className="rounded-full bg-background px-1.5 py-0.5 text-[11px] text-muted-foreground tabular-nums">
+              {narrowed ? `${shown.length}/${tasks.length}` : tasks.length}
+            </span>
           </button>
 
           <div className="flex items-center gap-1">
@@ -368,11 +468,11 @@ function BacklogListView({
             className="bg-card transition-[translate,opacity] duration-150 ease-out starting:-translate-y-1 starting:opacity-0 motion-reduce:starting:translate-y-0"
           >
             <SortableContext
-              items={tasks}
+              items={shown}
               strategy={verticalListSortingStrategy}
             >
               <AnimatePresence initial={false} mode="popLayout">
-                {tasks.map((task) => (
+                {shown.map((task) => (
                   <motion.div
                     key={task.id}
                     initial={{ opacity: 0 }}
@@ -380,14 +480,25 @@ function BacklogListView({
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.15, ease: [0.23, 1, 0.32, 1] }}
                   >
-                    <BacklogTaskRow task={task} />
+                    <BacklogTaskRow
+                      task={task}
+                      statusOptions={statusOptions}
+                      canEdit={canEdit}
+                      draggable={!narrowed}
+                      onChange={(patch) => changeTask(task, patch)}
+                    />
                   </motion.div>
                 ))}
               </AnimatePresence>
             </SortableContext>
 
+            {tasks.length > 0 && shown.length === 0 && (
+              <div className="px-4 py-5 text-center text-muted-foreground text-xs">
+                {t("tasks:listView.noMatches")}
+              </div>
+            )}
             {tasks.length === 0 && (
-              <div className="py-6 px-4 text-center text-xs text-muted-foreground">
+              <div className="px-4 py-5 text-center text-muted-foreground text-xs">
                 {t("tasks:backlog.noTasksInSection", {
                   section: t(`tasks:backlog.sections.${sectionId}`, {
                     defaultValue: title,
@@ -421,7 +532,27 @@ function BacklogListView({
       onDragEnd={handleDragEnd}
       modifiers={[snapCenterToCursor]}
     >
-      <div className="w-full h-full overflow-auto bg-muted/20">
+      <div className="h-full w-full overflow-auto bg-muted/20">
+        <ListToolbar
+          filter={filter}
+          onFilter={setFilter}
+          counts={counts}
+          query={query}
+          onQuery={setQuery}
+        />
+        <div
+          className={cn(
+            LIST_GRID,
+            "sticky top-0 z-10 border-border/60 border-b bg-background/95 px-4 py-2 font-medium text-muted-foreground text-xs backdrop-blur",
+          )}
+        >
+          <span>{t("tasks:listView.col.id")}</span>
+          <span>{t("tasks:listView.col.task")}</span>
+          <span>{t("tasks:listView.col.status")}</span>
+          <span>{t("tasks:listView.col.priority")}</span>
+          <span>{t("tasks:listView.col.assignee")}</span>
+          <span>{t("tasks:listView.col.due")}</span>
+        </div>
         <div className="divide-y divide-border/50">
           <BacklogSection
             sectionId="planned"

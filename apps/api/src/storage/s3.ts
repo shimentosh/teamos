@@ -317,6 +317,30 @@ export function assertStorageConfigured() {
   return getStorageConfig();
 }
 
+/** Whether S3_ENDPOINT and S3_BUCKET set up an instance-wide bucket. */
+export function isInstanceStorageConfigured() {
+  return Boolean(env("S3_ENDPOINT") && env("S3_BUCKET"));
+}
+
+/** Uploads through the server, so the bucket needs no browser CORS rules. */
+export async function putPrivateObject(
+  keyFor: (prefix: string) => string,
+  bytes: Buffer,
+  contentType: string,
+) {
+  const config = getStorageConfig();
+  const key = keyFor(config.keyPrefix);
+  await getClient(config).send(
+    new PutObjectCommand({
+      Bucket: config.bucket,
+      Key: key,
+      Body: bytes,
+      ContentType: contentType,
+    }),
+  );
+  return key;
+}
+
 export function assertTaskImageKeyMatchesContext(
   key: string,
   context: Omit<TaskImageUploadContext, "filename" | "contentType">,

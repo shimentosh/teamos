@@ -31,11 +31,13 @@ import {
   disconnectAccountStorage,
   disconnectStorage,
   fileRow,
+  filesLeftInDatabase,
   findFile,
   findShared,
   folderIsOwnedBy,
   listAllFolders,
   listFiles,
+  moveFilesToAccountStorage,
   moveFolder,
   normalizeFolder,
   presentFile,
@@ -179,6 +181,46 @@ const connectAccountStorageRoute = createRoute({
     200: jsonResponse("Connected", accountStorageSchema),
     400: errorResponse("The bucket could not be written to"),
     409: errorResponse("Files still live in the current bucket"),
+  },
+});
+
+const storedInDatabaseSchema = z
+  .object({
+    files: z.number().openapi({ description: "Files, receipts and images." }),
+    avatars: z.number().openapi({ description: "Profile pictures." }),
+  })
+  .openapi("StoredInDatabase");
+
+const accountStorageLeftRoute = createRoute({
+  method: "get",
+  operationId: "getFilesLeftInDatabase",
+  path: "/storage/account/left",
+  tags,
+  summary: "Files not yet in my bucket",
+  description:
+    "How many files and profile pictures in the workspaces you own are still stored in Postgres.",
+  responses: {
+    200: jsonResponse("What is left", storedInDatabaseSchema),
+  },
+});
+
+const moveToAccountStorageRoute = createRoute({
+  method: "post",
+  operationId: "moveFilesToAccountFileStorage",
+  path: "/storage/account/move",
+  tags,
+  summary: "Move files into my bucket",
+  description:
+    "Copy every file and profile picture the workspaces you own still keep in Postgres into your bucket. Safe to repeat.",
+  responses: {
+    200: jsonResponse(
+      "What moved, and what is left",
+      storedInDatabaseSchema.extend({
+        moved: z.number(),
+        failed: z.number(),
+      }),
+    ),
+    409: errorResponse("No bucket connected"),
   },
 });
 
@@ -527,6 +569,12 @@ const files = apiRouter()
       await connectAccountStorage(c.get("userId"), c.req.valid("json")),
       200,
     ),
+  )
+  .openapi(accountStorageLeftRoute, async (c) =>
+    c.json(await filesLeftInDatabase(c.get("userId")), 200),
+  )
+  .openapi(moveToAccountStorageRoute, async (c) =>
+    c.json(await moveFilesToAccountStorage(c.get("userId")), 200),
   )
   .openapi(disconnectAccountStorageRoute, async (c) =>
     c.json(await disconnectAccountStorage(c.get("userId")), 200),

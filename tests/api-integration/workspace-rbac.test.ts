@@ -40,6 +40,15 @@ async function seedTask(
   return task;
 }
 
+// Custom roles here don't see every task, so put the member on the
+// project's team: these tests are about what a role may do, not what it sees.
+async function joinTeam(projectId: string, userId: string) {
+  await db
+    .insert(schema.projectMemberTable)
+    .values({ projectId, userId })
+    .onConflictDoNothing();
+}
+
 async function createWorkspaceRoleRow(
   workspaceId: string,
   role: string,
@@ -484,6 +493,7 @@ describe("API integration: workspace RBAC enforcement", () => {
         project: ["read"],
       });
 
+      await joinTeam(project.id, member.user.id);
       mockAuthenticatedSession(member.user);
       const { app } = createApp();
 
@@ -501,6 +511,7 @@ describe("API integration: workspace RBAC enforcement", () => {
         project: ["read"],
       });
 
+      await joinTeam(project.id, member.user.id);
       mockAuthenticatedSession(member.user);
       const { app } = createApp();
 
@@ -521,6 +532,7 @@ describe("API integration: workspace RBAC enforcement", () => {
         workspace: ["read"],
       });
 
+      await joinTeam(project.id, member.user.id);
       mockAuthenticatedSession(member.user);
       const { app } = createApp();
 
@@ -537,6 +549,7 @@ describe("API integration: workspace RBAC enforcement", () => {
       // crash; with no built-in fallback for "broken", access is denied.
       await createWorkspaceRoleRow(member.workspace.id, "broken", "not-json");
 
+      await joinTeam(project.id, member.user.id);
       mockAuthenticatedSession(member.user);
       const { app } = createApp();
 
@@ -561,6 +574,7 @@ describe("API integration: workspace RBAC enforcement", () => {
         }),
       );
 
+      await joinTeam(project.id, member.user.id);
       mockAuthenticatedSession(member.user);
       const { app } = createApp();
 

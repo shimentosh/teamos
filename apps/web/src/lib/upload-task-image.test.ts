@@ -2,30 +2,22 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { uploadTaskImage } from "./upload-task-image";
 
 const mocks = vi.hoisted(() => ({
-  createImageUpload: vi.fn(),
-  finalizeImageUpload: vi.fn(),
+  uploadImageDirect: vi.fn(),
 }));
 
 vi.mock("@/fetchers/task/create-image-upload", () => ({
-  default: mocks.createImageUpload,
-  finalizeImageUpload: mocks.finalizeImageUpload,
+  uploadImageDirect: mocks.uploadImageDirect,
 }));
 
 describe("uploadTaskImage", () => {
   beforeEach(() => {
-    mocks.createImageUpload.mockResolvedValue({
-      key: "task/file.conf",
-      uploadUrl: "https://storage.example/upload",
-      headers: {},
+    mocks.uploadImageDirect.mockResolvedValue({
+      id: "asset-1",
+      url: "https://app.example/api/asset/asset-1",
     });
-    mocks.finalizeImageUpload.mockResolvedValue({
-      url: "https://storage.example/file.conf",
-    });
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true }));
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
     vi.clearAllMocks();
   });
 
@@ -39,11 +31,12 @@ describe("uploadTaskImage", () => {
     });
 
     expect(file.type).toBe("");
-    expect(mocks.createImageUpload).toHaveBeenCalledWith(
-      expect.objectContaining({ contentType: "application/octet-stream" }),
-    );
-    expect(mocks.finalizeImageUpload).toHaveBeenCalledWith(
-      expect.objectContaining({ contentType: "application/octet-stream" }),
+    // One request through the API; the server picks the storage.
+    expect(mocks.uploadImageDirect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contentType: "application/octet-stream",
+        file,
+      }),
     );
     expect(asset.mimeType).toBe("application/octet-stream");
     expect(asset.kind).toBe("attachment");
@@ -58,11 +51,9 @@ describe("uploadTaskImage", () => {
       file,
     });
 
-    expect(mocks.createImageUpload).toHaveBeenCalledWith(
-      expect.objectContaining({ contentType: "image/png" }),
-    );
-    expect(mocks.finalizeImageUpload).toHaveBeenCalledWith(
-      expect.objectContaining({ contentType: "image/png" }),
+    // One request through the API; the server picks the storage.
+    expect(mocks.uploadImageDirect).toHaveBeenCalledWith(
+      expect.objectContaining({ contentType: "image/png", file }),
     );
     expect(asset.mimeType).toBe("image/png");
     expect(asset.kind).toBe("image");

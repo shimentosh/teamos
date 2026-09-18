@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, ne } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import db from "../database";
 import {
@@ -124,13 +124,29 @@ export async function findTaskAttachment(taskId: string, id: string) {
   return attachment;
 }
 
-/** Links are just unlinked; a file is deleted from the library too. */
+/**
+ * Links are just unlinked. A file is deleted from the library too, unless
+ * another task still has it attached; then only this attachment goes.
+ */
 export async function removeAttachment(
   workspaceId: string,
   actorId: string,
   attachment: Awaited<ReturnType<typeof getAttachment>>,
 ) {
-  if (attachment.kind === "file" && attachment.fileId) {
+  const [elsewhere] =
+    attachment.kind === "file" && attachment.fileId
+      ? await db
+          .select({ id: taskAttachmentTable.id })
+          .from(taskAttachmentTable)
+          .where(
+            and(
+              eq(taskAttachmentTable.fileId, attachment.fileId),
+              ne(taskAttachmentTable.id, attachment.id),
+            ),
+          )
+          .limit(1)
+      : [];
+  if (attachment.kind === "file" && attachment.fileId && !elsewhere) {
     const [file] = await db
       .select()
       .from(storedFileTable)

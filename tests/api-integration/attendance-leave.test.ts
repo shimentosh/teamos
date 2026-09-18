@@ -151,8 +151,7 @@ describe("leave and attendance", () => {
     });
 
     expect(
-      (await asAlice(`/requests/leave/all?workspaceId=${workspace.id}`))
-        .status,
+      (await asAlice(`/requests/leave/all?workspaceId=${workspace.id}`)).status,
     ).toBe(403);
 
     const all = await asManager(
@@ -196,9 +195,7 @@ describe("leave and attendance", () => {
     expect(toManager).toHaveLength(1);
     expect(toOwner).toHaveLength(1);
     // Never the person asking.
-    expect(await notificationsFor(alice.id, "leave_requested")).toHaveLength(
-      0,
-    );
+    expect(await notificationsFor(alice.id, "leave_requested")).toHaveLength(0);
 
     await requestAs(manager)(`/requests/leave/${requested.json.id}/decide`, {
       method: "POST",

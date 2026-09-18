@@ -33,7 +33,7 @@ import {
 import type { AccessControl } from "better-auth/plugins/access";
 import type { UserWithAnonymous } from "better-auth/plugins/anonymous";
 import { config } from "dotenv-mono";
-import { count, eq, sql } from "drizzle-orm";
+import { and, count, eq, inArray, sql } from "drizzle-orm";
 import { auditAuthChange } from "./audit/auth-audit";
 import {
   findBillableWorkspaces,
@@ -41,6 +41,8 @@ import {
 } from "./billing/controllers/find-billable-workspaces";
 import { syncWorkspaceSeats } from "./billing/controllers/sync-seats";
 import db, { schema } from "./database";
+import { chatConversationTable, chatMemberTable } from "./database/schema";
+import { sendWelcomeEmail } from "./email/welcome";
 import { publishEvent } from "./events";
 import deleteAccountData from "./user/controllers/delete-account-data";
 import { canGrantRole, getRoleOfMembership } from "./utils/can-grant-role";
@@ -483,12 +485,56 @@ export const auth = betterAuth({
             });
           }
         },
-        afterRemoveMember: async ({ member }) => {
+        afterRemoveMember: async ({ member, user, organization }) => {
           if (member?.organizationId) {
             void syncWorkspaceSeats(member.organizationId).catch((error) => {
               console.error("Seat sync after member remove failed:", error);
             });
           }
+          if (user?.id && organization?.id) {
+            // Out of the workspace means out of its chats too.
+            void db
+              .delete(chatMemberTable)
+              .where(
+                and(
+                  eq(chatMemberTable.userId, user.id),
+                  inArray(
+                    chatMemberTable.conversationId,
+                    db
+                      .select({ id: chatConversationTable.id })
+                      .from(chatConversationTable)
+                      .where(
+                        eq(chatConversationTable.workspaceId, organization.id),
+                      ),
+                  ),
+                ),
+              )
+              .catch((error) => {
+                console.error(
+                  "Chat cleanup after member remove failed:",
+                  error,
+                );
+              });
+            void publishEvent("member.removed", {
+              workspaceId: organization.id,
+              workspaceName: organization.name,
+              userId: user.id,
+            });
+          }
+        },
+        afterUpdateMemberRole: async ({
+          member,
+          previousRole,
+          user,
+          organization,
+        }) => {
+          void publishEvent("member.role_changed", {
+            workspaceId: organization.id,
+            workspaceName: organization.name,
+            userId: user.id,
+            oldRole: previousRole,
+            newRole: member.role,
+          });
         },
       },
       async sendInvitationEmail(data) {
@@ -546,6 +592,8 @@ export const auth = betterAuth({
     bearer(),
     apiKey({
       enableSessionForAPIKeys: true,
+      // Agent keys for Claude are tagged { kind: "agent", scope } here.
+      enableMetadata: true,
       apiKeyHeaders: "x-api-key",
       rateLimit: {
         enabled: true,
@@ -672,6 +720,10 @@ export const auth = betterAuth({
                 .where(eq(schema.userTable.id, user.id));
             }
           });
+
+          void sendWelcomeEmail(user).catch((error) =>
+            console.error("Welcome email failed", error),
+          );
         },
       },
     },

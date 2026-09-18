@@ -9,6 +9,8 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { auth } from "../auth";
 import { apiRouter, createRoute, jsonResponse } from "../openapi";
+import { verifyApiKey } from "../utils/verify-api-key";
+import { registerMcpPrompts } from "./company-tools";
 import {
   beginMcpAuthorization,
   decideMcpAuthorizationRequest,
@@ -51,6 +53,9 @@ function createMcpServerForUser(token: string): LegacyMcpServer {
     version: "1.0.0",
   });
   registerMcpTools(toMcpToolRegistrar(server), internalApiUrl, token);
+  registerMcpPrompts(
+    server as unknown as Parameters<typeof registerMcpPrompts>[0],
+  );
   return server;
 }
 
@@ -66,9 +71,16 @@ async function validateBearerToken(
   const headers = new Headers();
   headers.set("authorization", `Bearer ${token}`);
   const session = await auth.api.getSession({ headers });
+  if (session?.user?.id) return { userId: session.user.id, token };
 
-  if (!session?.user?.id) return null;
-  return { userId: session.user.id, token };
+  // An API key works too, so Claude can run unattended (no browser login).
+  // The tools call the REST API with the same key, which applies the key's
+  // own permission limits on top of the person's role.
+  const apiKey = await verifyApiKey(token);
+  if (apiKey?.valid && apiKey.key?.enabled !== false && apiKey.key?.userId) {
+    return { userId: apiKey.key.userId, token };
+  }
+  return null;
 }
 
 const mcp = apiRouter();

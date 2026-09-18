@@ -174,7 +174,9 @@ export function AddExpenseDialog({
             />
           </div>
           <div className="space-y-1">
-            <Label>{t("requests:expense.project")}</Label>
+            <Label htmlFor={`${id}-project`}>
+              {t("requests:expense.project")}
+            </Label>
             <Select
               value={projectId}
               onValueChange={(value) => {
@@ -184,7 +186,7 @@ export function AddExpenseDialog({
                 }
               }}
             >
-              <SelectTrigger>
+              <SelectTrigger id={`${id}-project`}>
                 <SelectValue>{projectName}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -201,14 +203,14 @@ export function AddExpenseDialog({
           </div>
           {projectId !== NO_PROJECT && (
             <div className="space-y-1">
-              <Label>{t("expenses:task")}</Label>
+              <Label htmlFor={`${id}-task`}>{t("expenses:task")}</Label>
               <Select
                 value={taskId}
                 onValueChange={(value) => {
                   if (typeof value === "string") setTaskId(value);
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger id={`${id}-task`}>
                   <SelectValue>
                     {taskId === NO_TASK
                       ? t("expenses:noTask")

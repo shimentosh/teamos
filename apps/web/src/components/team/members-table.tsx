@@ -8,7 +8,9 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { LiveAppChip } from "@/components/people/live";
 import type { CurrentSalary } from "@/fetchers/pay";
+import type { LivePerson } from "@/fetchers/people/get-live-people";
 import type { PersonStats } from "@/fetchers/people/get-people-overview";
 import useCancelInvitation from "@/hooks/mutations/workspace-user/use-cancel-invitation";
 import useDeleteWorkspaceUser from "@/hooks/mutations/workspace-user/use-delete-workspace-user";
@@ -81,6 +83,8 @@ type Props = {
   // Company profile per user id; when given, rows show title/department and
   // presence, and names open the person's page where the viewer may see it.
   people?: Map<string, PersonInfo>;
+  /** Live state from the desktop app, when the page has it. */
+  live?: Map<string, LivePerson>;
   canOpenPerson?: (userId: string) => boolean;
   onOpenPerson?: (userId: string) => void;
   admin?: AdminColumns;
@@ -117,6 +121,7 @@ function MembersTable({
   invitations,
   users,
   people,
+  live,
   canOpenPerson,
   onOpenPerson,
   admin,
@@ -320,6 +325,12 @@ function MembersTable({
                           </span>
                         ) : null}
                       </div>
+                      {live?.get(member.userId)?.app ? (
+                        <LiveAppChip
+                          person={live.get(member.userId) as LivePerson}
+                          className="max-w-64"
+                        />
+                      ) : null}
                       <div className="truncate text-xs text-muted-foreground">
                         {person?.title || person?.departmentName
                           ? [person.title, person.departmentName]

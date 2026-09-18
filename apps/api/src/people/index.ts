@@ -7,8 +7,13 @@ import {
   z,
 } from "../openapi";
 import { assertSelfOrPermission } from "../utils/assert-self-or-permission";
-import { requireWorkspacePermission } from "../utils/require-workspace-permission";
+import {
+  hasWorkspacePermission,
+  requireWorkspacePermission,
+} from "../utils/require-workspace-permission";
+import { taskViewer } from "../utils/task-visibility";
 import { workspaceAccess } from "../utils/workspace-access-middleware";
+import getLivePeople from "./controllers/get-live-people";
 import getPeopleOverview from "./controllers/get-people-overview";
 import getPerson from "./controllers/get-person";
 import getPersonTasks from "./controllers/get-person-tasks";
@@ -16,6 +21,7 @@ import listPeople from "./controllers/list-people";
 import setTaskOrder from "./controllers/set-task-order";
 import updatePerson from "./controllers/update-person";
 import {
+  livePeopleSchema,
   peopleOverviewSchema,
   personDetailSchema,
   personListSchema,
@@ -40,6 +46,22 @@ const listPeopleRoute = createRoute({
   request: { query: workspaceQuery },
   responses: {
     200: jsonResponse("People in the workspace", personListSchema),
+    403: errorResponse("No access to the workspace"),
+  },
+});
+
+const livePeopleRoute = createRoute({
+  method: "get",
+  operationId: "getLivePeople",
+  path: "/live",
+  tags: ["People"],
+  summary: "Who is working in what, now",
+  description:
+    "Each member's live state from the desktop app (active, idle, paused, offline), clock-in and running timer. The app in front is shown for yourself, and for everyone with activity:read_all.",
+  middleware: [workspaceAccess.fromQuery()] as const,
+  request: { query: workspaceQuery },
+  responses: {
+    200: jsonResponse("Live state per person", livePeopleSchema),
     403: errorResponse("No access to the workspace"),
   },
 });
@@ -156,6 +178,18 @@ const people = apiRouter()
   .openapi(peopleOverviewRoute, async (c) =>
     c.json(await getPeopleOverview(c.req.valid("query").workspaceId), 200),
   )
+  .openapi(livePeopleRoute, async (c) => {
+    const { workspaceId } = c.req.valid("query");
+    return c.json(
+      await getLivePeople(
+        workspaceId,
+        c.get("userId"),
+        await hasWorkspacePermission(c, { activity: ["read_all"] }),
+        await taskViewer(c),
+      ),
+      200,
+    );
+  })
   .openapi(getPersonRoute, async (c) => {
     const { userId } = c.req.valid("param");
     await assertSelfOrPermission(c, userId, { people: ["read_all"] });

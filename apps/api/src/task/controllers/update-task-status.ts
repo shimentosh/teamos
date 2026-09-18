@@ -3,6 +3,7 @@ import { HTTPException } from "hono/http-exception";
 import db from "../../database";
 import { columnTable, taskTable } from "../../database/schema";
 import { publishEvent } from "../../events";
+import { syncTimerWithStatus } from "../../time-entry/auto-timer";
 import { assertValidTaskStatus } from "../validate-task-fields";
 
 async function updateTaskStatus({
@@ -44,6 +45,13 @@ async function updateTaskStatus({
       message: "Failed to update task status",
     });
   }
+
+  await syncTimerWithStatus({
+    taskId: updatedTask.id,
+    actorId: currentUserId,
+    oldStatus: existingTask.status,
+    newStatus: status,
+  });
 
   await publishEvent("task.status_changed", {
     taskId: updatedTask.id,

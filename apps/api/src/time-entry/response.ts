@@ -8,6 +8,9 @@ export const timeEntrySchema = z
       description: "Null once the user who logged the time has been removed.",
     }),
     description: z.string().nullable(),
+    reference: z.string().nullable().openapi({
+      description: "A link or ticket the work was for.",
+    }),
     startTime: responseTimestamp,
     endTime: nullableResponseTimestamp.openapi({
       description: "Null while the timer is still running.",

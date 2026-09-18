@@ -20,9 +20,15 @@ function statusText(s) {
 // Only shown when the company clocks people in and out from this app.
 function attendanceText(a) {
   if (!a || !a.autoClock) return null;
-  if (!a.clockedIn) return "Not clocked in. You'll be clocked in when you start working.";
-  const at = new Date(a.since).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-  return a.automatic ? `Clocked in automatically at ${at}` : `Clocked in at ${at}`;
+  if (!a.clockedIn)
+    return "Not clocked in. You'll be clocked in when you start working.";
+  const at = new Date(a.since).toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  return a.automatic
+    ? `Clocked in automatically at ${at}`
+    : `Clocked in at ${at}`;
 }
 
 function render(s) {
@@ -38,12 +44,23 @@ function render(s) {
   $("who").textContent = `Connected to ${s.workspaceName} as ${s.userName}`;
   $("status").textContent = statusText(s);
   $("dot").className = `dot ${s.offline ? "offline" : s.mode}`;
+  // Exactly what the company sees live, so nothing is shared unseen.
+  show(
+    $("now"),
+    s.mode === "tracking" && s.currentApp
+      ? `Now: ${s.currentApp}${s.currentDomain ? ` · ${s.currentDomain}` : ""} (visible to your company)`
+      : null,
+  );
   show($("attendance"), attendanceText(s.attendance));
+  // Only offered when the workspace runs Ask TeamOS on people's own Claude.
+  $("ai").hidden = !s.aiBridge;
+  $("ai-allow").checked = Boolean(s.allowAi);
   $("last-sync").textContent = s.lastSync
     ? `Last sync ${new Date(s.lastSync).toLocaleTimeString()}`
     : "Not synced yet";
   show($("sync-error"), s.offline ? null : s.lastError);
-  $("toggle").textContent = s.mode === "paused" ? "Resume tracking" : "Pause tracking";
+  $("toggle").textContent =
+    s.mode === "paused" ? "Resume tracking" : "Pause tracking";
   $("toggle").dataset.paused = String(s.mode === "paused");
 }
 
@@ -58,7 +75,12 @@ $("pair").addEventListener("submit", async (event) => {
   button.textContent = "Connecting…";
   show($("pair-error"), null);
   try {
-    render(await invoke("connect", { address: $("address").value, code: $("code").value }));
+    render(
+      await invoke("connect", {
+        address: $("address").value,
+        code: $("code").value,
+      }),
+    );
     $("code").value = "";
   } catch (error) {
     show($("pair-error"), String(error));
@@ -66,6 +88,10 @@ $("pair").addEventListener("submit", async (event) => {
     button.disabled = false;
     button.textContent = "Connect";
   }
+});
+
+$("ai-allow").addEventListener("change", async (event) => {
+  render(await invoke("set_allow_ai", { allow: event.target.checked }));
 });
 
 $("toggle").addEventListener("click", async () => {

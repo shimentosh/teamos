@@ -2,6 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Bell, Mail } from "lucide-react";
 import { forwardRef, useCallback, useImperativeHandle, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { openChangeSet } from "@/components/ai/ask-teamos";
 import {
   AlertDialog,
   AlertDialogClose,
@@ -120,6 +121,24 @@ export function getNotificationTitle(
           ...eventData,
           defaultValue: notification.title ?? notification.type,
         });
+      case "chat_mention":
+      case "role_changed":
+      case "member_removed":
+      case "task_due_today":
+      case "task_due_soon":
+      case "task_overdue_escalated":
+      case "daily_digest":
+      case "task_not_started":
+      case "task_stuck":
+      case "end_of_day":
+      case "team_summary":
+      case "task_deleted":
+      case "project_task_created":
+      case "project_task_deleted":
+        return t(`notifications:events.${notification.type}.title`, {
+          ...eventData,
+          defaultValue: notification.title ?? notification.type,
+        });
       case "workspace_created":
         return t("notifications:events.workspace_created.title", {
           ...eventData,
@@ -175,6 +194,15 @@ export function getNotificationTitle(
           ...leaveValues(eventData, t),
           defaultValue: notification.title ?? notification.type,
         });
+      case "ai_teammate":
+        return t(
+          `notifications:events.ai_teammate.${String(eventData.status)}`,
+          {
+            name: t(`ai:teammates.kinds.${String(eventData.kind)}.title`),
+            count: Number(eventData.actions ?? 0),
+            defaultValue: notification.title ?? notification.type,
+          },
+        );
       default:
         break;
     }
@@ -190,6 +218,8 @@ export function getNotificationContent(
   const eventData = getEventDataRecord(notification.eventData);
   if (eventData) {
     switch (notification.type) {
+      case "ai_teammate":
+        return String(eventData.summary ?? "").split("\n")[0] ?? "";
       case "task_created":
         return t("notifications:events.task_created.content", {
           ...eventData,
@@ -243,6 +273,24 @@ export function getNotificationContent(
           ...eventData,
           defaultValue: notification.content ?? "",
         });
+      case "chat_mention":
+      case "role_changed":
+      case "member_removed":
+      case "task_due_today":
+      case "task_due_soon":
+      case "task_overdue_escalated":
+      case "daily_digest":
+      case "task_not_started":
+      case "task_stuck":
+      case "end_of_day":
+      case "team_summary":
+      case "task_deleted":
+      case "project_task_created":
+      case "project_task_deleted":
+        return t(`notifications:events.${notification.type}.content`, {
+          ...eventData,
+          defaultValue: notification.content ?? "",
+        });
       case "member_joined":
         return t("notifications:events.member_joined.content", {
           ...eventData,
@@ -293,6 +341,14 @@ const NotificationDropdown = forwardRef<NotificationDropdownRef>(
         }
 
         const ed = getEventDataRecord(notification.eventData);
+        if (
+          notification.resourceType === "ai_change_set" &&
+          notification.resourceId
+        ) {
+          setIsOpen(false);
+          openChangeSet(notification.resourceId);
+          return;
+        }
         const workspaceId =
           typeof ed?.workspaceId === "string" ? ed.workspaceId : null;
         const projectId =
@@ -304,22 +360,69 @@ const NotificationDropdown = forwardRef<NotificationDropdownRef>(
             notification.resourceType === "payslip") &&
           workspaceId
         ) {
-          if (notification.type === "expense_submitted") {
-            navigate({
-              to: "/dashboard/workspace/$workspaceId/people",
-              params: { workspaceId },
-            });
-          } else if (notification.resourceType === "payslip") {
+          if (notification.resourceType === "payslip") {
             navigate({
               to: "/dashboard/workspace/$workspaceId/people/$userId",
               params: { workspaceId, userId: notification.userId },
             });
           } else {
             navigate({
-              to: "/dashboard/workspace/$workspaceId/my-work",
+              to: "/dashboard/workspace/$workspaceId/expenses",
               params: { workspaceId },
             });
           }
+          return;
+        }
+
+        if (notification.resourceType === "chat" && workspaceId) {
+          const conversationId =
+            typeof ed?.conversationId === "string" ? ed.conversationId : null;
+          navigate({
+            to: "/dashboard/workspace/$workspaceId/chat",
+            params: { workspaceId },
+            search: conversationId ? { c: conversationId } : {},
+          });
+          return;
+        }
+
+        if (notification.resourceType === "workspace" && workspaceId) {
+          const page =
+            notification.type === "daily_digest"
+              ? "/dashboard/workspace/$workspaceId/my-work"
+              : notification.type === "end_of_day"
+                ? "/dashboard/workspace/$workspaceId/attendance"
+                : notification.type === "team_summary"
+                  ? "/dashboard/workspace/$workspaceId/people"
+                  : null;
+          if (page) {
+            navigate({ to: page, params: { workspaceId } });
+            return;
+          }
+        }
+
+        // A removed member can no longer open that workspace.
+        if (
+          notification.resourceType === "workspace" &&
+          notification.type !== "member_removed" &&
+          workspaceId
+        ) {
+          navigate({
+            to: "/dashboard/workspace/$workspaceId",
+            params: { workspaceId },
+          });
+          return;
+        }
+
+        // Deleted tasks point at the project they were in.
+        if (
+          notification.resourceType === "project" &&
+          workspaceId &&
+          notification.resourceId
+        ) {
+          navigate({
+            to: "/dashboard/workspace/$workspaceId/project/$projectId/board",
+            params: { workspaceId, projectId: notification.resourceId },
+          });
           return;
         }
 

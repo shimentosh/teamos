@@ -14,6 +14,7 @@ import {
   createRoute,
   errorResponse,
   jsonResponse,
+  z,
 } from "../openapi";
 import {
   assertTaskImageKeyMatchesContext,
@@ -21,8 +22,11 @@ import {
   isImageContentType,
   validateTaskAssetUploadInput,
 } from "../storage/s3";
+import { storeTaskImage } from "../storage/task-image";
+import { limitBody } from "../utils/limit-body";
 import { normalizeApiServerUrl } from "../utils/openapi-spec";
 import { requireWorkspacePermission } from "../utils/require-workspace-permission";
+import { assertProjectVisible, taskViewer } from "../utils/task-visibility";
 import {
   validateAndParseDate,
   validateDateRange,
@@ -65,6 +69,7 @@ import {
   bulkUpdateBody,
   createQuickTaskBody,
   createTaskBody,
+  directImageUploadQuery,
   finalizeImageUploadBody,
   imageUploadBody,
   importTasksBody,
@@ -578,6 +583,43 @@ const finalizeTaskImageUploadRoute = createRoute({
   },
 });
 
+const directImageUploadRoute = createRoute({
+  method: "put",
+  operationId: "uploadTaskImage",
+  path: "/image-upload/{id}/direct",
+  tags: ["Tasks"],
+  summary: "Upload an image",
+  description:
+    "Send the raw image or file as the body. It is stored where the workspace's files go (the owner's R2 when connected) and returned as a private asset URL. Up to 25 MB with R2, 10 MB otherwise.",
+  middleware: [
+    limitBody(25 * 1024 * 1024 + 1024),
+    workspaceAccess.fromTask(),
+    requireWorkspacePermission({ task: ["update"] }),
+    requireEntitlement,
+  ] as const,
+  request: {
+    params: taskParam,
+    query: directImageUploadQuery,
+    body: {
+      required: true,
+      content: {
+        "application/octet-stream": {
+          schema: z.string().openapi({ format: "binary" }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: jsonResponse("The stored asset", finalizedAssetSchema),
+    400: errorResponse("Empty upload"),
+    403: errorResponse(
+      "No workspace access, or missing task:update permission",
+    ),
+    404: errorResponse("Task not found"),
+    413: errorResponse("Too large"),
+  },
+});
+
 const updateTaskDescriptionRoute = createRoute({
   method: "put",
   operationId: "updateTaskDescription",
@@ -611,7 +653,10 @@ const task = apiRouter<BaseVariables & { workspaceId: string }>()
     const { projectId } = c.req.valid("param");
     const filters = c.req.valid("query") || {};
 
-    const tasks = await getTasks(projectId, filters);
+    const tasks = await getTasks(projectId, {
+      ...filters,
+      visibleTo: await taskViewer(c),
+    });
 
     return c.json(tasks, 200);
   })
@@ -669,7 +714,8 @@ const task = apiRouter<BaseVariables & { workspaceId: string }>()
     const task = await createTask({
       projectId,
       currentUserId: c.get("userId"),
-      userId: userId,
+      // Someone who only sees their own tasks keeps what they create.
+      userId: userId ?? (await taskViewer(c)) ?? undefined,
       title,
       description,
       startDate: parsedStartDate,
@@ -684,6 +730,9 @@ const task = apiRouter<BaseVariables & { workspaceId: string }>()
   .openapi(createQuickTaskRoute, async (c) => {
     const { title, description, projectId, dueDate, priority } =
       c.req.valid("json");
+    // Same rule as creating a task in a project: someone who only sees
+    // their own tasks can't add work to a project hidden from them.
+    if (projectId) await assertProjectVisible(c, projectId);
 
     const task = await createQuickTask({
       workspaceId: c.get("workspaceId"),
@@ -767,7 +816,7 @@ const task = apiRouter<BaseVariables & { workspaceId: string }>()
   .openapi(exportTasksRoute, async (c) => {
     const { projectId } = c.req.valid("param");
 
-    const exportData = await exportTasks(projectId);
+    const exportData = await exportTasks(projectId, await taskViewer(c));
 
     return c.json(exportData, 200);
   })
@@ -1008,6 +1057,40 @@ const task = apiRouter<BaseVariables & { workspaceId: string }>()
         id: asset.id,
         url: `${apiBaseUrl}/asset/${asset.id}`,
       },
+      200,
+    );
+  })
+  .openapi(directImageUploadRoute, async (c) => {
+    const { id } = c.req.valid("param");
+    const { filename, surface } = c.req.valid("query");
+    const bytes = Buffer.from(await c.req.arrayBuffer());
+    if (bytes.length === 0) {
+      throw new HTTPException(400, { message: "The upload is empty" });
+    }
+    const [task] = await db
+      .select({ projectId: taskTable.projectId })
+      .from(taskTable)
+      .where(eq(taskTable.id, id))
+      .limit(1);
+    if (!task) throw new HTTPException(404, { message: "Task not found" });
+
+    const asset = await storeTaskImage({
+      workspaceId: c.get("workspaceId"),
+      projectId: task.projectId,
+      taskId: id,
+      surface,
+      filename,
+      mimeType:
+        c.req.header("Content-Type")?.split(";")[0]?.trim() ||
+        "application/octet-stream",
+      bytes,
+      userId: c.get("userId"),
+    });
+    const apiBaseUrl = normalizeApiServerUrl(
+      process.env.KANEO_API_URL || new URL(c.req.url).origin,
+    );
+    return c.json(
+      { id: asset.id, url: `${apiBaseUrl}/asset/${asset.id}` },
       200,
     );
   })

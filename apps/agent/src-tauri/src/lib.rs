@@ -1,3 +1,4 @@
+mod ai_bridge;
 mod api;
 mod cli;
 mod config;
@@ -55,6 +56,12 @@ fn set_paused(paused: bool, tracker: State<'_, Arc<Tracker>>) -> Status {
 }
 
 #[tauri::command]
+fn set_allow_ai(allow: bool, tracker: State<'_, Arc<Tracker>>) -> Status {
+    tracker.set_allow_ai(allow);
+    tracker.status()
+}
+
+#[tauri::command]
 fn disconnect(app: AppHandle, tracker: State<'_, Arc<Tracker>>) -> Status {
     tracker.disconnect();
     let _ = app.autolaunch().disable();
@@ -85,7 +92,11 @@ fn run_app(start_minimized: bool) {
         ))
         .manage(tracker.clone())
         .invoke_handler(tauri::generate_handler![
-            get_status, connect, set_paused, disconnect
+            get_status,
+            connect,
+            set_paused,
+            set_allow_ai,
+            disconnect
         ])
         .setup(move |app| {
             let handle = app.handle();
@@ -156,6 +167,11 @@ fn run_app(start_minimized: bool) {
             std::thread::Builder::new()
                 .name("tracker".into())
                 .spawn(move || worker.run())?;
+
+            let bridge = tracker.clone();
+            std::thread::Builder::new()
+                .name("ai-bridge".into())
+                .spawn(move || ai_bridge::run(bridge))?;
 
             if !start_minimized || !tracker.is_connected() {
                 show_window(handle);

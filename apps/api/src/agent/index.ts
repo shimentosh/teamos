@@ -1,10 +1,16 @@
 import { HTTPException } from "hono/http-exception";
 import {
+  claimDesktopJob,
+  finishDesktopJob,
+  reportDesktopProgress,
+} from "../ai/change-sets";
+import {
   apiRouter,
   type BaseVariables,
   createRoute,
   errorResponse,
   jsonResponse,
+  z,
 } from "../openapi";
 import {
   assertPermission,
@@ -102,6 +108,77 @@ const offlineRoute = createRoute({
   responses: {
     200: jsonResponse("Attendance after going offline", offlineResultSchema),
     401: errorResponse("Device not paired or revoked"),
+  },
+});
+
+// --- Ask TeamOS on the person's own Claude Code (device token) ---------
+
+const aiJobSchema = z
+  .object({
+    job: z
+      .object({
+        id: z.string(),
+        prompt: z.string(),
+        mcpUrl: z.string(),
+        token: z.string().openapi({
+          description: "A read-only key for this job; revoked with the result.",
+        }),
+      })
+      .nullable(),
+  })
+  .openapi("AgentAiJob");
+
+const aiJobNextRoute = createRoute({
+  method: "get",
+  operationId: "agentNextAiJob",
+  path: "/device/ai-jobs/next",
+  tags,
+  summary: "Wait for an Ask TeamOS request",
+  description:
+    "Long-polls up to 25 seconds for a request its person made with the desktop engine, and claims it for this device.",
+  middleware: [authenticateDevice] as const,
+  responses: {
+    200: jsonResponse("A job, or null after the wait", aiJobSchema),
+    401: errorResponse("Device not paired or revoked"),
+  },
+});
+
+const aiJobProgressRoute = createRoute({
+  method: "post",
+  operationId: "agentAiJobProgress",
+  path: "/device/ai-jobs/{id}/progress",
+  tags,
+  summary: "Report what Claude is doing",
+  middleware: [limitBody(8 * 1024), authenticateDevice] as const,
+  request: {
+    params: z.object({ id: z.string() }),
+    body: json(z.object({ steps: z.array(z.string().max(80)).max(20) })),
+  },
+  responses: {
+    200: jsonResponse("Recorded", z.object({ ok: z.boolean() })),
+    404: errorResponse("Not this device's job"),
+  },
+});
+
+const aiJobResultRoute = createRoute({
+  method: "post",
+  operationId: "agentAiJobResult",
+  path: "/device/ai-jobs/{id}/result",
+  tags,
+  summary: "Hand back Claude's answer",
+  middleware: [limitBody(256 * 1024), authenticateDevice] as const,
+  request: {
+    params: z.object({ id: z.string() }),
+    body: json(
+      z.object({
+        text: z.string().max(200_000).optional(),
+        error: z.string().max(2000).optional(),
+      }),
+    ),
+  },
+  responses: {
+    200: jsonResponse("Recorded", z.object({ ok: z.boolean() })),
+    404: errorResponse("Not this device's job"),
   },
 });
 
@@ -218,11 +295,44 @@ const agent = apiRouter<BaseVariables & { device: AuthenticatedDevice }>()
     return c.json(await pairDevice(c.req.valid("json")), 200);
   })
   .openapi(heartbeatRoute, async (c) => {
-    const { state, agentVersion } = c.req.valid("json");
-    return c.json(await heartbeat(c.get("device"), state, agentVersion), 200);
+    const { state, agentVersion, current } = c.req.valid("json");
+    return c.json(
+      await heartbeat(c.get("device"), state, agentVersion, undefined, current),
+      200,
+    );
   })
   .openapi(offlineRoute, async (c) =>
     c.json(await goOffline(c.get("device")), 200),
+  )
+  .openapi(aiJobNextRoute, async (c) => {
+    const device = c.get("device");
+    const until = Date.now() + 25_000;
+    while (Date.now() < until) {
+      const job = await claimDesktopJob(device);
+      if (job) return c.json({ job }, 200);
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
+    return c.json({ job: null }, 200);
+  })
+  .openapi(aiJobProgressRoute, async (c) =>
+    c.json(
+      await reportDesktopProgress(
+        c.get("device"),
+        c.req.valid("param").id,
+        c.req.valid("json").steps,
+      ),
+      200,
+    ),
+  )
+  .openapi(aiJobResultRoute, async (c) =>
+    c.json(
+      await finishDesktopJob(
+        c.get("device"),
+        c.req.valid("param").id,
+        c.req.valid("json"),
+      ),
+      200,
+    ),
   )
   .openapi(activityRoute, async (c) =>
     c.json(

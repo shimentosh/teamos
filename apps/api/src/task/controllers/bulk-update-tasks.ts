@@ -12,6 +12,7 @@ import {
 import { publishEvent } from "../../events";
 import { removeLabelFromGitea } from "../../plugins/gitea/utils/sync-label-to-gitea";
 import { removeLabelFromGitHub } from "../../plugins/github/utils/sync-label-to-github";
+import { syncTimerWithStatus } from "../../time-entry/auto-timer";
 import { assertAssignableUser } from "../../utils/assert-assignable-user";
 import {
   assertValidPriority,
@@ -42,6 +43,7 @@ async function bulkUpdateTasks({
     .select({
       id: taskTable.id,
       title: taskTable.title,
+      status: taskTable.status,
       projectId: taskTable.projectId,
       userId: taskTable.userId,
       dueDate: taskTable.dueDate,
@@ -122,6 +124,14 @@ async function bulkUpdateTasks({
         updatedCount += result.rowCount ?? projectTaskIds.length;
 
         for (const taskId of projectTaskIds) {
+          await syncTimerWithStatus({
+            taskId,
+            actorId: userId,
+            oldStatus: tasks.find((t) => t.id === taskId)?.status,
+            newStatus: value,
+            // One timer per person: only the last task of the move starts it.
+            start: taskId === tasks.at(-1)?.id,
+          });
           await publishEvent("task.status_changed", {
             taskId,
             projectId,
@@ -219,6 +229,8 @@ async function bulkUpdateTasks({
           projectId: task.projectId,
           userId,
           title: task.title,
+          assigneeId: task.userId,
+          bulk: true,
         });
       }
       break;

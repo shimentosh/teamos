@@ -17,6 +17,25 @@ pub struct Settings {
     pub heartbeat_seconds: u64,
     pub sync_seconds: u64,
     pub idle_after_seconds: u64,
+    /// The workspace runs Ask TeamOS on people's own Claude Code.
+    #[serde(default)]
+    pub ai_bridge: bool,
+}
+
+/// An Ask TeamOS request to run with this computer's Claude Code.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AiJob {
+    pub id: String,
+    pub prompt: String,
+    pub mcp_url: String,
+    /// A read-only key for this request, revoked with the answer.
+    pub token: String,
+}
+
+#[derive(Deserialize)]
+struct AiJobReply {
+    job: Option<AiJob>,
 }
 
 impl Default for Settings {
@@ -26,6 +45,7 @@ impl Default for Settings {
             heartbeat_seconds: 60,
             sync_seconds: 60,
             idle_after_seconds: 300,
+            ai_bridge: false,
         }
     }
 }
@@ -38,6 +58,7 @@ impl Settings {
             heartbeat_seconds: self.heartbeat_seconds.clamp(15, 3_600),
             sync_seconds: self.sync_seconds.clamp(15, 3_600),
             idle_after_seconds: self.idle_after_seconds.clamp(30, 7_200),
+            ai_bridge: self.ai_bridge,
         }
     }
 }
@@ -173,8 +194,20 @@ impl Client {
         self.post("/agent/device/pair", None, &body)
     }
 
-    pub fn heartbeat(&self, token: &str, state: &str) -> Result<HeartbeatReply, ApiError> {
-        let body = serde_json::json!({ "state": state, "agentVersion": AGENT_VERSION });
+    pub fn heartbeat(
+        &self,
+        token: &str,
+        state: &str,
+        current: Option<&crate::tracker::Current>,
+    ) -> Result<HeartbeatReply, ApiError> {
+        let mut body = serde_json::json!({ "state": state, "agentVersion": AGENT_VERSION });
+        if let Some(c) = current {
+            body["current"] = serde_json::json!({
+                "app": c.app,
+                "domain": c.domain,
+                "since": c.since.to_rfc3339_opts(chrono::SecondsFormat::Millis, true),
+            });
+        }
         self.post("/agent/device/heartbeat", Some(token), &body)
     }
 
@@ -196,6 +229,56 @@ impl Client {
             Some(token),
             &serde_json::json!({ "spans": spans }),
         )
+    }
+
+    /// Waits (server side, up to 25 s) for an Ask TeamOS request.
+    pub fn next_ai_job(&self, token: &str) -> Result<Option<AiJob>, ApiError> {
+        let response = self
+            .http
+            .get(format!("{}/agent/device/ai-jobs/next", self.base))
+            .bearer_auth(token)
+            .send()
+            .map_err(|e| ApiError::Network(e.to_string()))?;
+        let status = response.status();
+        if status == reqwest::StatusCode::UNAUTHORIZED {
+            return Err(ApiError::Unauthorized);
+        }
+        if !status.is_success() {
+            return Err(ApiError::Status(status.as_u16(), String::new()));
+        }
+        response
+            .json::<AiJobReply>()
+            .map(|reply| reply.job)
+            .map_err(|e| ApiError::Network(format!("unexpected response: {e}")))
+    }
+
+    pub fn ai_progress(&self, token: &str, id: &str, steps: &[String]) -> Result<(), ApiError> {
+        self.post::<serde::de::IgnoredAny>(
+            &format!("/agent/device/ai-jobs/{id}/progress"),
+            Some(token),
+            &serde_json::json!({ "steps": steps.iter().take(20).collect::<Vec<_>>() }),
+        )
+        .map(|_| ())
+    }
+
+    pub fn ai_result(
+        &self,
+        token: &str,
+        id: &str,
+        outcome: Result<String, String>,
+    ) -> Result<(), ApiError> {
+        let body = match outcome {
+            Ok(text) => serde_json::json!({ "text": text }),
+            Err(error) => {
+                serde_json::json!({ "error": error.chars().take(2000).collect::<String>() })
+            }
+        };
+        self.post::<serde::de::IgnoredAny>(
+            &format!("/agent/device/ai-jobs/{id}/result"),
+            Some(token),
+            &body,
+        )
+        .map(|_| ())
     }
 
     fn post<T: serde::de::DeserializeOwned>(

@@ -15,29 +15,49 @@ export type OutgoingEmail = {
 
 export type EmailProvider = "resend" | "smtp" | null;
 
+// Settings the instance admin saved in the app. They win over the process
+// environment, which stays the fallback for self-hosters who prefer env vars.
+let overrides: Env = {};
+
+export function setEmailSettings(next: Env) {
+  const updated: Env = Object.fromEntries(
+    Object.entries(next).filter(([, value]) => value),
+  );
+  // Settings are reloaded on a timer; keep the open SMTP connection unless
+  // something actually changed.
+  if (JSON.stringify(updated) === JSON.stringify(overrides)) return;
+  overrides = updated;
+  smtp = null;
+}
+
+/** The environment email delivery reads: process env plus saved settings. */
+export function emailEnv(): Env {
+  return { ...process.env, ...overrides };
+}
+
 /**
  * Resend when RESEND_API_KEY is set, otherwise SMTP. Self-hosted instances
  * keep working with plain SMTP; Resend is never required.
  */
-export function emailProvider(env: Env = process.env): EmailProvider {
+export function emailProvider(env: Env = emailEnv()): EmailProvider {
   if (env.RESEND_API_KEY && emailFrom(env)) return "resend";
   if (env.SMTP_HOST && env.SMTP_FROM) return "smtp";
   return null;
 }
 
-export function emailFrom(env: Env = process.env) {
+export function emailFrom(env: Env = emailEnv()) {
   return env.EMAIL_FROM || env.RESEND_FROM || env.SMTP_FROM || null;
 }
 
-export function isEmailConfigured(env: Env = process.env) {
+export function isEmailConfigured(env: Env = emailEnv()) {
   return emailProvider(env) !== null;
 }
 
 // Created on first use so a process that never sends mail never opens SMTP.
 let smtp: nodemailer.Transporter | null = null;
 
-async function sendWithSmtp(email: OutgoingEmail, from: string) {
-  smtp ??= nodemailer.createTransport(getSmtpTransportOptions());
+async function sendWithSmtp(email: OutgoingEmail, from: string, env: Env) {
+  smtp ??= nodemailer.createTransport(getSmtpTransportOptions(env));
   await smtp.sendMail({
     from,
     to: email.to,
@@ -92,7 +112,7 @@ async function sendWithResend(
 /** Sends one email with whichever provider is configured. Throws on failure. */
 export async function deliverEmail(
   email: OutgoingEmail,
-  env: Env = process.env,
+  env: Env = emailEnv(),
 ): Promise<{ provider: Exclude<EmailProvider, null>; id: string | null }> {
   const provider = emailProvider(env);
   const from = emailFrom(env);
@@ -103,6 +123,6 @@ export async function deliverEmail(
     const id = await sendWithResend(email, from, env.RESEND_API_KEY as string);
     return { provider, id };
   }
-  await sendWithSmtp(email, from);
+  await sendWithSmtp(email, from, env);
   return { provider, id: null };
 }

@@ -114,7 +114,12 @@ export const userAvatarTable = pgTable(
       }),
     mimeType: text("mime_type").notNull(),
     size: integer("size").notNull(),
-    data: bytea("data").notNull(),
+    // Null when the picture lives in the workspace owner's R2 instead.
+    data: bytea("data"),
+    storedFileId: text("stored_file_id").references(() => storedFileTable.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "date" })
       .defaultNow()
@@ -343,6 +348,35 @@ export const projectTable = pgTable(
   ],
 );
 
+// The people a project is worked with. Membership lets someone see the
+// project; which of its tasks they see still follows task:read_all.
+export const projectMemberTable = pgTable(
+  "project_member",
+  {
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projectTable.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => userTable.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    addedBy: text("added_by").references(() => userTable.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.projectId, table.userId] }),
+    index("project_member_user_idx").on(table.userId),
+  ],
+);
+
 export const columnTable = pgTable(
   "column",
   {
@@ -492,6 +526,67 @@ export const jobLeaseTable = pgTable("job_lease", {
   expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
 });
 
+// A workspace's rule for one notification event, set by an admin. Without a
+// row everything is on and each person decides. `locked` means members
+// can't change it: the admin's on/off applies to everyone.
+export const workspaceNotificationPolicyTable = pgTable(
+  "workspace_notification_policy",
+  {
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaceTable.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    eventKey: text("event_key").notNull(),
+    inApp: boolean("in_app").notNull().default(true),
+    email: boolean("email").notNull().default(true),
+    locked: boolean("locked").notNull().default(false),
+    updatedBy: text("updated_by").references(() => userTable.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
+    updatedAt: timestamp("updated_at", { mode: "date" })
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.workspaceId, table.eventKey] })],
+);
+
+// Per-person nudges that aren't about one task (the morning digest, the
+// end-of-day nudge, the weekly team summary): one row per person, workspace
+// and occasion, so each goes out once.
+export const userNudgeSentTable = pgTable(
+  "user_nudge_sent",
+  {
+    id: text("id")
+      .$defaultFn(() => createId())
+      .primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => userTable.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaceTable.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    key: text("key").notNull(),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("user_nudge_sent_unique").on(
+      table.userId,
+      table.workspaceId,
+      table.key,
+    ),
+  ],
+);
+
 export const taskReminderSentTable = pgTable(
   "task_reminder_sent",
   {
@@ -537,6 +632,8 @@ export const timeEntryTable = pgTable(
       onUpdate: "cascade",
     }),
     description: text("description"),
+    // Optional link or ticket the work was for (a PR, a doc, an issue key).
+    reference: text("reference"),
     startTime: timestamp("start_time", { mode: "date" }).notNull(),
     endTime: timestamp("end_time", { mode: "date" }),
     duration: integer("duration").default(0),
@@ -1479,6 +1576,11 @@ export const agentDeviceTable = pgTable(
     lastState: text("last_state"),
     // Latest moment the device saw keyboard or mouse activity.
     lastActiveAt: timestamp("last_active_at", { mode: "date" }),
+    // What the person has in front right now: the app, the site (only when
+    // the company tracks domains) and since when. Cleared when idle ends it.
+    currentApp: text("current_app"),
+    currentDomain: text("current_domain"),
+    currentSince: timestamp("current_since", { mode: "date" }),
     revokedAt: timestamp("revoked_at", { mode: "date" }),
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   },
@@ -1969,6 +2071,21 @@ export const userTaskOrderTable = pgTable(
 
 // A workspace's own S3-compatible bucket (Cloudflare R2 and the like). Without
 // a row, files are kept in Postgres.
+// Server-wide settings the instance admin manages from the app instead of
+// environment variables (for now, email delivery). Secrets are sealed.
+export const instanceSettingTable = pgTable("instance_setting", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedBy: text("updated_by").references(() => userTable.id, {
+    onDelete: "set null",
+    onUpdate: "cascade",
+  }),
+  updatedAt: timestamp("updated_at", { mode: "date" })
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
 // A person's own S3-compatible bucket (Cloudflare R2 and the like). Every
 // workspace they own stores new files here; objects are keyed per workspace.
 export const userStorageTable = pgTable("user_storage", {
@@ -2293,6 +2410,123 @@ export const activityReactionTable = pgTable(
       table.activityId,
       table.userId,
       table.emoji,
+    ),
+  ],
+);
+
+// Claude in the app: whether a workspace allows it and how it runs.
+export const workspaceAiSettingTable = pgTable("workspace_ai_setting", {
+  workspaceId: text("workspace_id")
+    .primaryKey()
+    .references(() => workspaceTable.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+    }),
+  enabled: boolean("enabled").notNull().default(false),
+  // "server": Claude Code installed on the API's machine; "desktop": the
+  // person's own Claude Code, through the TeamOS desktop app.
+  engine: text("engine").notNull().default("server"),
+  updatedBy: text("updated_by").references(() => userTable.id, {
+    onDelete: "set null",
+    onUpdate: "cascade",
+  }),
+  updatedAt: timestamp("updated_at", { mode: "date" })
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+// What Claude proposed for a request, what was applied, and how to undo it.
+// Claude only proposes; TeamOS applies the ticked actions as the person.
+export const aiChangeSetTable = pgTable(
+  "ai_change_set",
+  {
+    id: text("id")
+      .$defaultFn(() => createId())
+      .primaryKey(),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaceTable.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => userTable.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    prompt: text("prompt").notNull(),
+    // Claude's reply in words, shown above the proposed actions.
+    summary: text("summary"),
+    // proposing | proposed | applied | discarded | undone | failed
+    status: text("status").notNull().default("proposing"),
+    actions: jsonb("actions"),
+    // Per applied action: what it changed and the values before, for undo.
+    results: jsonb("results"),
+    engine: text("engine").notNull(),
+    error: text("error"),
+    // The desktop engine: which of the person's devices took the request.
+    deviceId: text("device_id").references(() => agentDeviceTable.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
+    claimedAt: timestamp("claimed_at", { mode: "date" }),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+    appliedAt: timestamp("applied_at", { mode: "date" }),
+  },
+  (table) => [
+    index("ai_change_set_workspace_user_idx").on(
+      table.workspaceId,
+      table.userId,
+      table.createdAt,
+    ),
+  ],
+);
+
+// Claude on a schedule: triage mornings, standups, overdue nudges, reports.
+// Runs as the person who set it up, within their permissions.
+export const aiTeammateTable = pgTable(
+  "ai_teammate",
+  {
+    id: text("id")
+      .$defaultFn(() => createId())
+      .primaryKey(),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaceTable.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    // Whose permissions it works with, and who gets its suggestions.
+    userId: text("user_id")
+      .notNull()
+      .references(() => userTable.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    // triage | standup | overdue | weekly
+    kind: text("kind").notNull(),
+    enabled: boolean("enabled").notNull().default(false),
+    // Extra words from the owner on top of the preset's job.
+    instructions: text("instructions"),
+    // Local time in the company's timezone, and ISO weekdays (1 = Monday).
+    time: text("time").notNull().default("09:00"),
+    days: text("days").notNull().default("1,2,3,4,5"),
+    // suggest: a change set waits for the owner; act: applied, with undo.
+    mode: text("mode").notNull().default("suggest"),
+    // Where standups and reports are posted, when they post.
+    channelId: text("channel_id"),
+    lastRunAt: timestamp("last_run_at", { mode: "date" }),
+    lastRunDay: text("last_run_day"),
+    lastChangeSetId: text("last_change_set_id"),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("ai_teammate_workspace_user_kind_idx").on(
+      table.workspaceId,
+      table.userId,
+      table.kind,
     ),
   ],
 );

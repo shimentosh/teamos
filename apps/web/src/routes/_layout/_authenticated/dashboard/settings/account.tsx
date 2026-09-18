@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-router";
 import {
   Bell,
+  Bot,
   Code,
   HardDrive,
   Mail,
@@ -69,6 +70,11 @@ function RouteComponent() {
       title: t("files:storage.title"),
       url: "/dashboard/settings/account/storage",
       icon: HardDrive,
+    },
+    {
+      title: t("ai:title"),
+      url: "/dashboard/settings/account/ai",
+      icon: Bot,
     },
   ];
 

@@ -50,15 +50,33 @@ describe("buildNotificationEmail", () => {
     });
   });
 
-  it("marks overdue tasks as danger", () => {
-    const email = build("task_overdue", { dueDate: "2026-09-17T00:00:00Z" });
+  it("marks overdue tasks as danger, with how late they are", () => {
+    const email = build("task_overdue", {
+      dueDate: "2026-09-17",
+      daysOverdue: 3,
+    });
+    expect(email.subject).toBe("Overdue by 3 days: Fix the header");
     expect(email.props.card?.status).toEqual({
-      label: "Overdue",
+      label: "3 days late",
       tone: "danger",
     });
     expect(email.props.card?.details).toEqual([
-      { label: "Due", value: "Thu, Sep 17, 2026" },
+      { label: "Was due", value: "Thu, Sep 17, 2026" },
     ]);
+  });
+
+  it("tells managers whose task is stuck", () => {
+    const email = build("task_overdue_escalated", {
+      dueDate: "2026-09-17",
+      daysOverdue: 5,
+      assigneeName: "Mia",
+    });
+    expect(email.subject).toBe("Mia's task is 5 days overdue: Fix the header");
+    expect(email.category).toBe("task_escalated");
+    expect(email.props.card?.details).toContainEqual({
+      label: "Assigned to",
+      value: "Mia",
+    });
   });
 
   it("asks approvers to review leave, with the reason", () => {

@@ -101,7 +101,14 @@ const task: Task = {
 
 describe("TaskRow", () => {
   it("renders labels and pull requests from the task payload without per-row requests", () => {
-    render(<TaskRow task={task} projectSlug="kan" />);
+    render(
+      <TaskRow
+        task={task}
+        projectSlug="kan"
+        canEdit={false}
+        onChange={() => {}}
+      />,
+    );
 
     expect(screen.getByText("Bug")).toBeVisible();
     expect(screen.getByText("#42")).toBeVisible();

@@ -30,9 +30,16 @@ import {
   GripVertical,
   Paperclip,
   Search,
+  UserRoundPen,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  AssigneePicker,
+  DueDatePicker,
+} from "@/components/task/inline-pickers";
+import { RunningTimerBadge } from "@/components/task/running-timer-badge";
+import { TimerHint } from "@/components/task/timer-hint";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import CircularProgress from "@/components/ui/circular-progress";
 import { Input } from "@/components/ui/input";
@@ -581,6 +588,7 @@ function TaskRow({
           >
             {task.title}
           </Link>
+          <RunningTimerBadge taskId={task.id} workspaceId={workspaceId} />
           {task.subtaskTotal > 0 && (
             <span
               className={cn(
@@ -625,44 +633,80 @@ function TaskRow({
         </span>
       </td>
       <td className="max-w-0">
-        {task.assignedById ? (
-          <span className="flex items-center gap-1.5 text-xs">
-            <Avatar className="size-5">
-              <AvatarImage
-                src={resolveAvatarSrc(task.assignedByImage ?? undefined)}
-                alt=""
-              />
-              <AvatarFallback className="text-[9px]">
-                {getInitials(task.assignedByName)}
-              </AvatarFallback>
-            </Avatar>
-            <span className="truncate">
-              {task.assignedById === userId
-                ? t("myWork:table.you")
-                : (task.assignedByName ?? t("myWork:table.unknown"))}
+        <div className="flex items-center gap-1">
+          {task.assignedById ? (
+            <span className="flex min-w-0 items-center gap-1.5 text-xs">
+              <Avatar className="size-5">
+                <AvatarImage
+                  src={resolveAvatarSrc(task.assignedByImage ?? undefined)}
+                  alt=""
+                />
+                <AvatarFallback className="text-[9px]">
+                  {getInitials(task.assignedByName)}
+                </AvatarFallback>
+              </Avatar>
+              <span className="truncate">
+                {task.assignedById === userId
+                  ? t("myWork:table.you")
+                  : (task.assignedByName ?? t("myWork:table.unknown"))}
+              </span>
             </span>
-          </span>
-        ) : (
-          <span className="text-xs text-muted-foreground">—</span>
-        )}
+          ) : (
+            <span className="text-xs text-muted-foreground">—</span>
+          )}
+          <AssigneePicker
+            workspaceId={workspaceId}
+            value={userId}
+            canEdit={canEdit}
+            onPick={(value) => onChange({ field: "assignee", value })}
+            trigger={
+              <button
+                type="button"
+                aria-label={t("myWork:table.reassign")}
+                title={t("myWork:table.reassign")}
+                className={cn(
+                  "ms-auto flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground",
+                  "opacity-0 focus-visible:opacity-100 group-hover:opacity-100",
+                  !canEdit && "hidden",
+                )}
+              >
+                <UserRoundPen className="size-3.5" />
+              </button>
+            }
+          />
+        </div>
       </td>
       <td>
-        {task.dueDate ? (
-          <span
-            className={cn(
-              "inline-flex rounded-md px-1.5 py-0.5 text-xs tabular-nums",
-              due === "overdue" && "bg-destructive/15 text-destructive",
-              due === "today" && "bg-warning/15 text-warning-foreground",
-              (due === "upcoming" || due === "none") && "text-muted-foreground",
-            )}
-          >
-            {due === "today"
-              ? t("myWork:table.today")
-              : formatDateShort(task.dueDate)}
-          </span>
-        ) : (
-          <span className="text-xs text-muted-foreground">—</span>
-        )}
+        <DueDatePicker
+          value={task.dueDate}
+          canEdit={canEdit}
+          onPick={(value) => onChange({ field: "dueDate", value })}
+          trigger={
+            <button
+              type="button"
+              className="-mx-1 rounded-md px-1 py-0.5 hover:bg-accent disabled:hover:bg-transparent"
+              disabled={!canEdit}
+            >
+              {task.dueDate ? (
+                <span
+                  className={cn(
+                    "inline-flex rounded-md px-1.5 py-0.5 text-xs tabular-nums",
+                    due === "overdue" && "bg-destructive/15 text-destructive",
+                    due === "today" && "bg-warning/15 text-warning-foreground",
+                    (due === "upcoming" || due === "none") &&
+                      "text-muted-foreground",
+                  )}
+                >
+                  {due === "today"
+                    ? t("myWork:table.today")
+                    : formatDateShort(task.dueDate)}
+                </span>
+              ) : (
+                <span className="text-xs text-muted-foreground">—</span>
+              )}
+            </button>
+          }
+        />
       </td>
       <td className="text-right text-xs tabular-nums text-muted-foreground">
         {estimate > 0 ? (
@@ -774,6 +818,7 @@ function StatusOptions({
             <span className="flex-1 truncate">
               {getStatusDisplayLabel(column.slug, column.name)}
             </span>
+            <TimerHint slug={column.slug} current={task.status} />
             {column.slug === task.status && <Check className="size-3.5" />}
           </button>
         </li>

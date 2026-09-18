@@ -15,17 +15,28 @@ export const pairBody = z.object({
 
 export const agentState = z.enum(["active", "idle", "paused"]);
 
-export const heartbeatBody = z.object({
-  state: agentState,
-  agentVersion: z.string().max(40).optional(),
-});
-
 // Only the host of a URL, never a path or query.
 const hostname = z
   .string()
   .max(253)
   .regex(/^[a-z0-9.-]+$/i, "Domain only, no path")
   .transform((d) => d.toLowerCase().replace(/^www\./, ""));
+
+export const heartbeatBody = z.object({
+  state: agentState,
+  agentVersion: z.string().max(40).optional(),
+  current: z
+    .object({
+      app: z.string().trim().max(120).nullable(),
+      domain: hostname.nullable().optional(),
+      since: timestamp,
+    })
+    .optional()
+    .openapi({
+      description:
+        "The app in front right now (and its site when domains are tracked). Older agents leave it out.",
+    }),
+});
 
 export const activitySpan = z
   .object({

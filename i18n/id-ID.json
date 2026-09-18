@@ -550,6 +550,14 @@
 					"hint": "Someone @mentions you in a comment or description.",
 					"title": "Mentions"
 				},
+				"task_deleted": {
+					"title": "Your task deleted",
+					"hint": "Someone else deletes a task assigned to you."
+				},
+				"project_activity": {
+					"title": "Project activity",
+					"hint": "Someone adds or deletes a task in a project you're on the team of."
+				},
 				"task_overdue": {
 					"hint": "A task you’re on is past its due date.",
 					"title": "Overdue tasks"
@@ -565,6 +573,46 @@
 				"workspace": {
 					"hint": "A welcome when you create a new workspace.",
 					"title": "Workspace created"
+				},
+				"chat_mention": {
+					"title": "Chat mentions",
+					"hint": "Someone @mentions you in a chat conversation."
+				},
+				"membership": {
+					"title": "Your membership",
+					"hint": "Your role in a workspace changes, or you're removed from one."
+				},
+				"task_due_today": {
+					"title": "Due today",
+					"hint": "The morning a task you're on is due."
+				},
+				"task_last_call": {
+					"title": "Last call",
+					"hint": "About two hours before the workday ends on the due day."
+				},
+				"task_escalated": {
+					"title": "Overdue on your team",
+					"hint": "Someone's task is 3 workdays late (then weekly). For people who see everyone."
+				},
+				"daily_digest": {
+					"title": "Morning digest",
+					"hint": "Each workday morning: what's due today, what's late, what's new. Skipped when there's nothing."
+				},
+				"task_not_started": {
+					"title": "Not started",
+					"hint": "A task assigned to you is still untouched after 2 workdays."
+				},
+				"task_stuck": {
+					"title": "Stuck tasks",
+					"hint": "A task in progress has had no updates, comments or time for 3 workdays."
+				},
+				"end_of_day": {
+					"title": "End of day",
+					"hint": "30 minutes before the workday ends, if you clocked in but logged no time."
+				},
+				"team_summary": {
+					"title": "Weekly team summary",
+					"hint": "First workday of each week: finished work, overdue tasks and load per person."
 				}
 			},
 			"inAppColumn": "In app",
@@ -1287,6 +1335,10 @@
 					"assign": {
 						"label": "Tugaskan tugas",
 						"description": "Tugaskan tugas kepada anggota ruang kerja lain."
+					},
+					"read_all": {
+						"description": "See every task in the workspace. Without it, people see only the tasks assigned to them.",
+						"label": "See all tasks"
 					}
 				},
 				"label": {
@@ -1420,6 +1472,28 @@
 			"deleteDialog": {
 				"title": "Hapus peran",
 				"description": "Ini akan menghapus peran \"{{role}}\" secara permanen. Anggota yang memakai peran ini akan kehilangan izinnya."
+			},
+			"transfer": {
+				"actions": {
+					"create": "New",
+					"unchanged": "Same",
+					"update": "Update"
+				},
+				"apply_other": "Import {{count}} roles",
+				"cancel": "Cancel",
+				"dropped": "Skipped, not available here: {{list}}",
+				"errors": {
+					"noRoles": "The file has no roles that can be imported.",
+					"notJson": "That file isn't valid JSON.",
+					"notRolesFile": "That isn't a TeamOS roles file. Export one from the Roles page first."
+				},
+				"export": "Export",
+				"import": "Import",
+				"imported_other": "Imported {{count}} roles",
+				"nothingToDo": "These roles already match this workspace.",
+				"previewHint": "New roles are added and roles with the same name are updated. Nothing is deleted.",
+				"previewTitle": "Import roles",
+				"someFailed": "Some roles couldn't be imported"
 			}
 		},
 		"workspaceLabels": {
@@ -1550,7 +1624,8 @@
 			"chat": "Chat",
 			"attendance": "Attendance",
 			"expenses": "Expenses",
-			"reports": "Reports"
+			"reports": "Reports",
+			"dashboard": "Dashboard"
 		},
 		"projectList": {
 			"viewProject": "Lihat Proyek",
@@ -1666,6 +1741,18 @@
 				"title": "{{mentionerName}} menyebut Anda",
 				"content": "{{mentionerName}} menyebut Anda di: {{taskTitle}}"
 			},
+			"task_deleted": {
+				"title": "Your task was deleted",
+				"content": "{{actorName}} deleted \"{{taskTitle}}\" in {{projectName}}"
+			},
+			"project_task_created": {
+				"title": "New task in {{projectName}}",
+				"content": "{{actorName}} added \"{{taskTitle}}\""
+			},
+			"project_task_deleted": {
+				"title": "Task deleted in {{projectName}}",
+				"content": "{{actorName}} deleted \"{{taskTitle}}\""
+			},
 			"time_entry_created": {
 				"title": "Pelacakan waktu dimulai",
 				"contentWithTask": "Pelacakan waktu dimulai pada tugas: {{taskTitle}}",
@@ -1720,6 +1807,54 @@
 			"member_joined": {
 				"content": "{{email}} accepted the invitation.",
 				"title": "{{userName}} joined the workspace"
+			},
+			"chat_mention": {
+				"title": "{{senderName}} mentioned you",
+				"content": "{{excerpt}}"
+			},
+			"role_changed": {
+				"title": "Your role in {{workspaceName}} changed",
+				"content": "You're now {{newRole}} (was {{oldRole}})."
+			},
+			"member_removed": {
+				"title": "You were removed from {{workspaceName}}",
+				"content": "You no longer have access to its projects, chat and files."
+			},
+			"task_due_today": {
+				"title": "Due today",
+				"content": "{{taskTitle}} is due today"
+			},
+			"task_due_soon": {
+				"title": "Last call",
+				"content": "{{taskTitle}} is due by the end of today"
+			},
+			"task_overdue_escalated": {
+				"title": "{{assigneeName}}'s task is overdue",
+				"content": "{{taskTitle}} is {{daysOverdue}} days late"
+			},
+			"daily_digest": {
+				"title": "Your day: {{dueTodayCount}} due today, {{overdueCount}} overdue",
+				"content": "Open My work to see what needs you today."
+			},
+			"task_not_started": {
+				"title": "Not started yet",
+				"content": "{{taskTitle}} was assigned {{workdays}} workdays ago"
+			},
+			"task_stuck": {
+				"title": "No progress lately",
+				"content": "{{taskTitle}} hasn't moved in {{workdays}} workdays"
+			},
+			"end_of_day": {
+				"title": "What did you work on today?",
+				"content": "No time logged on any task yet today."
+			},
+			"team_summary": {
+				"title": "Last week: {{doneCount}} done, {{overdueCount}} overdue",
+				"content": "Your team's weekly summary is ready."
+			},
+			"ai_teammate": {
+				"applied_other": "{{name}} made {{count}} changes",
+				"proposed_other": "{{name}}: {{count}} suggestions to review"
 			}
 		},
 		"reminderLeadTime": {
@@ -2203,7 +2338,29 @@
 		"listView": {
 			"addTask": "Tambah tugas",
 			"archiveAllTooltip": "Arsipkan semua tugas yang selesai",
-			"noTasks": "Tidak ada tugas"
+			"noTasks": "Tidak ada tugas",
+			"col": {
+				"assignee": "Assignee",
+				"due": "Due",
+				"id": "ID",
+				"priority": "Priority",
+				"status": "Status",
+				"task": "Task"
+			},
+			"estimate": "Estimate",
+			"filter": {
+				"all": "All",
+				"mine": "Mine",
+				"overdue": "Overdue",
+				"unassigned": "Unassigned",
+				"urgent": "Urgent & high",
+				"week": "Next 7 days"
+			},
+			"filtersLabel": "Quick views",
+			"noMatches": "No tasks here match.",
+			"search": "Search tasks or labels",
+			"today": "Today",
+			"updateError": "Couldn't update the task"
 		},
 		"kanban": {
 			"addTask": "Tambah tugas"
@@ -2326,11 +2483,23 @@
 			"remove": "Remove",
 			"uploadError": "Upload failed",
 			"linkError": "Couldn't add the link",
-			"removeError": "Couldn't remove it"
+			"removeError": "Couldn't remove it",
+			"confirmRemoveFile": "Remove “{{name}}”? The file is deleted from Files too, unless another task still uses it.",
+			"confirmRemoveLink": "Remove the link “{{name}}”?"
 		},
 		"progress": {
 			"label": "{{done}}/{{total}} done · {{percent}}%",
 			"hint": "{{done}} of {{total}} subtasks done"
+		},
+		"inline": {
+			"due": {
+				"nextWeek": "Next week",
+				"today": "Today",
+				"tomorrow": "Tomorrow"
+			},
+			"me": "(you)",
+			"noPeople": "No one matches.",
+			"searchPeople": "Search people"
 		}
 	},
 	"invitations": {
@@ -2416,7 +2585,15 @@
 				"tracked": "Tracked, last 30 days"
 			},
 			"taskCounts": "{{open}} open · {{done}} done",
-			"team": "Team",
+			"team": {
+				"addPlaceholder": "Add people…",
+				"empty": "No one on the team yet.",
+				"error": "Couldn't update the team",
+				"hint": "Who you work with here. Being on the team shows them the project; they see only the tasks assigned to them unless their role can see all tasks.",
+				"noOneLeft": "Everyone is already on the team.",
+				"remove": "Remove {{name}} from the team",
+				"title": "Project team"
+			},
 			"tracked": "Tracked (30d)",
 			"updated": "Updated"
 		},
@@ -2615,6 +2792,24 @@
 			"attendance": "Attendance",
 			"time": "Timesheet",
 			"activity": "Activity"
+		},
+		"auto": {
+			"started": "Timer started: {{task}}",
+			"startedHint": "It runs while the task is In Progress and stops when you move it on.",
+			"startsTimer": "Starts your timer",
+			"stopped": "Timer stopped: {{task}}",
+			"stoppedHint": "{{duration}} logged. Moving a task out of In Progress stops its timer.",
+			"stopsTimer": "Stops the timer",
+			"running": "Your timer is running on this task"
+		},
+		"note": {
+			"failed": "Couldn't save the note",
+			"reference": "Reference",
+			"referencePlaceholder": "Reference (optional): link or ticket, e.g. PR #42",
+			"save": "Save note",
+			"saved": "Note saved",
+			"skip": "Skip",
+			"subtitle": "{{duration}} on {{task}}. Add a quick note, or skip."
 		}
 	},
 	"people": {
@@ -2667,7 +2862,8 @@
 			"tasks": "Tasks",
 			"time": "Time",
 			"people": "People",
-			"requests": "Requests"
+			"requests": "Requests",
+			"live": "Live"
 		},
 		"tasks": {
 			"empty": "No tasks assigned.",
@@ -2703,6 +2899,21 @@
 			"editSalary": "Change salary for {{name}}",
 			"leavePending": "+{{count}} pending",
 			"leaveHint": "{{used}} of {{allowance}} days used, {{pending}} pending"
+		},
+		"live": {
+			"clockedIn": "Clocked in",
+			"nobody": "Nobody here yet.",
+			"noDesktopApp": "No desktop app connected",
+			"notClockedIn": "Not clocked in",
+			"state": {
+				"active": "Active",
+				"idle": "Idle",
+				"offline": "Offline",
+				"paused": "Paused"
+			},
+			"timeline": "Today",
+			"timingTask": "Timing a task",
+			"workingOnly": "Working now only"
 		}
 	},
 	"company": {
@@ -3012,7 +3223,8 @@
 			"myOrder": "My order",
 			"myOrderHint": "Arrange your tasks by dragging. Only you see this order; boards don't change.",
 			"dragHandle": "Reorder {{title}}",
-			"orderError": "Couldn't save your order"
+			"orderError": "Couldn't save your order",
+			"reassign": "Reassign"
 		}
 	},
 	"pay": {
@@ -3232,7 +3444,15 @@
 			"usingLegacy": "New files go to this workspace's older bucket {{bucket}}.",
 			"managedInAccount": "File storage is set up by the workspace owner in their account settings.",
 			"openAccount": "Open File storage",
-			"disconnectLegacy": "Remove the workspace bucket"
+			"disconnectLegacy": "Remove the workspace bucket",
+			"move": {
+				"action": "Move them to the bucket",
+				"allInBucket": "Every file and profile picture is in your bucket.",
+				"done_other": "Moved {{count}} items to the bucket",
+				"left": "{{files}} files and {{avatars}} profile pictures are still stored in the database.",
+				"moving": "Moving…",
+				"someFailed": "Moved {{moved}}, but {{failed}} couldn't be moved. Try again."
+			}
 		},
 		"title": "Files",
 		"turnOffLink": "Turn off live link",
@@ -3403,6 +3623,11 @@
 		"tabs": {
 			"mine": "Sent to me",
 			"workspace": "Everyone in {{workspace}}"
+		},
+		"tabHints": {
+			"mine": "Every email TeamOS sent to your address, from all your workspaces.",
+			"workspace": "Every email this workspace sent, to anyone in it. Only admins see this.",
+			"templates": "Every email TeamOS can send: what it's for, when it goes out and who gets it."
 		}
 	},
 	"expenses": {
@@ -3602,6 +3827,573 @@
 			"tracked": "Time tracked"
 		},
 		"title": "Reports",
+		"unassigned": "Unassigned"
+	},
+	"emailSetup": {
+		"title": "Email delivery",
+		"instanceAdmin": "Instance admin",
+		"subtitle": "How TeamOS sends invitations, reminders and notifications for every workspace on this server. Only you can see this.",
+		"sourceApp": "Resend, set up here",
+		"sourceEnv": "{{provider}}, from server settings",
+		"notSet": "Not set up",
+		"apiKey": "Resend API key",
+		"keyKept": "Saved ({{hint}}), leave empty to keep",
+		"from": "Send from",
+		"help": "Create an API key with sending access, and use an address on a domain you verified in Resend. The key is stored encrypted.",
+		"saveAndTest": "Save and send a test",
+		"saving": "Saving…",
+		"sendTest": "Send a test email",
+		"testSent": "Test email sent to {{to}}",
+		"clear": "Remove",
+		"cleared": "Email settings removed",
+		"updated": "Updated {{date}} by {{name}}",
+		"error": "Couldn't save the email settings"
+	},
+	"emailTemplates": {
+		"tab": "Email types",
+		"title": "Email types",
+		"search": "Search emails",
+		"subject": "Subject",
+		"to": "Sent to",
+		"control": "Turn off",
+		"canTurnOff": "Each person can turn it off under Notifications → {{name}}.",
+		"alwaysSent": "Always sent: it's needed to sign in or join.",
+		"always": "Always sent",
+		"noMatch": "No emails match.",
+		"sampleNote": "Shown with sample data. Real emails use your workspace, people and tasks.",
+		"sections": {
+			"label": "Email sections",
+			"all": "All",
+			"account": "Account & sign-in",
+			"team": "Team & workspace",
+			"tasks": "Tasks",
+			"chat": "Chat",
+			"leave": "Leave",
+			"money": "Expenses & pay",
+			"nudges": "Staying on track"
+		},
+		"sectionHints": {
+			"account": "Security and first-time emails for each person.",
+			"team": "Who joins, leaves or changes role.",
+			"tasks": "Work assigned to someone, and what happens to it.",
+			"chat": "When someone is called out in a conversation.",
+			"leave": "Requests go to approvers; decisions go back to the requester.",
+			"money": "Expense reviews and payslips.",
+			"nudges": "Gentle nudges in working hours, so nothing sits forgotten."
+		},
+		"types": {
+			"welcome": {
+				"name": "Welcome",
+				"when": "Right after someone creates an account.",
+				"who": "The new person"
+			},
+			"magic_link": {
+				"name": "Sign-in link",
+				"when": "When someone signs in with an email link.",
+				"who": "The person signing in"
+			},
+			"otp": {
+				"name": "Sign-in code",
+				"when": "When someone signs in with a one-time code.",
+				"who": "The person signing in"
+			},
+			"password_reset": {
+				"name": "Password reset",
+				"when": "When someone asks to reset their password.",
+				"who": "The person who asked"
+			},
+			"invitation": {
+				"name": "Invitation",
+				"when": "When an admin invites someone to the workspace.",
+				"who": "The invited email address"
+			},
+			"member_joined": {
+				"name": "New member",
+				"when": "When someone accepts an invitation.",
+				"who": "Workspace admins"
+			},
+			"role_changed": {
+				"name": "Role changed",
+				"when": "When an admin changes someone's role.",
+				"who": "The member"
+			},
+			"member_removed": {
+				"name": "Removed from workspace",
+				"when": "When an admin removes someone.",
+				"who": "The removed member"
+			},
+			"workspace_created": {
+				"name": "Workspace ready",
+				"when": "When someone creates a workspace.",
+				"who": "The creator"
+			},
+			"trial_reminder": {
+				"name": "Trial ending",
+				"when": "3 days before and when a hosted trial ends.",
+				"who": "Workspace owner"
+			},
+			"task_created": {
+				"name": "New task for you",
+				"when": "When a task is created with you as the assignee.",
+				"who": "The assignee"
+			},
+			"task_assignee_changed": {
+				"name": "Task assigned",
+				"when": "When a task is assigned to someone.",
+				"who": "The new assignee"
+			},
+			"task_status_changed": {
+				"name": "Task status changed",
+				"when": "When a task moves to another column.",
+				"who": "The assignee"
+			},
+			"task_comment": {
+				"name": "New comment",
+				"when": "When someone comments on a task.",
+				"who": "The assignee"
+			},
+			"task_mention": {
+				"name": "Mentioned in a task",
+				"when": "When someone @mentions a person in a comment or description.",
+				"who": "The mentioned person"
+			},
+			"task_deleted": {
+				"name": "Your task was deleted",
+				"when": "When someone else deletes a task assigned to a person.",
+				"who": "The assignee"
+			},
+			"project_task_created": {
+				"name": "New task in your project",
+				"when": "When someone adds a task by hand to a project.",
+				"who": "The project team, except the creator and the assignee"
+			},
+			"project_task_deleted": {
+				"name": "Task deleted in your project",
+				"when": "When someone deletes a task from a project (bulk deletes excluded).",
+				"who": "The project team, except the person who deleted it and the assignee"
+			},
+			"due_date_reminder": {
+				"name": "Due soon",
+				"when": "Before a task's due date (each person picks how early).",
+				"who": "The assignee"
+			},
+			"task_overdue": {
+				"name": "Overdue",
+				"when": "When a task passes its due date unfinished.",
+				"who": "The assignee"
+			},
+			"time_entry_created": {
+				"name": "Time logged",
+				"when": "When someone logs time on a task.",
+				"who": "The assignee"
+			},
+			"chat_mention": {
+				"name": "Mentioned in chat",
+				"when": "When someone @mentions a person in a chat conversation.",
+				"who": "The mentioned person"
+			},
+			"leave_requested": {
+				"name": "Leave request",
+				"when": "When someone asks for leave.",
+				"who": "Approvers"
+			},
+			"leave_withdrawn": {
+				"name": "Leave withdrawn",
+				"when": "When someone cancels a pending leave request.",
+				"who": "Approvers"
+			},
+			"leave_approved": {
+				"name": "Leave approved",
+				"when": "When an approver approves the request.",
+				"who": "The requester"
+			},
+			"leave_rejected": {
+				"name": "Leave declined",
+				"when": "When an approver declines the request.",
+				"who": "The requester"
+			},
+			"leave_cancelled": {
+				"name": "Leave cancelled",
+				"when": "When approved leave is cancelled.",
+				"who": "The requester"
+			},
+			"expense_submitted": {
+				"name": "Expense to review",
+				"when": "When someone files an expense.",
+				"who": "Approvers"
+			},
+			"expense_approved": {
+				"name": "Expense approved",
+				"when": "When an approver approves the expense.",
+				"who": "The person who filed it"
+			},
+			"expense_rejected": {
+				"name": "Expense declined",
+				"when": "When an approver declines the expense.",
+				"who": "The person who filed it"
+			},
+			"expense_paid": {
+				"name": "Expense paid back",
+				"when": "When payroll marks the expense paid.",
+				"who": "The person who filed it"
+			},
+			"payslip_ready": {
+				"name": "Payslip ready",
+				"when": "When a payroll run is approved.",
+				"who": "Each person on the payroll"
+			},
+			"task_due_today": {
+				"name": "Due today",
+				"when": "The morning of the due day, at the start of the workday.",
+				"who": "The assignee"
+			},
+			"task_due_soon": {
+				"name": "Last call",
+				"when": "About two hours before the workday ends on the due day, if it's still open.",
+				"who": "The assignee"
+			},
+			"task_overdue_escalated": {
+				"name": "Overdue on your team",
+				"when": "On the third workday late, then weekly, while it's still open.",
+				"who": "Managers and admins"
+			},
+			"daily_digest": {
+				"name": "Morning digest",
+				"when": "Each workday at the start of the day, if something is due, late or new.",
+				"who": "Each person"
+			},
+			"task_not_started": {
+				"name": "Not started",
+				"when": "2 workdays after a task is assigned, if the assignee hasn't touched it.",
+				"who": "The assignee"
+			},
+			"task_stuck": {
+				"name": "Stuck task",
+				"when": "When a task in progress has no updates, comments or time for 3 workdays.",
+				"who": "The assignee"
+			},
+			"end_of_day": {
+				"name": "End of day",
+				"when": "30 minutes before the workday ends, if clocked in with no time logged.",
+				"who": "The person"
+			},
+			"team_summary": {
+				"name": "Weekly team summary",
+				"when": "The first workday of each week.",
+				"who": "Managers and admins"
+			}
+		},
+		"sendTest": "Send me a test",
+		"testSent": "Test email sent to {{to}}. It shows under Emails to me.",
+		"testFailed": "The test email couldn't be sent"
+	},
+	"notificationPolicy": {
+		"title": "Notification rules",
+		"subtitle": "Decide which notifications and emails people in {{workspace}} get. Everyone follows these automatically.",
+		"howDefault": "With \"Members can change\" on, your choice is the default and each person can still turn it on or off for themselves.",
+		"howLocked": "With it off, your choice applies to everyone and members can't change it.",
+		"summary": "Rules set: {{custom}} · Locked: {{locked}}",
+		"readOnly": "Only workspace admins can change these.",
+		"locked": "Locked by an admin",
+		"setByAdmin": "Set by the {{workspace}} admin",
+		"reset": "Back to default (on, each person decides)",
+		"error": "Couldn't save the rule",
+		"col": {
+			"event": "Notification",
+			"who": "Who gets it",
+			"inApp": "In app",
+			"email": "Email",
+			"membersCanChange": "Members can change"
+		},
+		"audience": {
+			"everyone": "The person it's about",
+			"approvers": "Approvers",
+			"admins": "Admins and managers"
+		},
+		"groups": {
+			"tasks": "Tasks",
+			"deadlines": "Deadlines and follow-ups",
+			"rhythm": "Daily rhythm",
+			"chat": "Chat and membership",
+			"requests": "Leave, expenses and pay",
+			"approvers": "For approvers",
+			"managers": "For admins and managers",
+			"other": "Other"
+		}
+	},
+	"ai": {
+		"connect": {
+			"claudeCode": "Claude Code",
+			"create": "Create key",
+			"description": "Make a key, then paste one command into Claude Code. Works with Claude Desktop, Cursor and any MCP app too.",
+			"done": "I've copied it",
+			"name": "Key name",
+			"namePlaceholder": "e.g. My laptop · Claude Code",
+			"oauthHint": "Add TeamOS without a key, then run /mcp inside Claude Code and sign in in the browser. Best for your own laptop; use a key for anything unattended.",
+			"oauthTitle": "Or sign in without a key",
+			"otherApps": "Other MCP apps (JSON config)",
+			"readyHint": "Run this in a terminal, then start Claude Code and ask it anything about your work.",
+			"readyTitle": "Your key is ready. Copy it now: it won't be shown again.",
+			"title": "Connect Claude"
+		},
+		"copied": "Copied",
+		"copy": "Copy",
+		"error": "Something went wrong",
+		"keys": {
+			"allRevoked": "All agent keys revoked",
+			"confirmAll": "Click again to revoke all",
+			"created": "made {{when}}",
+			"description": "Every key acts as you, limited to its scope. Revoke any you no longer use.",
+			"killSwitchHint": "Kill switch: stop every agent key at once.",
+			"lastUsed": "used {{when}}",
+			"neverUsed": "never used",
+			"none": "No agent keys yet.",
+			"revoke": "Revoke {{name}}",
+			"revokeAll": "Revoke all",
+			"revoked": "Key revoked",
+			"title": "Your agent keys"
+		},
+		"pageTitle": "AI & agents",
+		"scope": {
+			"full": {
+				"hint": "All your permissions except pay, audit, settings and people management.",
+				"title": "Everything I can do"
+			},
+			"label": "What Claude may do",
+			"read": {
+				"hint": "Look at projects, tasks and reports. Changes nothing.",
+				"title": "Read only"
+			},
+			"tasks": {
+				"hint": "Create, edit, assign and organise tasks. Can't delete.",
+				"title": "Tasks & projects"
+			}
+		},
+		"subtitle": "Let Claude work in TeamOS for you: sort and create tasks, plan your day, write reports. Claude acts as you and never does more than your role allows.",
+		"title": "AI & agents",
+		"try": {
+			"description": "Once connected, ask in plain words, in English or Bangla.",
+			"examples": {
+				"notes": "Turn these meeting notes into tasks in Marketing Launch with owners and dates: …",
+				"plan": "What should I work on today? Order my overdue and due-today tasks",
+				"report": "Write this week's report: what got done, what slipped, time per project",
+				"triage": "Sort the unassigned tasks in Mobile App: set priorities and assign by workload"
+			},
+			"title": "Try asking Claude"
+		},
+		"ask": {
+			"applied": "Changes applied",
+			"apply_other": "Apply {{count}} changes",
+			"cleared": "cleared",
+			"comment": "Comment on",
+			"contextProject": "About this project",
+			"contextTask": "About this task",
+			"contextWorkspace": "About {{name}}",
+			"create": "Create task",
+			"discard": "Discard",
+			"done": "Done",
+			"fields": {
+				"assigneeId": "Assignee",
+				"dueDate": "Due",
+				"priority": "Priority",
+				"status": "Status",
+				"title": "Title"
+			},
+			"include": "Include this change",
+			"newRequest": "New request",
+			"open": "Ask TeamOS",
+			"placeholder": "e.g. Sort the unassigned tasks in this project by priority and give them owners",
+			"safety": "Claude only proposes. Nothing changes until you tick and apply, and applied changes can be undone.",
+			"send": "Ask",
+			"settingsLink": "AI settings and agent keys",
+			"title": "Ask TeamOS",
+			"undo": "Undo",
+			"undone": "Changes undone",
+			"update": "Change",
+			"working": "Claude is working…"
+		},
+		"workspace": {
+			"askAdmin": "Only people who manage workspace settings can change this.",
+			"description": "Claude inside the app: press Ctrl+J (⌘J) anywhere, ask in plain words, review what it proposes, then apply. It reads as you and changes nothing on its own.",
+			"enable": "Turn on Ask TeamOS",
+			"enableHint": "Everyone in the workspace can use it, within their own permissions.",
+			"engine": "Where Claude runs",
+			"engines": {
+				"desktop": {
+					"hint": "Runs on their computer through the TeamOS desktop app, on their own Claude plan.",
+					"title": "Each person's own Claude Code"
+				},
+				"server": {
+					"hint": "Uses the Claude Code installed and signed in where TeamOS runs.",
+					"title": "Claude Code on the TeamOS server"
+				}
+			},
+			"serverFound": "Claude Code found on the server",
+			"serverMissing": "Claude Code isn't installed on the server",
+			"title": "Ask TeamOS in {{name}}",
+			"pick": "Workspace"
+		},
+		"teammates": {
+			"channel": "Post to channel",
+			"days": {
+				"1": "M",
+				"2": "T",
+				"3": "W",
+				"4": "T",
+				"5": "F",
+				"6": "S",
+				"7": "S"
+			},
+			"description": "Claude on a schedule, working with your permissions. Suggest: it drafts changes for you to review. Act: it applies them, and you can undo.",
+			"enabled": "On",
+			"instructions": "Extra instructions",
+			"instructionsPlaceholder": "Anything to add, in any language. e.g. Only look at Mobile App; write in Bangla.",
+			"kinds": {
+				"overdue": {
+					"hint": "A friendly comment on each overdue task asking its owner for an update.",
+					"title": "Overdue nudger"
+				},
+				"standup": {
+					"hint": "Yesterday / today / blocked for each person, from time and task changes.",
+					"title": "Standup"
+				},
+				"triage": {
+					"hint": "Gives unowned, unprioritised tasks a priority and an owner by workload.",
+					"title": "Triage"
+				},
+				"weekly": {
+					"hint": "Done, slipped, time per project and risks for next week.",
+					"title": "Weekly report"
+				}
+			},
+			"lastRun": "Last run {{when}}",
+			"modes": {
+				"act": {
+					"hint": "Applies its changes; you can undo them",
+					"title": "Act"
+				},
+				"suggest": {
+					"hint": "Drafts changes for you to review and apply",
+					"title": "Suggest"
+				}
+			},
+			"neverRun": "Not run yet",
+			"noChannel": "Don't post; just send me the result",
+			"runNow": "Run now",
+			"save": "Save",
+			"started": "Started. You'll get a notification when it's done.",
+			"time": "Time",
+			"title": "AI teammates",
+			"viewResult": "View result"
+		}
+	},
+	"dashboard": {
+		"activity": {
+			"hint": "Who did what, newest first",
+			"title": "Recent activity"
+		},
+		"attendance": {
+			"absentDays": "Absent",
+			"hint": "Days, {{period}}",
+			"lateDays": "Late",
+			"leaveDays": "On leave",
+			"overtime": "{{time}} overtime",
+			"presentDays": "Present",
+			"title": "Attendance"
+		},
+		"attention": {
+			"approvals_other": "{{count}} requests waiting for approval",
+			"overdue_other": "{{count}} tasks are overdue",
+			"projectsAtRisk_other": "{{count}} projects at risk"
+		},
+		"greeting": {
+			"afternoon": "Good afternoon, {{name}}",
+			"evening": "Good evening, {{name}}",
+			"morning": "Good morning, {{name}}"
+		},
+		"loading": "Loading…",
+		"now": {
+			"clockedIn": "Clocked in",
+			"inToday": "In today",
+			"inTodayHint": "Clocked in or online now",
+			"myDay": "My day",
+			"myTimer": "My timer",
+			"notClockedIn": "Not in",
+			"noTimer": "No timer running",
+			"running": "Running",
+			"workedToday": "{{time}} worked today",
+			"workingNow": "Working on a task",
+			"workingNowHint": "Timers running right now"
+		},
+		"people": {
+			"done": "Done",
+			"empty": "No assigned tasks yet.",
+			"hint": "Workload and time, {{period}}",
+			"hours": "Hours",
+			"late": "Late",
+			"liveEmpty": "No one is online.",
+			"liveHint": "Who is working on what",
+			"liveTitle": "Team right now",
+			"open": "Open",
+			"person": "Person",
+			"state": {
+				"active": "Active",
+				"idle": "Idle",
+				"offline": "Offline",
+				"paused": "On a break"
+			},
+			"title": "People"
+		},
+		"period": {
+			"month": "Last 30 days",
+			"today": "Today",
+			"week": "Last 7 days"
+		},
+		"projects": {
+			"empty": "No projects yet.",
+			"health": {
+				"atRisk": "At risk",
+				"done": "Done",
+				"dueSoon": "Due soon",
+				"onTrack": "On track"
+			},
+			"hint_other": "{{count}} projects",
+			"title": "Projects"
+		},
+		"scope": {
+			"mine": "Showing your own work",
+			"team": "Showing the whole team"
+		},
+		"seeAll": "See all",
+		"seeAttendance": "Attendance",
+		"seePeople": "People",
+		"seeProjects": "All projects",
+		"seeReport": "Report",
+		"seeTimesheet": "Timesheet",
+		"tasks": {
+			"chartHint": "Created and finished, {{period}}",
+			"completed": "Finished",
+			"completedIn": "Finished · {{period}}",
+			"created": "Created",
+			"cycle": "About {{time}} from start to done",
+			"lateList": "Late tasks",
+			"open": "Open tasks",
+			"openHintAll": "Across every project",
+			"openHintMine": "Assigned to you",
+			"overdue": "Overdue",
+			"overdueHint": "Past their due date",
+			"title": "Tasks"
+		},
+		"time": {
+			"attended": "{{time}} at work",
+			"byProject": "Where the time went",
+			"chartHint": "Hours tracked on tasks, {{period}}",
+			"empty": "No time tracked yet.",
+			"hours": "Hours",
+			"title": "Time",
+			"trackedIn": "Tracked · {{period}}"
+		},
+		"title": "Dashboard",
 		"unassigned": "Unassigned"
 	}
 }

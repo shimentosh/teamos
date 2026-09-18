@@ -57,6 +57,14 @@ vi.mock("../../../apps/api/src/utils/validate-workspace-access", async () => {
   };
 });
 
+// Which tasks a member may see is covered by the task-visibility
+// integration tests; here only where the workspace comes from matters.
+vi.mock("../../../apps/api/src/utils/task-visibility", () => ({
+  assertTasksVisible: async () => {},
+  assertProjectVisible: async () => {},
+  taskViewer: async () => null,
+}));
+
 const { workspaceAccess } = await import(
   "../../../apps/api/src/utils/workspace-access-middleware"
 );

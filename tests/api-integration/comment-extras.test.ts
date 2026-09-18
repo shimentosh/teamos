@@ -6,6 +6,7 @@ import { resetTestDatabase } from "./helpers/database";
 import {
   createProjectFixture,
   createWorkspaceMember,
+  grantSeeAllTasks,
 } from "./helpers/fixtures";
 
 beforeEach(async () => {
@@ -16,6 +17,8 @@ async function setup() {
   const { user: owner, workspace } = await createWorkspaceMember({
     role: "owner",
   });
+  // About who may act on a task, not who sees it: members see the board.
+  await grantSeeAllTasks(workspace.id);
   const bob = await addWorkspaceMember(workspace.id, "member", "Bob");
   const viewer = await addWorkspaceMember(workspace.id, "viewer", "Vera");
   const { project, columns } = await createProjectFixture({

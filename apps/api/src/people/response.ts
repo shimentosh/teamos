@@ -108,3 +108,36 @@ export const peopleOverviewSchema = z
     ),
   })
   .openapi("PeopleOverview");
+
+export const livePersonSchema = z
+  .object({
+    userId: z.string(),
+    name: z.string(),
+    image: z.string().nullable(),
+    state: z.enum(["active", "idle", "paused", "offline"]),
+    lastSeenAt: nullableResponseTimestamp,
+    hasDesktopApp: z.boolean(),
+    app: z.string().nullable().openapi({
+      description:
+        "The app in front. Only your own, or everyone's with activity:read_all.",
+    }),
+    domain: z.string().nullable(),
+    since: nullableResponseTimestamp,
+    clockedIn: z.boolean(),
+    timing: z.boolean(),
+    runningTask: z
+      .object({
+        id: z.string(),
+        title: z.string(),
+        projectId: z.string(),
+        ref: z.string(),
+        startedAt: responseTimestamp,
+      })
+      .nullable()
+      .openapi({
+        description: "Null when not timing, or not a task you can see.",
+      }),
+  })
+  .openapi("LivePerson");
+
+export const livePeopleSchema = z.array(livePersonSchema);

@@ -1,3 +1,4 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -5,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { filesApi } from "@/fetchers/files";
 import {
   useAccountStorage,
   useAccountStorageActions,
@@ -12,6 +14,67 @@ import {
   useFileStorage,
 } from "@/hooks/files";
 import { toast } from "@/lib/toast";
+
+/**
+ * Files saved before the bucket was connected stay in Postgres until moved.
+ * Shows how many are left and moves them in one go.
+ */
+function MoveToBucket() {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const { data: left } = useQuery({
+    queryKey: ["files", "left-in-database"],
+    queryFn: () => filesApi.leftInDatabase(),
+  });
+  const move = useMutation({
+    mutationFn: () => filesApi.moveToAccount(),
+    onSuccess: (result) => {
+      queryClient.setQueryData(["files", "left-in-database"], {
+        files: result.files,
+        avatars: result.avatars,
+      });
+      if (result.failed > 0) {
+        toast.error(
+          t("files:storage.move.someFailed", {
+            moved: result.moved,
+            failed: result.failed,
+          }),
+        );
+      } else {
+        toast.success(t("files:storage.move.done", { count: result.moved }));
+      }
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : t("files:error")),
+  });
+
+  if (!left) return null;
+  const total = left.files + left.avatars;
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2.5">
+      <p className="text-xs text-muted-foreground">
+        {total === 0
+          ? t("files:storage.move.allInBucket")
+          : t("files:storage.move.left", {
+              files: left.files,
+              avatars: left.avatars,
+            })}
+      </p>
+      {total > 0 && (
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={move.isPending}
+          onClick={() => move.mutate()}
+        >
+          {move.isPending
+            ? t("files:storage.move.moving")
+            : t("files:storage.move.action")}
+        </Button>
+      )}
+    </div>
+  );
+}
 
 // Your own Cloudflare R2 (or any S3-compatible) bucket. Every workspace you
 // own stores new files there. The secret never comes back from the server;
@@ -122,6 +185,7 @@ export function StorageSettings() {
         {field("keyPrefix", t("files:storage.prefix"), "teamos/")}
       </div>
       <p className="text-xs text-muted-foreground">{t("files:storage.help")}</p>
+      {storage.connected && <MoveToBucket />}
       <div className="flex gap-2">
         <Button size="sm" onClick={save} disabled={connect.isPending}>
           {connect.isPending

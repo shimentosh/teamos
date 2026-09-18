@@ -22,6 +22,7 @@ import {
   workspaceUserTable,
 } from "../database/schema";
 import { publishEvent } from "../events";
+import { notifyMentions } from "./mentions";
 
 type Conversation = typeof chatConversationTable.$inferSelect;
 
@@ -139,10 +140,22 @@ async function assertWorkspaceMembers(workspaceId: string, userIds: string[]) {
   }
 }
 
+/** Conversation members who still belong to its workspace. */
 async function memberIds(conversationId: string) {
   const rows = await db
     .select({ userId: chatMemberTable.userId })
     .from(chatMemberTable)
+    .innerJoin(
+      chatConversationTable,
+      eq(chatConversationTable.id, chatMemberTable.conversationId),
+    )
+    .innerJoin(
+      workspaceUserTable,
+      and(
+        eq(workspaceUserTable.workspaceId, chatConversationTable.workspaceId),
+        eq(workspaceUserTable.userId, chatMemberTable.userId),
+      ),
+    )
     .where(eq(chatMemberTable.conversationId, conversationId));
   return rows.map((r) => r.userId);
 }
@@ -643,6 +656,18 @@ export async function sendMessage(
 
   const message = await findMessage(id);
   await notify(conversation, "CHAT_MESSAGE", { message });
+  // In the background: a slow notification never holds up the message.
+  void memberIds(conversationId)
+    .then((members) =>
+      notifyMentions({
+        conversation,
+        members,
+        senderId: userId,
+        senderName: message.userName ?? "Someone",
+        body,
+      }),
+    )
+    .catch((error) => console.error("Chat mention notification failed", error));
   return message;
 }
 

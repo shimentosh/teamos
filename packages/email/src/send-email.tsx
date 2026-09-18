@@ -158,3 +158,29 @@ export const renderActivityEmail = async (data: ActivityEmailProps) => {
   ]);
   return { html, text };
 };
+
+/** The emails that don't use the activity layout, for previews. */
+export type SystemEmail =
+  | { kind: "magic_link"; props: MagicLinkEmailProps }
+  | { kind: "otp"; props: OtpEmailProps }
+  | { kind: "password_reset"; props: PasswordResetEmailProps }
+  | { kind: "invitation"; props: WorkspaceInvitationEmailProps }
+  | { kind: "trial_reminder"; props: TrialReminderEmailProps };
+
+export const renderSystemEmail = async (email: SystemEmail) => {
+  const element =
+    email.kind === "magic_link"
+      ? MagicLinkEmail(email.props)
+      : email.kind === "otp"
+        ? OtpEmail(email.props)
+        : email.kind === "password_reset"
+          ? PasswordResetEmail(email.props)
+          : email.kind === "invitation"
+            ? WorkspaceInvitationEmail(email.props)
+            : TrialReminderEmail(email.props);
+  const [html, text] = await Promise.all([
+    render(element),
+    render(element, { plainText: true }),
+  ]);
+  return { html, text };
+};

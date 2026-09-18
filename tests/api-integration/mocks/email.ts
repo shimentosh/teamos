@@ -53,3 +53,26 @@ export async function deliverEmail(): Promise<{
 }> {
   return { provider: "resend", id: "test" };
 }
+
+// Settings the instance admin saves; kept so the settings route can report
+// them. Delivery itself stays off in tests (isEmailConfigured is false).
+let settings: Record<string, string | undefined> = {};
+
+export function setEmailSettings(next: Record<string, string | undefined>) {
+  settings = { ...next };
+}
+
+export function emailFrom(): string | null {
+  return settings.EMAIL_FROM ?? null;
+}
+
+export function emailProvider(): "resend" | null {
+  return settings.RESEND_API_KEY && settings.EMAIL_FROM ? "resend" : null;
+}
+
+export async function renderSystemEmail(): Promise<{
+  html: string;
+  text: string;
+}> {
+  return { html: "<p>email</p>", text: "email" };
+}

@@ -1,4 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
+import { Lock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Switch } from "@/components/ui/switch";
 import type {
@@ -6,6 +7,8 @@ import type {
   NotificationPreferences,
 } from "@/fetchers/notification-preferences/get-notification-preferences";
 import updateNotificationPreferences from "@/fetchers/notification-preferences/update-notification-preferences";
+import { useNotificationPolicies } from "@/hooks/queries/use-notification-policy";
+import { useWorkspacePermission } from "@/hooks/use-workspace-permission";
 import { toast } from "@/lib/toast";
 
 const AUDIENCES = ["everyone", "approvers", "admins"] as const;
@@ -26,6 +29,12 @@ export function NotificationEventMatrix({
 }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  // A workspace admin can lock an event for everyone in the current
+  // workspace; those rows show the admin's choice and can't be changed here.
+  const { workspace } = useWorkspacePermission();
+  const { data: policies = [] } = useNotificationPolicies(workspace?.id);
+  const lockedRule = (key: string) =>
+    policies.find((rule) => rule.key === key && rule.locked);
 
   const change = async (
     key: string,
@@ -90,6 +99,7 @@ export function NotificationEventMatrix({
                   const title = t(
                     `settings:notificationsPage.events.${event.key}.title`,
                   );
+                  const locked = lockedRule(event.key);
                   return (
                     <li
                       key={event.key}
@@ -102,10 +112,19 @@ export function NotificationEventMatrix({
                             `settings:notificationsPage.events.${event.key}.hint`,
                           )}
                         </p>
+                        {locked && (
+                          <p className="mt-0.5 flex items-center gap-1 text-muted-foreground text-xs">
+                            <Lock className="size-3" />
+                            {t("notificationPolicy:setByAdmin", {
+                              workspace: workspace?.name ?? "",
+                            })}
+                          </p>
+                        )}
                       </div>
                       <span className="flex justify-center">
                         <Switch
-                          checked={event.inApp}
+                          checked={locked ? locked.inApp : event.inApp}
+                          disabled={Boolean(locked)}
                           aria-label={t("settings:notificationsPage.inAppFor", {
                             event: title,
                           })}
@@ -123,8 +142,11 @@ export function NotificationEventMatrix({
                         }
                       >
                         <Switch
-                          checked={emailEnabled && event.email}
-                          disabled={!emailEnabled}
+                          checked={
+                            emailEnabled &&
+                            (locked ? locked.email : event.email)
+                          }
+                          disabled={!emailEnabled || Boolean(locked)}
                           aria-label={t("settings:notificationsPage.emailFor", {
                             event: title,
                           })}

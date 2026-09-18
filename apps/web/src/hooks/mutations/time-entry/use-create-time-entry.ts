@@ -8,9 +8,14 @@ function useCreateTimeEntry() {
 
   return useMutation({
     mutationFn: (data: CreateTimeEntryRequest) => createTimeEntry(data),
-    // Starting a timer can stop another one anywhere, so refresh every view.
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["time-entries"] }),
+    // Starting a timer can stop another one anywhere, and moves a task that
+    // hadn't started to In Progress, so refresh every view.
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["time-entries"] });
+      void queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      void queryClient.invalidateQueries({ queryKey: ["task"] });
+      void queryClient.invalidateQueries({ queryKey: ["people"] });
+    },
   });
 }
 

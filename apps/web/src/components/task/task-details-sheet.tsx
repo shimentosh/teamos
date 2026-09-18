@@ -117,6 +117,7 @@ export default function TaskDetailsSheet({
             workspaceId={workspaceId}
             className="w-full bg-sidebar border-b border-border flex flex-col gap-0 overflow-y-auto shrink-0"
             compact={true}
+            showTimeLog={false}
           />
 
           <div className="flex-1 overflow-y-auto min-h-0">
@@ -126,6 +127,7 @@ export default function TaskDetailsSheet({
                 projectId={projectId}
                 workspaceId={workspaceId}
                 className="flex flex-col gap-3"
+                timeLogPlacement="end"
               />
             </div>
           </div>

@@ -16,6 +16,7 @@ import { getColumnIcon } from "@/lib/column";
 import { getStatusDisplayLabel } from "@/lib/i18n/domain";
 import { toast } from "@/lib/toast";
 import type Task from "@/types/task";
+import { TimerHint } from "./timer-hint";
 
 type TaskStatusPopoverProps = {
   task: Task;
@@ -100,6 +101,7 @@ export default function TaskStatusPopover({
                 <span className="text-sm">
                   {getStatusDisplayLabel(status.value, status.label)}
                 </span>
+                <TimerHint slug={status.value} current={task.status} />
                 {task.status === status.value ? (
                   <Check className="ml-auto h-4 w-4" />
                 ) : (

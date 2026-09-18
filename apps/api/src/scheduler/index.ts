@@ -1,9 +1,11 @@
 import * as Sentry from "@sentry/node";
 import { Cron } from "croner";
 import { purgeOldActivity } from "../agent/controllers";
+import { runDueTeammates } from "../ai/teammates";
 import { autoClockOut } from "../attendance/auto-clock";
 import { processEmailOutbox } from "../email/outbox";
 import { checkDueDateReminders } from "./due-date-reminders";
+import { runEngagement } from "./engagement";
 import { checkProjectWebhookReminders } from "./project-webhook-reminders";
 import { reconcileWorkspaceSeats } from "./seat-reconciliation";
 import { checkTrialReminders } from "./trial-reminders";
@@ -62,6 +64,14 @@ export function initializeScheduler(): void {
   );
   jobs.push(
     new Cron(
+      "*/5 * * * *",
+      // Digests, nudges and the weekly summary; skips a tick if slow.
+      { protect: true },
+      withCheckIn("engagement", () => runEngagement()),
+    ),
+  );
+  jobs.push(
+    new Cron(
       "17 * * * *",
       withCheckIn("seat-reconciliation", reconcileWorkspaceSeats),
     ),
@@ -82,6 +92,13 @@ export function initializeScheduler(): void {
       "* * * * *",
       { protect: true },
       withCheckIn("email-outbox", () => processEmailOutbox()),
+    ),
+  );
+  jobs.push(
+    new Cron(
+      "* * * * *",
+      { protect: true },
+      withCheckIn("ai-teammates", () => runDueTeammates()),
     ),
   );
   jobs.push(

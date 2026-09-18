@@ -8,7 +8,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { createId } from "@paralleldrive/cuid2";
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import db from "../database";
 import {
@@ -105,16 +105,21 @@ export async function getWorkspaceBucket(
   return row ? toConfig(row) : null;
 }
 
+/** A member row whose role list includes "owner" ("owner" or "owner,admin"). */
+export const hasOwnerRoleSql = sql`(',' || replace(${workspaceUserTable.role}, ' ', '') || ',') like '%,owner,%'`;
+
+/**
+ * The workspace's storage owner: the earliest owner, so uploads go to the
+ * same bucket every time even when a workspace has several owners.
+ */
 export async function workspaceOwnerId(workspaceId: string) {
   const [owner] = await db
     .select({ userId: workspaceUserTable.userId })
     .from(workspaceUserTable)
     .where(
-      and(
-        eq(workspaceUserTable.workspaceId, workspaceId),
-        eq(workspaceUserTable.role, "owner"),
-      ),
+      and(eq(workspaceUserTable.workspaceId, workspaceId), hasOwnerRoleSql),
     )
+    .orderBy(asc(workspaceUserTable.joinedAt), asc(workspaceUserTable.id))
     .limit(1);
   return owner?.userId ?? null;
 }
@@ -215,7 +220,9 @@ type StoreInput = {
   filename: string;
   mimeType: string;
   bytes: Buffer;
-  kind: "file" | "receipt";
+  // "asset": pasted into a task description or comment; not in Files.
+  // "avatar": a profile picture, in the owner of the person's first workspace.
+  kind: "file" | "receipt" | "asset" | "avatar";
   folder?: string;
 };
 
@@ -371,6 +378,32 @@ export async function readBlobBytes(file: StoredFile): Promise<Buffer> {
   }
   if (!file.data) throw new HTTPException(404, { message: "File not found" });
   return file.data;
+}
+
+/**
+ * Copies a file kept in Postgres into a bucket and points the row at it, so
+ * files saved before R2 was connected end up there too.
+ */
+export async function moveBlobToBucket(
+  file: StoredFile,
+  config: BucketConfig,
+  ownerId: string,
+) {
+  if (file.storage !== "db" || !file.data) return false;
+  const key = objectKey(config, file.workspaceId, file.filename);
+  await clientFor(config).send(
+    new PutObjectCommand({
+      Bucket: config.bucket,
+      Key: key,
+      Body: file.data,
+      ContentType: file.mimeType,
+    }),
+  );
+  await db
+    .update(storedFileTable)
+    .set({ storage: "s3", storageOwnerId: ownerId, objectKey: key, data: null })
+    .where(eq(storedFileTable.id, file.id));
+  return true;
 }
 
 export async function deleteBlob(file: StoredFile) {

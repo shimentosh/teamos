@@ -80,6 +80,15 @@ vi.mock(
   }),
 );
 
+// No workspace rules in these tests: every switch is the person's own.
+vi.mock("@/hooks/use-workspace-permission", () => ({
+  useWorkspacePermission: () => ({ workspace: undefined }),
+}));
+
+vi.mock("@/hooks/queries/use-notification-policy", () => ({
+  useNotificationPolicies: () => ({ data: [] }),
+}));
+
 vi.mock("@/hooks/queries/workspace/use-get-workspaces", () => ({
   default: () => ({ data: [] }),
 }));

@@ -46,7 +46,13 @@ export function useTaskAttachmentActions({
         folder,
         onProgress,
       );
-      return taskAttachmentApi.attachFile(taskId, stored.id);
+      try {
+        return await taskAttachmentApi.attachFile(taskId, stored.id);
+      } catch (error) {
+        // Don't leave a file in the library that nothing points at.
+        await filesApi.remove(workspaceId, stored.id).catch(() => {});
+        throw error;
+      }
     },
     onSettled: refresh,
   });

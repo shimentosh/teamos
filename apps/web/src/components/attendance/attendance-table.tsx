@@ -101,6 +101,15 @@ export function AttendanceTable({
                   onRowClick && "cursor-pointer",
                 )}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
+                // Clickable rows are reachable and openable from the keyboard.
+                tabIndex={onRowClick ? 0 : undefined}
+                onKeyDown={
+                  onRowClick
+                    ? (e) => {
+                        if (e.key === "Enter") onRowClick(row);
+                      }
+                    : undefined
+                }
               >
                 <TableCell className="ps-4">
                   {row.label}

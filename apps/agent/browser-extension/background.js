@@ -44,7 +44,8 @@ async function currentDomain() {
   if (!win || !win.focused) return { focused: false, domain: null };
   // Incognito is excluded by the manifest ("incognito": "not_allowed"); the
   // check stays as a second guard.
-  if (win.type !== "normal" || win.incognito) return { focused: true, domain: null };
+  if (win.type !== "normal" || win.incognito)
+    return { focused: true, domain: null };
   const [tab] = await chrome.tabs.query({ active: true, windowId: win.id });
   if (!tab || tab.incognito) return { focused: true, domain: null };
   return { focused: true, domain: domainOf(tab.url) };
@@ -75,7 +76,8 @@ function connect() {
 
 function scheduleRetry(reason) {
   failures += 1;
-  nextAttemptAt = Date.now() + Math.min(MAX_BACKOFF_MS, 1000 * 2 ** Math.min(failures, 9));
+  nextAttemptAt =
+    Date.now() + Math.min(MAX_BACKOFF_MS, 1000 * 2 ** Math.min(failures, 9));
   if (!loggedMissingHost) {
     loggedMissingHost = true;
     console.info(
@@ -87,7 +89,12 @@ function scheduleRetry(reason) {
 
 async function report() {
   const { focused, domain } = await currentDomain();
-  const message = { type: "domain", domain, browser: BROWSER, at: new Date().toISOString() };
+  const message = {
+    type: "domain",
+    domain,
+    browser: BROWSER,
+    at: new Date().toISOString(),
+  };
   const target = connect();
   if (target) {
     try {
@@ -111,7 +118,9 @@ chrome.tabs.onActivated.addListener(() => report());
 chrome.tabs.onUpdated.addListener((_tabId, change, tab) => {
   if (change.url && tab.active) report();
 });
-chrome.windows.onFocusChanged.addListener(() => report(), { windowTypes: WINDOW_TYPES });
+chrome.windows.onFocusChanged.addListener(() => report(), {
+  windowTypes: WINDOW_TYPES,
+});
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === HEARTBEAT) report();
 });

@@ -66,3 +66,38 @@ export async function finalizeImageUpload({
 }
 
 export default createImageUpload;
+
+/**
+ * Sends the file through the API, which stores it where the workspace's
+ * files go (the owner's R2 when connected), so buckets need no CORS rules.
+ */
+export async function uploadImageDirect({
+  taskId,
+  file,
+  contentType,
+  surface,
+}: {
+  taskId: string;
+  file: File;
+  contentType: string;
+  surface: "description" | "comment";
+}) {
+  const response = await client.task["image-upload"][":id"].direct.$put(
+    {
+      param: { id: taskId },
+      query: { filename: file.name || "image", surface },
+    },
+    { init: { body: file, headers: { "Content-Type": contentType } } },
+  );
+
+  if (!response.ok) {
+    const text = await response.text();
+    let message = text;
+    try {
+      message = JSON.parse(text).message ?? text;
+    } catch {}
+    throw new Error(message);
+  }
+
+  return response.json();
+}

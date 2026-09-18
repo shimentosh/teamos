@@ -92,3 +92,12 @@ input:focus-visible, button:focus-visible { outline: 2px solid var(--accent); ou
 
 .shared { margin-top: 16px; font-size: 13px; }
 .attendance { margin-top: -4px; font-size: 13px; color: var(--muted); }
+
+.now {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  color: var(--muted, #888);
+}
+
+.ai { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; font-size: 13px; cursor: pointer; }
+.ai small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }

@@ -2,6 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { AskTeamOsButton } from "@/components/ai/ask-teamos";
 import NotificationDropdown from "@/components/notification/notification-dropdown";
 import {
   DropdownMenu,
@@ -62,7 +63,7 @@ export function WorkspaceSwitcher() {
 
         setTimeout(() => {
           navigate({
-            to: "/dashboard/workspace/$workspaceId",
+            to: "/dashboard/workspace/$workspaceId/dashboard",
             params: { workspaceId: selectedWorkspace.id },
           });
         }, 50);
@@ -202,6 +203,7 @@ export function WorkspaceSwitcher() {
         </SidebarMenu>
 
         <div className="flex items-center gap-1">
+          <AskTeamOsButton />
           <NotificationDropdown />
           <div className="h-8 w-8 shrink-0">
             <UserAvatar />

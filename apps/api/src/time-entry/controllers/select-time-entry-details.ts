@@ -17,6 +17,7 @@ export function selectTimeEntryDetails() {
       userId: timeEntryTable.userId,
       userName: userTable.name,
       description: timeEntryTable.description,
+      reference: timeEntryTable.reference,
       startTime: timeEntryTable.startTime,
       endTime: timeEntryTable.endTime,
       duration: timeEntryTable.duration,

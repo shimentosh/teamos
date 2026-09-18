@@ -1,13 +1,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useNavigate } from "@tanstack/react-router";
-import { format } from "date-fns";
-import {
-  Calendar,
-  CalendarClock,
-  CalendarX,
-  SlidersHorizontal,
-} from "lucide-react";
+import { SlidersHorizontal } from "lucide-react";
 import { type CSSProperties, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -19,7 +13,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   HoverCard,
@@ -31,13 +24,7 @@ import useGetCustomFieldValuesByProject from "@/hooks/queries/custom-field/use-g
 import useActiveWorkspace from "@/hooks/queries/workspace/use-active-workspace";
 import { useGetActiveWorkspaceUsers } from "@/hooks/queries/workspace-users/use-get-active-workspace-users";
 import { cn } from "@/lib/cn";
-import {
-  dueDateStatusColors,
-  getDueDateStatus,
-  isTaskCompleted,
-} from "@/lib/due-date-status";
-import { getInitials } from "@/lib/get-initials";
-import { getPriorityIcon } from "@/lib/priority";
+import { isTaskCompleted } from "@/lib/due-date-status";
 import { toast } from "@/lib/toast";
 import useBacklogBulkSelectionStore from "@/store/backlog-bulk-selection";
 import useProjectStore from "@/store/project";
@@ -45,13 +32,34 @@ import { useUserPreferencesStore } from "@/store/user-preferences";
 import type Task from "@/types/task";
 import TaskCardContextMenuContent from "../kanban-board/task-card-context-menu/task-card-context-menu-content";
 import { TaskLabels } from "../kanban-board/task-labels";
+import {
+  AssigneeCell,
+  DueChip,
+  LIST_GRID,
+  PriorityCell,
+  StatusCell,
+  type StatusOption,
+} from "../list-view/cells";
+import { AssigneePicker, DueDatePicker } from "../task/inline-pickers";
 import { ContextMenu, ContextMenuTrigger } from "../ui/context-menu";
 
 type BacklogTaskRowProps = {
   task: Task;
+  /** Planned, archived and the board columns a task can move to. */
+  statusOptions: StatusOption[];
+  canEdit: boolean;
+  /** Off while a filter or search hides rows: positions would scramble. */
+  draggable?: boolean;
+  onChange: (patch: Partial<Task>) => void;
 };
 
-export default function BacklogTaskRow({ task }: BacklogTaskRowProps) {
+export default function BacklogTaskRow({
+  task,
+  statusOptions,
+  canEdit,
+  draggable = true,
+  onChange,
+}: BacklogTaskRowProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const {
@@ -61,7 +69,7 @@ export default function BacklogTaskRow({ task }: BacklogTaskRowProps) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: task.id });
+  } = useSortable({ id: task.id, disabled: !draggable });
 
   const { project } = useProjectStore();
   const taskIsCompleted = isTaskCompleted(task.status, project?.columns);
@@ -174,123 +182,139 @@ export default function BacklogTaskRow({ task }: BacklogTaskRowProps) {
             onClick={handleClick}
             onKeyDown={handleKeyDown}
             className={cn(
-              "group relative flex items-center gap-3 px-4 py-1.5 transition-colors cursor-pointer",
-              isTaskSelected ? "bg-accent/45" : "hover:bg-accent/60",
+              LIST_GRID,
+              "group relative cursor-pointer px-4 py-2 transition-colors",
+              isTaskSelected ? "bg-accent/45" : "hover:bg-accent/50",
             )}
             {...attributes}
             {...listeners}
           >
-            {showPriority && (
-              <div className="flex-shrink-0 first:[&_svg]:h-4 first:[&_svg]:w-4">
-                {getPriorityIcon(task.priority ?? "")}
-              </div>
-            )}
-            {showTaskNumbers && (
-              <div className="text-xs font-mono text-muted-foreground flex-shrink-0">
-                {project?.slug}-{task.number}
-              </div>
-            )}
+            <span className="font-mono text-muted-foreground text-xs tabular-nums">
+              {showTaskNumbers ? `${project?.slug}-${task.number}` : ""}
+            </span>
 
-            <div className="flex-1 min-w-0 flex items-center gap-2">
-              <div className="flex items-center gap-2 justify-between w-full">
-                <span className="text-sm text-foreground truncate">
-                  {task.title}
-                </span>
-                {showLabels && (
-                  <div className="flex items-center gap-1">
-                    <TaskLabels labels={task.labels ?? []} />
-                  </div>
+            <div className="flex min-w-0 items-center gap-2">
+              <span
+                className={cn(
+                  "truncate font-medium text-foreground text-sm",
+                  task.status === "archived" && "text-muted-foreground",
                 )}
-              </div>
+              >
+                {task.title}
+              </span>
+              {showLabels && (
+                <div className="flex shrink-0 items-center gap-1">
+                  <TaskLabels labels={task.labels ?? []} />
+                </div>
+              )}
+              {activeCustomFieldValues.length > 0 && (
+                <HoverCard openDelay={200} closeDelay={100}>
+                  <HoverCardTrigger asChild>
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 rounded border border-border/70 bg-muted/55 px-2 py-1 text-[10px] font-medium text-muted-foreground cursor-default focus:outline-none focus:ring-2 focus:ring-ring/50 focus:ring-offset-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                      }}
+                      onPointerDown={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                      }}
+                      aria-label={t("tasks:customFields.ariaLabel", {
+                        count: activeCustomFieldValues.length,
+                      })}
+                    >
+                      <SlidersHorizontal className="w-3 h-3" />
+                      <span>{activeCustomFieldValues.length}</span>
+                    </button>
+                  </HoverCardTrigger>
+                  <HoverCardContent
+                    className="w-fit p-2.5"
+                    side="bottom"
+                    onClick={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    <div className="space-y-1.5">
+                      {activeCustomFieldValues.map((field) => (
+                        <div
+                          key={field.id}
+                          className="flex items-center justify-between gap-2 text-xs"
+                        >
+                          <span className="font-medium text-muted-foreground truncate">
+                            {field.fieldName}
+                          </span>
+                          <span className="text-foreground truncate max-w-24">
+                            {field.value}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </HoverCardContent>
+                </HoverCard>
+              )}
             </div>
 
-            {showDueDates && task.dueDate && (
-              <div
-                className={`flex items-center gap-1 text-[10px] px-2 py-1 rounded flex-shrink-0 ${dueDateStatusColors[getDueDateStatus(task.dueDate, taskIsCompleted)]}`}
-              >
-                {getDueDateStatus(task.dueDate, taskIsCompleted) ===
-                  "overdue" && <CalendarX className="w-3 h-3" />}
-                {getDueDateStatus(task.dueDate, taskIsCompleted) ===
-                  "due-soon" && <CalendarClock className="w-3 h-3" />}
-                {(getDueDateStatus(task.dueDate, taskIsCompleted) ===
-                  "far-future" ||
-                  getDueDateStatus(task.dueDate, taskIsCompleted) ===
-                    "no-due-date") && <Calendar className="w-3 h-3" />}
-                <span>{format(new Date(task.dueDate), "MMM d")}</span>
-              </div>
-            )}
+            <div className="min-w-0">
+              <StatusCell
+                status={task.status}
+                columns={statusOptions}
+                canEdit={canEdit}
+                onPick={(option) => onChange({ status: option.slug })}
+              />
+            </div>
 
-            {activeCustomFieldValues.length > 0 && (
-              <HoverCard openDelay={200} closeDelay={100}>
-                <HoverCardTrigger asChild>
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-1 rounded border border-border/70 bg-muted/55 px-2 py-1 text-[10px] font-medium text-muted-foreground cursor-default focus:outline-none focus:ring-2 focus:ring-ring/50 focus:ring-offset-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                    }}
-                    onPointerDown={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                    }}
-                    aria-label={t("tasks:customFields.ariaLabel", {
-                      count: activeCustomFieldValues.length,
-                    })}
-                  >
-                    <SlidersHorizontal className="w-3 h-3" />
-                    <span>{activeCustomFieldValues.length}</span>
-                  </button>
-                </HoverCardTrigger>
-                <HoverCardContent
-                  className="w-fit p-2.5"
-                  side="bottom"
-                  onClick={(e) => e.stopPropagation()}
-                  onPointerDown={(e) => e.stopPropagation()}
-                >
-                  <div className="space-y-1.5">
-                    {activeCustomFieldValues.map((field) => (
-                      <div
-                        key={field.id}
-                        className="flex items-center justify-between gap-2 text-xs"
-                      >
-                        <span className="font-medium text-muted-foreground truncate">
-                          {field.fieldName}
-                        </span>
-                        <span className="text-foreground truncate max-w-24">
-                          {field.value}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </HoverCardContent>
-              </HoverCard>
-            )}
+            <div className="min-w-0">
+              {showPriority && (
+                <PriorityCell
+                  priority={task.priority ?? "no-priority"}
+                  canEdit={canEdit}
+                  onPick={(priority) => onChange({ priority })}
+                />
+              )}
+            </div>
 
-            {showAssignees && (
-              <div className="flex-shrink-0">
-                {task.userId ? (
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage
-                      src={assignee?.user?.image ?? ""}
-                      alt={assignee?.user?.name || ""}
-                    />
-                    <AvatarFallback className="text-xs font-medium border border-border/30">
-                      {getInitials(assignee?.user?.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                ) : (
-                  <div
-                    className="w-6 h-6 rounded-full bg-muted border border-border flex items-center justify-center"
-                    title={t("tasks:assignee.unassigned")}
-                  >
-                    <span className="text-[10px] font-medium text-muted-foreground">
-                      ?
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
+            <div className="min-w-0">
+              {showAssignees && (
+                <AssigneePicker
+                  workspaceId={workspace?.id ?? ""}
+                  value={task.userId ?? null}
+                  canEdit={canEdit}
+                  onPick={(userId) => onChange({ userId })}
+                  trigger={
+                    <button
+                      type="button"
+                      className="-mx-1.5 max-w-full rounded-md px-1.5 py-0.5 text-left hover:bg-accent"
+                    >
+                      <AssigneeCell
+                        assigned={!!task.userId}
+                        name={assignee?.user?.name ?? task.assigneeName}
+                        image={assignee?.user?.image ?? task.assigneeImage}
+                      />
+                    </button>
+                  }
+                />
+              )}
+            </div>
+
+            <div>
+              {showDueDates && (
+                <DueDatePicker
+                  value={task.dueDate ?? null}
+                  canEdit={canEdit}
+                  notBefore={task.startDate}
+                  onPick={(dueDate) => onChange({ dueDate })}
+                  trigger={
+                    <button
+                      type="button"
+                      className="-mx-1 rounded-md px-1 py-0.5 hover:bg-accent"
+                    >
+                      <DueChip dueDate={task.dueDate} done={taskIsCompleted} />
+                    </button>
+                  }
+                />
+              )}
+            </div>
           </div>
         </ContextMenuTrigger>
 

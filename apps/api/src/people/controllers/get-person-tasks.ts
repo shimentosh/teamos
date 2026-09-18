@@ -74,6 +74,8 @@ async function getPersonTasks(workspaceId: string, userId: string) {
         eq(projectTable.workspaceId, workspaceId),
         eq(taskTable.userId, userId),
         ne(taskTable.status, "archived"),
+        // Archived projects are out of everyone's way, here too.
+        isNull(projectTable.archivedAt),
         or(
           isNull(columnTable.isFinal),
           eq(columnTable.isFinal, false),

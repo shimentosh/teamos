@@ -5,10 +5,12 @@ function useStopTimeEntry() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: string | { id: string; description?: string }) =>
+    mutationFn: (
+      input: string | { id: string; description?: string; reference?: string },
+    ) =>
       typeof input === "string"
         ? stopTimeEntry(input)
-        : stopTimeEntry(input.id, input.description),
+        : stopTimeEntry(input.id, input.description, input.reference),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ["time-entries"] }),
   });

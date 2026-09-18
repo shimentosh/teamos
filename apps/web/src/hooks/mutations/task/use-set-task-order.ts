@@ -8,6 +8,9 @@ function useSetTaskOrder(workspaceId: string, userId: string) {
   const listKey = ["people", workspaceId, userId, "tasks"];
 
   return useMutation({
+    // One save at a time, in the order they were made: two quick drags must
+    // not land out of order on the server.
+    scope: { id: `task-order:${workspaceId}:${userId}` },
     mutationFn: (taskIds: string[]) =>
       setTaskOrder(workspaceId, userId, taskIds),
     onMutate: async (taskIds) => {
@@ -26,6 +29,8 @@ function useSetTaskOrder(workspaceId: string, userId: string) {
       if (context?.previous)
         queryClient.setQueryData(listKey, context.previous);
     },
+    // Whatever happened, show what the server kept.
+    onSettled: () => queryClient.invalidateQueries({ queryKey: listKey }),
   });
 }
 

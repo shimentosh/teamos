@@ -54,16 +54,18 @@ export function CreateQuickTaskDialog({
   }, [open]);
 
   const save = async () => {
-    if (!title.trim()) return;
+    // Enter in the title submits too; one request at a time.
+    if (!title.trim() || createQuickTask.isPending) return;
     try {
       await createQuickTask.mutateAsync({
         workspaceId,
         title: title.trim(),
         description: description.trim() || undefined,
         projectId: projectId === NO_PROJECT ? undefined : projectId,
-        // Noon keeps the picked calendar day stable across time zones.
+        // Local midnight, like the task date pickers: the server rounds it
+        // to the nearest day in the company's time zone.
         dueDate: dueDate
-          ? new Date(`${dueDate}T12:00:00`).toISOString()
+          ? new Date(`${dueDate}T00:00:00`).toISOString()
           : undefined,
       });
       toast.success(t("myWork:tasks.created"));
@@ -119,14 +121,16 @@ export function CreateQuickTaskDialog({
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label>{t("myWork:tasks.project")}</Label>
+                <Label htmlFor={`${id}-project`}>
+                  {t("myWork:tasks.project")}
+                </Label>
                 <Select
                   value={projectId}
                   onValueChange={(value) => {
                     if (typeof value === "string") setProjectId(value);
                   }}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id={`${id}-project`}>
                     <SelectValue>{projectName}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>

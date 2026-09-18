@@ -1,6 +1,12 @@
 import { and, eq, gte, isNotNull, isNull, sql } from "drizzle-orm";
 import db from "../../database";
-import { projectTable, taskTable, timeEntryTable } from "../../database/schema";
+import {
+  projectMemberTable,
+  projectTable,
+  taskTable,
+  timeEntryTable,
+} from "../../database/schema";
+import { visibleProjects, visibleTasks } from "../../utils/task-visibility";
 
 type ProjectStatistics = {
   completionPercentage: number;
@@ -37,14 +43,15 @@ const TRACKED_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 async function getProjectStatistics(
   workspaceId: string,
   includeArchived: boolean,
+  viewer: string | null,
 ) {
   const statisticsByProject = new Map<string, ProjectStatistics>();
-  const inWorkspace = includeArchived
-    ? eq(projectTable.workspaceId, workspaceId)
-    : and(
-        eq(projectTable.workspaceId, workspaceId),
-        isNull(projectTable.archivedAt),
-      );
+  // Someone who only sees their own tasks gets rollups of those tasks only.
+  const inWorkspace = and(
+    eq(projectTable.workspaceId, workspaceId),
+    includeArchived ? undefined : isNull(projectTable.archivedAt),
+    visibleTasks(viewer),
+  );
 
   // Aggregate in the database instead of loading every task row into memory:
   // one grouped row per project, however many tasks it has. Scoping by
@@ -129,14 +136,17 @@ async function getProjectStatistics(
   return statisticsByProject;
 }
 
-async function getProjects(workspaceId: string, includeArchived = false) {
+async function getProjects(
+  workspaceId: string,
+  includeArchived = false,
+  viewer: string | null = null,
+) {
   const projects = await db.query.projectTable.findMany({
-    where: includeArchived
-      ? eq(projectTable.workspaceId, workspaceId)
-      : and(
-          eq(projectTable.workspaceId, workspaceId),
-          isNull(projectTable.archivedAt),
-        ),
+    where: and(
+      eq(projectTable.workspaceId, workspaceId),
+      includeArchived ? undefined : isNull(projectTable.archivedAt),
+      visibleProjects(viewer),
+    ),
     // `id` is the deterministic tie-breaker: without it, rows sharing both a
     // position and a createdAt come back in an unspecified order.
     orderBy: (project, { asc }) => [
@@ -146,13 +156,32 @@ async function getProjects(workspaceId: string, includeArchived = false) {
     ],
   });
 
-  const statisticsByProject = await getProjectStatistics(
-    workspaceId,
-    includeArchived,
-  );
+  const [statisticsByProject, members] = await Promise.all([
+    getProjectStatistics(workspaceId, includeArchived, viewer),
+    db
+      .select({
+        projectId: projectMemberTable.projectId,
+        userId: projectMemberTable.userId,
+      })
+      .from(projectMemberTable)
+      .innerJoin(
+        projectTable,
+        eq(projectMemberTable.projectId, projectTable.id),
+      )
+      .where(eq(projectTable.workspaceId, workspaceId))
+      .orderBy(projectMemberTable.createdAt),
+  ]);
+  const memberIds = new Map<string, string[]>();
+  for (const row of members) {
+    memberIds.set(row.projectId, [
+      ...(memberIds.get(row.projectId) ?? []),
+      row.userId,
+    ]);
+  }
 
   return projects.map((project) => ({
     ...project,
+    memberIds: memberIds.get(project.id) ?? [],
     statistics: statisticsByProject.get(project.id) ?? EMPTY_STATISTICS,
     archivedTasks: [],
     plannedTasks: [],

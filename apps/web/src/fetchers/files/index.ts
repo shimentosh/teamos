@@ -47,6 +47,10 @@ export const filesApi = {
     unwrap(await client.files.storage.account.$put({ json })),
   disconnectAccount: async () =>
     unwrap(await client.files.storage.account.$delete()),
+  leftInDatabase: async () =>
+    unwrap(await client.files.storage.account.left.$get()),
+  moveToAccount: async () =>
+    unwrap(await client.files.storage.account.move.$post()),
   disconnect: async (workspaceId: string) =>
     unwrap(await client.files.storage.$delete({ query: { workspaceId } })),
   share: async (workspaceId: string, id: string) =>

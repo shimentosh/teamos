@@ -15,7 +15,8 @@ import {
 import { enqueueEmail } from "../email/outbox";
 import { assertPublicWebhookDestination } from "../plugins/generic-webhook/config";
 import { buildNotificationEmail, clientUrl } from "./email-content";
-import { eventEnabled, eventKeyOf } from "./events";
+import { effectiveEventEnabled, eventKeyOf } from "./events";
+import { workspacePolicy } from "./policy";
 import { decryptSecret } from "./secrets";
 
 const DEFAULT_OUTBOUND_FETCH_TIMEOUT_MS = 15_000;
@@ -134,6 +135,28 @@ function buildDeliveryContent(notification: {
           : "A new task was created in TeamOS.",
       };
     }
+    case "task_deleted":
+    case "project_task_created":
+    case "project_task_deleted": {
+      const taskTitle = getStringValue(notification.eventData, "taskTitle");
+      const actorName =
+        getStringValue(notification.eventData, "actorName") ?? "Someone";
+      const projectName = getStringValue(notification.eventData, "projectName");
+      const where = projectName ? ` in ${projectName}` : "";
+      if (notification.type === "project_task_created") {
+        return {
+          title: "New task in your project",
+          body: `${actorName} added ${taskTitle ? `"${taskTitle}"` : "a task"}${where}.`,
+        };
+      }
+      return {
+        title:
+          notification.type === "task_deleted"
+            ? "Your task was deleted"
+            : "Task deleted",
+        body: `${actorName} deleted ${taskTitle ? `"${taskTitle}"` : "a task"}${where}.`,
+      };
+    }
     case "workspace_created": {
       const workspaceName = getStringValue(
         notification.eventData,
@@ -246,8 +269,7 @@ function buildDeliveryContent(notification: {
     default:
       return {
         title: notification.title ?? "New TeamOS notification",
-        body:
-          notification.content ?? "You have a new notification in TeamOS.",
+        body: notification.content ?? "You have a new notification in TeamOS.",
       };
   }
 }
@@ -301,6 +323,40 @@ async function resolveNotificationContext(notification: {
     };
   }
 
+  if (notification.resourceType === "project") {
+    const [project] = await db
+      .select({
+        projectId: projectTable.id,
+        projectName: projectTable.name,
+        workspaceId: workspaceTable.id,
+        workspaceName: workspaceTable.name,
+        workspaceLogo: workspaceTable.logo,
+      })
+      .from(projectTable)
+      .innerJoin(
+        workspaceTable,
+        eq(projectTable.workspaceId, workspaceTable.id),
+      )
+      .where(eq(projectTable.id, notification.resourceId))
+      .limit(1);
+
+    if (!project) {
+      return null;
+    }
+
+    return {
+      workspaceId: project.workspaceId,
+      workspaceName: project.workspaceName,
+      workspaceLogo: project.workspaceLogo,
+      actionUrl: `${clientUrl()}/dashboard/workspace/${project.workspaceId}/project/${project.projectId}/board`,
+      projectId: project.projectId,
+      projectName: project.projectName,
+      taskId: null,
+      taskTitle: null,
+      taskUrl: null,
+    };
+  }
+
   if (notification.resourceType === "workspace") {
     const [workspace] = await db
       .select({
@@ -320,7 +376,20 @@ async function resolveNotificationContext(notification: {
       workspaceId: workspace.workspaceId,
       workspaceName: workspace.workspaceName,
       workspaceLogo: workspace.workspaceLogo,
-      actionUrl: `${clientUrl()}/dashboard/workspace/${workspace.workspaceId}`,
+      // Nudges point at where to act on them; the rest open the workspace,
+      // except for someone who was just removed from it.
+      actionUrl:
+        notification.type === "member_removed"
+          ? null
+          : `${clientUrl()}/dashboard/workspace/${workspace.workspaceId}${
+              notification.type === "daily_digest"
+                ? "/my-work"
+                : notification.type === "end_of_day"
+                  ? "/attendance"
+                  : notification.type === "team_summary"
+                    ? "/people"
+                    : ""
+            }`,
       projectId: null,
       projectName: null,
       taskId: null,
@@ -331,7 +400,8 @@ async function resolveNotificationContext(notification: {
 
   if (
     notification.resourceType === "expense" ||
-    notification.resourceType === "payslip"
+    notification.resourceType === "payslip" ||
+    notification.resourceType === "chat"
   ) {
     const data = notification.eventData as { workspaceId?: unknown } | null;
     const workspaceId =
@@ -347,15 +417,20 @@ async function resolveNotificationContext(notification: {
       .limit(1);
     if (!workspace) return null;
 
-    // Approvers review expenses on People; everyone else sees their own
-    // expenses and payslips on My work and their profile.
+    // Expenses (to review or your own) live on the Expenses page, payslips
+    // on the person's profile, chat mentions in their conversation.
     const base = `${clientUrl()}/dashboard/workspace/${workspaceId}`;
+    const conversationId = (
+      notification.eventData as { conversationId?: unknown }
+    )?.conversationId;
     const actionUrl =
-      notification.type === "expense_submitted"
-        ? `${base}/people`
+      notification.resourceType === "chat"
+        ? typeof conversationId === "string"
+          ? `${base}/chat?c=${encodeURIComponent(conversationId)}`
+          : `${base}/chat`
         : notification.resourceType === "payslip"
           ? `${base}/people/${notification.userId}`
-          : `${base}/my-work`;
+          : `${base}/expenses`;
     return {
       workspaceId,
       workspaceName: workspace.workspaceName,
@@ -524,6 +599,24 @@ export async function deliverNotification(
     return;
   }
 
+  return deliverRecord(notification, { emailOnly: false });
+}
+
+/**
+ * Email for a notification that isn't shown in the app: the person (or a
+ * workspace rule) turned the in-app switch off but left email on.
+ */
+export function deliverEmailOnly(
+  notification: typeof notificationTable.$inferSelect,
+): Promise<void> {
+  return deliverRecord(notification, { emailOnly: true });
+}
+
+async function deliverRecord(
+  notification: typeof notificationTable.$inferSelect,
+  options: { emailOnly: boolean },
+): Promise<void> {
+  const notificationId = notification.id;
   const context = await resolveNotificationContext(notification);
   if (!context) {
     console.info("Notification delivery skipped: unresolved context", {
@@ -583,12 +676,14 @@ export async function deliverNotification(
     return;
   }
 
+  // "Selected projects" narrows project work; leave, pay, chat and
+  // membership notifications aren't about a project and always go through.
   if (
     rule.projectMode === "selected" &&
-    (!context.projectId ||
-      !rule.selectedProjects.some(
-        (project) => project.projectId === context.projectId,
-      ))
+    context.projectId &&
+    !rule.selectedProjects.some(
+      (project) => project.projectId === context.projectId,
+    )
   ) {
     return;
   }
@@ -658,7 +753,12 @@ export async function deliverNotification(
   // Notifications); never set means on.
   const eventKey = eventKeyOf(notification.type);
   const eventEmail = eventKey
-    ? eventEnabled(eventKey, "email", preference)
+    ? effectiveEventEnabled(
+        eventKey,
+        "email",
+        preference,
+        await workspacePolicy(context.workspaceId, eventKey),
+      )
     : true;
 
   if (
@@ -684,6 +784,7 @@ export async function deliverNotification(
   }
 
   if (
+    !options.emailOnly &&
     decryptedPreference.ntfyEnabled &&
     decryptedPreference.ntfyServerUrl &&
     decryptedPreference.ntfyTopic &&
@@ -702,6 +803,7 @@ export async function deliverNotification(
   }
 
   if (
+    !options.emailOnly &&
     decryptedPreference.gotifyEnabled &&
     decryptedPreference.gotifyServerUrl &&
     decryptedPreference.gotifyToken &&
@@ -719,6 +821,7 @@ export async function deliverNotification(
   }
 
   if (
+    !options.emailOnly &&
     decryptedPreference.webhookEnabled &&
     decryptedPreference.webhookUrl &&
     rule.webhookEnabled

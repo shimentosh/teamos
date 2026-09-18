@@ -14,6 +14,7 @@ export const createNotificationBody = z.object({
       "Stored as resourceId: the task or workspace being pointed at.",
   }),
   relatedEntityType: z.string().optional().openapi({
-    description: "Stored as resourceType: `task` or `workspace`.",
+    description:
+      "Stored as resourceType, e.g. `task`, `project` or `workspace`.",
   }),
 });

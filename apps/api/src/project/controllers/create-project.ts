@@ -1,6 +1,10 @@
 import { eq, max, sql } from "drizzle-orm";
 import db from "../../database";
-import { columnTable, projectTable } from "../../database/schema";
+import {
+  columnTable,
+  projectMemberTable,
+  projectTable,
+} from "../../database/schema";
 
 export const DEFAULT_PROJECT_COLUMNS = [
   { name: "To Do", slug: "to-do", position: 0, isFinal: false },
@@ -63,10 +67,24 @@ async function createProject(
   name: string,
   icon: string,
   slug: string,
+  creatorId?: string,
 ) {
-  return db.transaction((tx) =>
-    insertProject(tx, workspaceId, name, icon, slug),
-  );
+  return db.transaction(async (tx) => {
+    const project = await insertProject(tx, workspaceId, name, icon, slug);
+    // The creator is on the team, so they keep seeing what they made even
+    // when their role only shows their own tasks.
+    if (project && creatorId) {
+      await tx
+        .insert(projectMemberTable)
+        .values({
+          projectId: project.id,
+          userId: creatorId,
+          addedBy: creatorId,
+        })
+        .onConflictDoNothing();
+    }
+    return project;
+  });
 }
 
 export default createProject;

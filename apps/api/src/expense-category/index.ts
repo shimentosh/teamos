@@ -1,4 +1,4 @@
-import { and, asc, count, eq } from "drizzle-orm";
+import { and, asc, count, eq, sql } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import db from "../database";
 import { expenseCategoryTable } from "../database/schema";
@@ -191,16 +191,22 @@ const expenseCategory = apiRouter()
     const { id } = c.req.valid("param");
     const { workspaceId } = c.req.valid("query");
     // An empty list would be refilled with the defaults on the next load.
-    const [{ n } = { n: 0 }] = await db
-      .select({ n: count() })
-      .from(expenseCategoryTable)
-      .where(eq(expenseCategoryTable.workspaceId, workspaceId));
-    if (n <= 1) {
-      throw new HTTPException(409, {
-        message: "Keep at least one category",
-      });
-    }
-    await db.delete(expenseCategoryTable).where(inWorkspace(id, workspaceId));
+    // Count and delete under one lock, so two deletes can't both pass.
+    await db.transaction(async (tx) => {
+      await tx.execute(
+        sql`SELECT pg_advisory_xact_lock(1526, hashtext(${workspaceId}))`,
+      );
+      const [{ n } = { n: 0 }] = await tx
+        .select({ n: count() })
+        .from(expenseCategoryTable)
+        .where(eq(expenseCategoryTable.workspaceId, workspaceId));
+      if (n <= 1) {
+        throw new HTTPException(409, {
+          message: "Keep at least one category",
+        });
+      }
+      await tx.delete(expenseCategoryTable).where(inWorkspace(id, workspaceId));
+    });
     return c.json({ id }, 200);
   });
 

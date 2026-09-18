@@ -226,6 +226,13 @@
           {
             "type": "object",
             "properties": {
+              "memberIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The project's team: people added to work on it, in the order they joined."
+              },
               "statistics": {
                 "$ref": "#/components/schemas/ProjectStatistics"
               },
@@ -252,6 +259,7 @@
               }
             },
             "required": [
+              "memberIds",
               "statistics",
               "archivedTasks",
               "plannedTasks",
@@ -632,6 +640,37 @@
           "archivedAt",
           "position",
           "lastTaskNumber"
+        ]
+      },
+      "ProjectMember": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "image": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "addedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "userId",
+          "name",
+          "email",
+          "image",
+          "addedAt"
         ]
       },
       "BoardResponse": {
@@ -1440,6 +1479,13 @@
               "null"
             ]
           },
+          "reference": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A link or ticket the work was for."
+          },
           "startTime": {
             "type": "string",
             "format": "date-time"
@@ -1473,6 +1519,7 @@
           "taskId",
           "userId",
           "description",
+          "reference",
           "startTime",
           "endTime",
           "duration",
@@ -1674,6 +1721,23 @@
           "accessKeyId",
           "keyPrefix",
           "updatedAt"
+        ]
+      },
+      "StoredInDatabase": {
+        "type": "object",
+        "properties": {
+          "files": {
+            "type": "number",
+            "description": "Files, receipts and images."
+          },
+          "avatars": {
+            "type": "number",
+            "description": "Profile pictures."
+          }
+        },
+        "required": [
+          "files",
+          "avatars"
         ]
       },
       "WorkspaceFileList": {
@@ -2795,6 +2859,270 @@
           "nextBefore"
         ]
       },
+      "AgentConnectInfo": {
+        "type": "object",
+        "properties": {
+          "mcpUrl": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "mcpUrl"
+        ]
+      },
+      "AgentKey": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "start": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "read",
+              "tasks",
+              "full"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "lastUsedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "start",
+          "scope",
+          "enabled",
+          "lastUsedAt",
+          "createdAt"
+        ]
+      },
+      "CreatedAgentKey": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string",
+            "description": "Shown once; store it now."
+          },
+          "name": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "read",
+              "tasks",
+              "full"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "name",
+          "scope"
+        ]
+      },
+      "AiSettings": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "engine": {
+            "type": "string",
+            "enum": [
+              "server",
+              "desktop"
+            ]
+          },
+          "serverAvailable": {
+            "type": "boolean",
+            "description": "Claude Code is installed where TeamOS runs."
+          }
+        },
+        "required": [
+          "enabled",
+          "engine",
+          "serverAvailable"
+        ]
+      },
+      "AiChangeSet": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "workspaceId": {
+            "type": "string"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "summary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "proposing",
+              "proposed",
+              "applied",
+              "discarded",
+              "undone",
+              "failed"
+            ]
+          },
+          "actions": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "results": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "progress": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "appliedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "workspaceId",
+          "prompt",
+          "summary",
+          "status",
+          "actions",
+          "results",
+          "error",
+          "createdAt",
+          "appliedAt"
+        ]
+      },
+      "AiTeammate": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "triage",
+              "standup",
+              "overdue",
+              "weekly"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "instructions": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "time": {
+            "type": "string"
+          },
+          "days": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "suggest",
+              "act"
+            ]
+          },
+          "channelId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastRunAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "lastChangeSetId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "enabled",
+          "instructions",
+          "time",
+          "days",
+          "mode",
+          "channelId",
+          "lastRunAt",
+          "lastChangeSetId"
+        ]
+      },
       "TaskChecklist": {
         "type": "object",
         "properties": {
@@ -3669,13 +3997,18 @@
           },
           "idleAfterSeconds": {
             "type": "number"
+          },
+          "aiBridge": {
+            "type": "boolean",
+            "description": "The workspace runs Ask TeamOS on people's own Claude Code: poll /device/ai-jobs/next."
           }
         },
         "required": [
           "trackDomains",
           "heartbeatSeconds",
           "syncSeconds",
-          "idleAfterSeconds"
+          "idleAfterSeconds",
+          "aiBridge"
         ]
       },
       "AgentHeartbeatResult": {
@@ -3736,6 +4069,41 @@
         },
         "required": [
           "attendance"
+        ]
+      },
+      "AgentAiJob": {
+        "type": "object",
+        "properties": {
+          "job": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "prompt": {
+                "type": "string"
+              },
+              "mcpUrl": {
+                "type": "string"
+              },
+              "token": {
+                "type": "string",
+                "description": "A read-only key for this job; revoked with the result."
+              }
+            },
+            "required": [
+              "id",
+              "prompt",
+              "mcpUrl",
+              "token"
+            ]
+          }
+        },
+        "required": [
+          "job"
         ]
       },
       "AgentActivityResult": {
@@ -4328,6 +4696,114 @@
           "people"
         ]
       },
+      "LivePerson": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "image": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "active",
+              "idle",
+              "paused",
+              "offline"
+            ]
+          },
+          "lastSeenAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "hasDesktopApp": {
+            "type": "boolean"
+          },
+          "app": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The app in front. Only your own, or everyone's with activity:read_all."
+          },
+          "domain": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "since": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "clockedIn": {
+            "type": "boolean"
+          },
+          "timing": {
+            "type": "boolean"
+          },
+          "runningTask": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "projectId": {
+                "type": "string"
+              },
+              "ref": {
+                "type": "string"
+              },
+              "startedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "id",
+              "title",
+              "projectId",
+              "ref",
+              "startedAt"
+            ],
+            "description": "Null when not timing, or not a task you can see."
+          }
+        },
+        "required": [
+          "userId",
+          "name",
+          "image",
+          "state",
+          "lastSeenAt",
+          "hasDesktopApp",
+          "app",
+          "domain",
+          "since",
+          "clockedIn",
+          "timing",
+          "runningTask"
+        ]
+      },
       "PersonDetail": {
         "allOf": [
           {
@@ -4700,7 +5176,7 @@
           },
           "type": {
             "type": "string",
-            "description": "One of: info, task_created, workspace_created, task_status_changed, task_assignee_changed, time_entry_created, due_date_reminder, task_overdue, task_mention, task_comment."
+            "description": "For example: info, task_created, task_deleted, project_task_created, project_task_deleted, workspace_created, task_status_changed, task_assignee_changed, time_entry_created, due_date_reminder, task_overdue, task_mention, task_comment."
           },
           "eventData": {
             "description": "Type-specific payload, e.g. { taskTitle, oldStatus, newStatus, projectId, workspaceId }."
@@ -6395,6 +6871,167 @@
           "name",
           "icon",
           "createdAt"
+        ]
+      },
+      "InstanceEmailSettings": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "resend",
+              "smtp",
+              null
+            ]
+          },
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "app",
+              "environment",
+              null
+            ]
+          },
+          "from": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "savedFrom": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "resendKeyHint": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The last four characters; the key itself is never sent."
+          },
+          "updatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "updatedByName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "provider",
+          "source",
+          "from",
+          "savedFrom",
+          "resendKeyHint",
+          "updatedAt",
+          "updatedByName"
+        ]
+      },
+      "EmailTemplate": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "section": {
+            "type": "string",
+            "enum": [
+              "account",
+              "team",
+              "tasks",
+              "nudges",
+              "chat",
+              "leave",
+              "money"
+            ]
+          },
+          "audience": {
+            "type": "string",
+            "enum": [
+              "person",
+              "approvers",
+              "admins",
+              "invitee",
+              "owner"
+            ]
+          },
+          "switchKey": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The Settings → Notifications switch that turns this email off; null when it is always sent."
+          },
+          "subject": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "section",
+          "audience",
+          "switchKey",
+          "subject"
+        ]
+      },
+      "NotificationPolicy": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "audience": {
+            "type": "string",
+            "enum": [
+              "everyone",
+              "approvers",
+              "admins"
+            ]
+          },
+          "inApp": {
+            "type": "boolean"
+          },
+          "email": {
+            "type": "boolean"
+          },
+          "locked": {
+            "type": "boolean",
+            "description": "Members can't change it; the in-app and email values apply to everyone."
+          },
+          "custom": {
+            "type": "boolean",
+            "description": "False when nothing was set: on, and each person decides."
+          },
+          "updatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "key",
+          "audience",
+          "inApp",
+          "email",
+          "locked",
+          "custom",
+          "updatedAt"
         ]
       },
       "WorkflowRule": {
@@ -9763,6 +10400,195 @@
         }
       }
     },
+    "/project/{id}/members": {
+      "get": {
+        "operationId": "listProjectMembers",
+        "tags": [
+          "Projects"
+        ],
+        "summary": "List project team",
+        "description": "The people on a project's team. Being on the team shows someone the project; which tasks they see still depends on task:read_all.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The project's team",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectMember"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "No workspace access",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "addProjectMember",
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Add to project team",
+        "description": "Add a workspace member to the project's team. It doesn't grant access to tasks that aren't assigned to them.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "userId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The project's team",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectMember"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a member of the workspace",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "No workspace access, or missing project:update",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/project/{id}/members/{userId}": {
+      "delete": {
+        "operationId": "removeProjectMember",
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Remove from project team",
+        "description": "Take someone off the project's team. Tasks assigned to them stay theirs.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "userId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The project's team",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectMember"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "No workspace access, or missing project:update",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/task/tasks/{projectId}": {
       "get": {
         "operationId": "listTasks",
@@ -11373,6 +12199,116 @@
         }
       }
     },
+    "/task/image-upload/{id}/direct": {
+      "put": {
+        "operationId": "uploadTaskImage",
+        "tags": [
+          "Tasks"
+        ],
+        "summary": "Upload an image",
+        "description": "Send the raw image or file as the body. It is stored where the workspace's files go (the owner's R2 when connected) and returned as a private asset URL. Up to 25 MB with R2, 10 MB otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": true,
+            "name": "filename",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "description",
+                "comment"
+              ],
+              "description": "Where the image is used, which decides how it is scoped."
+            },
+            "required": true,
+            "description": "Where the image is used, which decides how it is scoped.",
+            "name": "surface",
+            "in": "query"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The stored asset",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskImageAsset"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Empty upload",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "No workspace access, or missing task:update permission",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Task not found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Too large",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/task/description/{id}": {
       "put": {
         "operationId": "updateTaskDescription",
@@ -12851,6 +13787,86 @@
         }
       }
     },
+    "/time-entry/{id}/note": {
+      "patch": {
+        "operationId": "updateTimeEntryNote",
+        "tags": [
+          "Time Entries"
+        ],
+        "summary": "Add a note to a time entry",
+        "description": "Set what was done and an optional reference (a link or ticket) without touching the times, e.g. right after a timer stops. Other people's entries need timeEntry:manage_all.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "description": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "reference": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 500,
+                    "example": "https://github.com/acme/app/pull/42",
+                    "description": "Null or empty clears it."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The time entry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimeEntry"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The reference isn't an http(s) link or plain text",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "No workspace access, missing task:update permission, or not your entry without timeEntry:manage_all",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/time-entry/{id}": {
       "delete": {
         "operationId": "deleteTimeEntry",
@@ -13321,6 +14337,85 @@
           },
           "409": {
             "description": "Files still live in the bucket",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/files/storage/account/left": {
+      "get": {
+        "operationId": "getFilesLeftInDatabase",
+        "tags": [
+          "Files"
+        ],
+        "summary": "Files not yet in my bucket",
+        "description": "How many files and profile pictures in the workspaces you own are still stored in Postgres.",
+        "responses": {
+          "200": {
+            "description": "What is left",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoredInDatabase"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          }
+        }
+      }
+    },
+    "/files/storage/account/move": {
+      "post": {
+        "operationId": "moveFilesToAccountFileStorage",
+        "tags": [
+          "Files"
+        ],
+        "summary": "Move files into my bucket",
+        "description": "Copy every file and profile picture the workspaces you own still keep in Postgres into your bucket. Safe to repeat.",
+        "responses": {
+          "200": {
+            "description": "What moved, and what is left",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/StoredInDatabase"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "moved": {
+                          "type": "number"
+                        },
+                        "failed": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "moved",
+                        "failed"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "409": {
+            "description": "No bucket connected",
             "content": {
               "text/plain": {
                 "schema": {
@@ -15633,6 +16728,869 @@
           },
           "403": {
             "description": "Someone else's activity without report:read",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/connect": {
+      "get": {
+        "operationId": "getAgentConnectInfo",
+        "tags": [
+          "AI agents"
+        ],
+        "summary": "Where Claude connects",
+        "description": "The MCP address to give Claude Code or Claude Desktop.",
+        "responses": {
+          "200": {
+            "description": "Connection details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentConnectInfo"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          }
+        }
+      }
+    },
+    "/ai/agent-keys": {
+      "get": {
+        "operationId": "listAgentKeys",
+        "tags": [
+          "AI agents"
+        ],
+        "summary": "Your agent keys",
+        "description": "Keys you made for Claude, newest first. The key itself is never shown again.",
+        "responses": {
+          "200": {
+            "description": "Agent keys",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AgentKey"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createAgentKey",
+        "tags": [
+          "AI agents"
+        ],
+        "summary": "Make a key for Claude",
+        "description": "An API key limited to a scope (read, tasks, or everything your role allows except pay, audit, settings and people management). Works for the REST API and /api/mcp.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 60
+                  },
+                  "scope": {
+                    "type": "string",
+                    "enum": [
+                      "read",
+                      "tasks",
+                      "full"
+                    ]
+                  }
+                },
+                "required": [
+                  "scope"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The new key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedAgentKey"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "revokeAllAgentKeys",
+        "tags": [
+          "AI agents"
+        ],
+        "summary": "Revoke every agent key",
+        "description": "The kill switch: all of your agent keys stop working at once.",
+        "responses": {
+          "200": {
+            "description": "How many were revoked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "revoked": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "revoked"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          }
+        }
+      }
+    },
+    "/ai/settings": {
+      "get": {
+        "operationId": "getAiSettings",
+        "tags": [
+          "AI agents"
+        ],
+        "summary": "Ask TeamOS settings",
+        "description": "Whether Claude is on for the workspace, and how it runs.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          }
+        }
+      },
+      "put": {
+        "operationId": "setAiSettings",
+        "tags": [
+          "AI agents"
+        ],
+        "summary": "Turn Ask TeamOS on or off",
+        "description": "Needs workspace:manage_settings.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "workspaceId": {
+                    "type": "string"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "engine": {
+                    "type": "string",
+                    "enum": [
+                      "server",
+                      "desktop"
+                    ]
+                  }
+                },
+                "required": [
+                  "workspaceId",
+                  "enabled",
+                  "engine"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "Missing workspace:manage_settings",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/ask": {
+      "post": {
+        "operationId": "askTeamOs",
+        "tags": [
+          "AI agents"
+        ],
+        "summary": "Ask Claude",
+        "description": "Starts Claude on a request. It reads as you and proposes changes; nothing is applied until you apply the change set. Poll the returned change set until it isn't `proposing`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "workspaceId": {
+                    "type": "string"
+                  },
+                  "prompt": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 8000
+                  },
+                  "context": {
+                    "type": "object",
+                    "properties": {
+                      "projectId": {
+                        "type": "string"
+                      },
+                      "taskId": {
+                        "type": "string"
+                      },
+                      "page": {
+                        "type": "string",
+                        "maxLength": 200
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "workspaceId",
+                  "prompt"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The change set, still proposing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiChangeSet"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "Ask TeamOS is off",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Claude isn't available here",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/change-sets": {
+      "get": {
+        "operationId": "listAiChangeSets",
+        "tags": [
+          "AI agents"
+        ],
+        "summary": "Your recent requests",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Newest first",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AiChangeSet"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          }
+        }
+      }
+    },
+    "/ai/change-sets/{id}": {
+      "get": {
+        "operationId": "getAiChangeSet",
+        "tags": [
+          "AI agents"
+        ],
+        "summary": "One request, with live progress while Claude works",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The change set",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiChangeSet"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/change-sets/{id}/apply": {
+      "post": {
+        "operationId": "applyAiChangeSet",
+        "tags": [
+          "AI agents"
+        ],
+        "summary": "Apply the ticked changes",
+        "description": "Applies the chosen actions as you, through the normal API, recording what they replaced so the change can be undone.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "workspaceId": {
+                    "type": "string"
+                  },
+                  "actions": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "maxItems": 50
+                  }
+                },
+                "required": [
+                  "workspaceId",
+                  "actions"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Applied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiChangeSet"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "409": {
+            "description": "Not a proposal",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/change-sets/{id}/undo": {
+      "post": {
+        "operationId": "undoAiChangeSet",
+        "tags": [
+          "AI agents"
+        ],
+        "summary": "Undo an applied change",
+        "description": "Puts back what each applied action replaced and removes tasks it created.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "workspaceId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "workspaceId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Undone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiChangeSet"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "409": {
+            "description": "Not applied",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/change-sets/{id}/discard": {
+      "post": {
+        "operationId": "discardAiChangeSet",
+        "tags": [
+          "AI agents"
+        ],
+        "summary": "Discard a proposal",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "workspaceId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "workspaceId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Discarded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiChangeSet"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "409": {
+            "description": "Not a proposal",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/teammates": {
+      "get": {
+        "operationId": "listAiTeammates",
+        "tags": [
+          "AI agents"
+        ],
+        "summary": "Your AI teammates",
+        "description": "Triage, standup, overdue and weekly: Claude on a schedule, working with your permissions.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Teammates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AiTeammate"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          }
+        }
+      }
+    },
+    "/ai/teammates/{kind}": {
+      "put": {
+        "operationId": "saveAiTeammate",
+        "tags": [
+          "AI agents"
+        ],
+        "summary": "Set up a teammate",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "triage",
+                "standup",
+                "overdue",
+                "weekly"
+              ]
+            },
+            "required": true,
+            "name": "kind",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "workspaceId": {
+                    "type": "string"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "instructions": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 2000
+                  },
+                  "time": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                  },
+                  "days": {
+                    "type": "string",
+                    "pattern": "^[1-7](,[1-7])*$"
+                  },
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "suggest",
+                      "act"
+                    ]
+                  },
+                  "channelId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "workspaceId",
+                  "enabled",
+                  "time",
+                  "days",
+                  "mode"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The teammate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiTeammate"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          }
+        }
+      }
+    },
+    "/ai/teammates/{kind}/run": {
+      "post": {
+        "operationId": "runAiTeammate",
+        "tags": [
+          "AI agents"
+        ],
+        "summary": "Run a teammate now",
+        "description": "Starts it in the background; you're notified when it's done.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "triage",
+                "standup",
+                "overdue",
+                "weekly"
+              ]
+            },
+            "required": true,
+            "name": "kind",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "workspaceId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "workspaceId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "started": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "started"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "404": {
+            "description": "Not set up yet",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/agent-keys/{id}": {
+      "delete": {
+        "operationId": "revokeAgentKey",
+        "tags": [
+          "AI agents"
+        ],
+        "summary": "Revoke an agent key",
+        "description": "The key stops working immediately.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Revoked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "404": {
+            "description": "Not one of your agent keys",
             "content": {
               "text/plain": {
                 "schema": {
@@ -18327,6 +20285,36 @@
                   "agentVersion": {
                     "type": "string",
                     "maxLength": 40
+                  },
+                  "current": {
+                    "type": "object",
+                    "properties": {
+                      "app": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "maxLength": 120
+                      },
+                      "domain": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "maxLength": 253,
+                        "pattern": "^[a-z0-9.-]+$/i"
+                      },
+                      "since": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-31T09:00:00Z"
+                      }
+                    },
+                    "required": [
+                      "app",
+                      "since"
+                    ],
+                    "description": "The app in front right now (and its site when domains are tracked). Older agents leave it out."
                   }
                 },
                 "required": [
@@ -18381,6 +20369,185 @@
           },
           "401": {
             "description": "Device not paired or revoked",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agent/device/ai-jobs/next": {
+      "get": {
+        "operationId": "agentNextAiJob",
+        "tags": [
+          "Desktop agent"
+        ],
+        "summary": "Wait for an Ask TeamOS request",
+        "description": "Long-polls up to 25 seconds for a request its person made with the desktop engine, and claims it for this device.",
+        "responses": {
+          "200": {
+            "description": "A job, or null after the wait",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentAiJob"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Device not paired or revoked",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agent/device/ai-jobs/{id}/progress": {
+      "post": {
+        "operationId": "agentAiJobProgress",
+        "tags": [
+          "Desktop agent"
+        ],
+        "summary": "Report what Claude is doing",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "steps": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 80
+                    },
+                    "maxItems": 20
+                  }
+                },
+                "required": [
+                  "steps"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "404": {
+            "description": "Not this device's job",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agent/device/ai-jobs/{id}/result": {
+      "post": {
+        "operationId": "agentAiJobResult",
+        "tags": [
+          "Desktop agent"
+        ],
+        "summary": "Hand back Claude's answer",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "maxLength": 200000
+                  },
+                  "error": {
+                    "type": "string",
+                    "maxLength": 2000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "404": {
+            "description": "Not this device's job",
             "content": {
               "text/plain": {
                 "schema": {
@@ -19416,6 +21583,54 @@
           },
           "403": {
             "description": "Missing people:read_all",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/people/live": {
+      "get": {
+        "operationId": "getLivePeople",
+        "tags": [
+          "People"
+        ],
+        "summary": "Who is working in what, now",
+        "description": "Each member's live state from the desktop app (active, idle, paused, offline), clock-in and running timer. The app in front is shown for yourself, and for everyone with activity:read_all.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Live state per person",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LivePerson"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "No access to the workspace",
             "content": {
               "text/plain": {
                 "schema": {
@@ -20756,7 +22971,7 @@
                   },
                   "relatedEntityType": {
                     "type": "string",
-                    "description": "Stored as resourceType: `task` or `workspace`."
+                    "description": "Stored as resourceType, e.g. `task`, `project` or `workspace`."
                   }
                 },
                 "required": [
@@ -24865,6 +27080,551 @@
           },
           "409": {
             "description": "It is the last category",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/instance/email": {
+      "get": {
+        "operationId": "getInstanceEmailSettings",
+        "tags": [
+          "Instance"
+        ],
+        "summary": "Email delivery settings",
+        "description": "How this server sends email. Settings saved here win over RESEND_API_KEY / EMAIL_FROM in the environment. Instance admin only.",
+        "responses": {
+          "200": {
+            "description": "Settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceEmailSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "Not the instance admin",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "saveInstanceEmailSettings",
+        "tags": [
+          "Instance"
+        ],
+        "summary": "Save Resend settings",
+        "description": "Leave the key empty to keep the saved one. The key is stored encrypted and never returned.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "resendApiKey": {
+                    "type": "string",
+                    "pattern": "^re_[A-Za-z0-9_]{8,}$"
+                  },
+                  "from": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 200,
+                    "example": "TeamOS <notifications@example.com>"
+                  }
+                },
+                "required": [
+                  "from"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceEmailSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No key saved yet, or not a Resend key",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "Not the instance admin",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "clearInstanceEmailSettings",
+        "tags": [
+          "Instance"
+        ],
+        "summary": "Remove saved settings",
+        "description": "Email falls back to the environment variables, if any.",
+        "responses": {
+          "200": {
+            "description": "Settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceEmailSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "Not the instance admin",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/instance/email/test": {
+      "post": {
+        "operationId": "sendInstanceTestEmail",
+        "tags": [
+          "Instance"
+        ],
+        "summary": "Send a test email",
+        "description": "Sends one email to you right away, and reports the provider's answer.",
+        "responses": {
+          "200": {
+            "description": "Sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "to": {
+                      "type": "string"
+                    },
+                    "provider": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "to",
+                    "provider"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Email is not set up, or the provider refused",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "Not the instance admin",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/email-templates": {
+      "get": {
+        "operationId": "listEmailTemplates",
+        "tags": [
+          "Email"
+        ],
+        "summary": "Email templates",
+        "description": "Every email TeamOS can send, with its subject as it reads with sample data.",
+        "responses": {
+          "200": {
+            "description": "Templates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EmailTemplate"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          }
+        }
+      }
+    },
+    "/email-templates/{type}": {
+      "get": {
+        "operationId": "previewEmailTemplate",
+        "tags": [
+          "Email"
+        ],
+        "summary": "Preview an email",
+        "description": "The email rendered with sample data. Nothing is sent.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "type",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rendered email",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "subject": {
+                      "type": "string"
+                    },
+                    "html": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "subject",
+                    "html",
+                    "text"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "404": {
+            "description": "No such template",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/email-templates/{type}/send": {
+      "post": {
+        "operationId": "sendTestEmailTemplate",
+        "tags": [
+          "Email"
+        ],
+        "summary": "Send me a test",
+        "description": "Sends the email with sample data to your own address only, through the normal queue, so it shows in your email log. At most 10 every 10 minutes.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "type",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "to": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "to"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Email is not set up",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "404": {
+            "description": "No such template",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many test emails; try again in a few minutes",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notification-policy": {
+      "get": {
+        "operationId": "listNotificationPolicies",
+        "tags": [
+          "Notification policy"
+        ],
+        "summary": "Workspace notification rules",
+        "description": "Every notification event with the workspace's rule for it. Members read this to see what their admin decided.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rules",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationPolicy"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "No access to the workspace",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notification-policy/{key}": {
+      "put": {
+        "operationId": "setNotificationPolicy",
+        "tags": [
+          "Notification policy"
+        ],
+        "summary": "Set a notification rule",
+        "description": "Turn an event on or off for the workspace, in the app and by email. Locked rules apply to everyone; unlocked ones are the default each person can change. Audit logged.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "workspaceId": {
+                    "type": "string"
+                  },
+                  "inApp": {
+                    "type": "boolean"
+                  },
+                  "email": {
+                    "type": "boolean"
+                  },
+                  "locked": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "workspaceId",
+                  "inApp",
+                  "email",
+                  "locked"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rules",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationPolicy"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "Missing workspace:manage_settings",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown event",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "resetNotificationPolicy",
+        "tags": [
+          "Notification policy"
+        ],
+        "summary": "Reset a notification rule",
+        "description": "Back to on, with each person deciding. Audit logged.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "key",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rules",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationPolicy"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "Missing workspace:manage_settings",
             "content": {
               "text/plain": {
                 "schema": {

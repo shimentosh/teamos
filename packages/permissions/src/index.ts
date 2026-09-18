@@ -9,7 +9,8 @@ import {
 export const statement = {
   ...defaultStatements,
   project: ["create", "read", "update", "delete", "share"],
-  task: ["create", "read", "update", "delete", "assign"],
+  // Without read_all, a member sees only the tasks assigned to them.
+  task: ["create", "read", "read_all", "update", "delete", "assign"],
   label: ["create", "read", "update", "delete"],
   workspace: ["read", "update", "delete", "manage_settings"],
   // Everyone may log, see and edit their own time; these grant the same for
@@ -35,7 +36,7 @@ export const ac = createAccessControl(statement);
 export const viewer = ac.newRole({
   ...memberAc.statements,
   project: ["read"],
-  task: ["read"],
+  task: ["read", "read_all"],
   label: ["read"],
   workspace: ["read"],
 });
@@ -54,7 +55,7 @@ export const member = ac.newRole({
 export const manager = ac.newRole({
   ...memberAc.statements,
   project: ["create", "read", "update"],
-  task: ["create", "read", "update", "delete", "assign"],
+  task: ["create", "read", "read_all", "update", "delete", "assign"],
   label: ["create", "read", "update", "delete"],
   workspace: ["read"],
   timeEntry: ["read_all"],
@@ -68,7 +69,7 @@ export const manager = ac.newRole({
 export const admin = ac.newRole({
   ...adminAc.statements,
   project: ["create", "read", "update", "delete", "share"],
-  task: ["create", "read", "update", "delete", "assign"],
+  task: ["create", "read", "read_all", "update", "delete", "assign"],
   label: ["create", "read", "update", "delete"],
   workspace: ["read", "update", "manage_settings"],
   timeEntry: ["read_all", "manage_all"],
@@ -84,7 +85,7 @@ export const admin = ac.newRole({
 export const owner = ac.newRole({
   ...ownerAc.statements,
   project: ["create", "read", "update", "delete", "share"],
-  task: ["create", "read", "update", "delete", "assign"],
+  task: ["create", "read", "read_all", "update", "delete", "assign"],
   label: ["create", "read", "update", "delete"],
   workspace: ["read", "update", "delete", "manage_settings"],
   timeEntry: ["read_all", "manage_all"],

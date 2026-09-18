@@ -1,12 +1,16 @@
 import { APIError } from "better-auth/api";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, count, eq, inArray, notInArray } from "drizzle-orm";
 import {
   findBillableWorkspaces,
   formatBillableWorkspacesMessage,
 } from "../../billing/controllers/find-billable-workspaces";
 import { syncWorkspaceSeats } from "../../billing/controllers/sync-seats";
 import db from "../../database";
-import { workspaceTable, workspaceUserTable } from "../../database/schema";
+import {
+  storedFileTable,
+  workspaceTable,
+  workspaceUserTable,
+} from "../../database/schema";
 import {
   formatBlockedWorkspacesMessage,
   hasOwnerRole,
@@ -66,6 +70,26 @@ export async function deleteAccountData(userId: string) {
   if (plan.blockedWorkspaceNames.length > 0) {
     throw new APIError("CONFLICT", {
       message: formatBlockedWorkspacesMessage(plan.blockedWorkspaceNames),
+    });
+  }
+
+  // Files other people's workspaces keep in this person's bucket would be
+  // unreachable once their account (and its bucket settings) is gone.
+  const [inBucket] = await db
+    .select({ n: count() })
+    .from(storedFileTable)
+    .where(
+      and(
+        eq(storedFileTable.storageOwnerId, userId),
+        eq(storedFileTable.storage, "s3"),
+        plan.workspaceIdsToDelete.length > 0
+          ? notInArray(storedFileTable.workspaceId, plan.workspaceIdsToDelete)
+          : undefined,
+      ),
+    );
+  if ((inBucket?.n ?? 0) > 0) {
+    throw new APIError("CONFLICT", {
+      message: `${inBucket?.n} files in other workspaces are stored in your file storage bucket. Move or delete them, or hand the workspaces to someone who connects their own storage, before deleting your account.`,
     });
   }
 

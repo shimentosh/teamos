@@ -29,6 +29,13 @@ async function getPeopleOverview(workspaceId: string) {
   const year = today.slice(0, 4);
   // Raw SQL needs an explicit timestamp; columns are UTC "timestamp".
   const nowSql = sql`${now.toISOString()}::timestamp`;
+  // Overdue once the due day is over in the company's zone. Due dates are
+  // saved as the picker's local midnight, so round to the nearest day
+  // (12 hours either side), as the reminders do.
+  const overdueBefore = new Date(
+    zonedInstant(today, "00:00", company.timezone).getTime() - 12 * 3600 * 1000,
+  );
+  const overdueSql = sql`${overdueBefore.toISOString()}::timestamp`;
   const thisYearCounted = sql`${leaveRequestTable.startDate} between ${`${year}-01-01`} and ${`${year}-12-31`} and ${inArray(leaveRequestTable.type, COUNTED)}`;
 
   const [tasks, attendance, leave] = await Promise.all([
@@ -36,7 +43,7 @@ async function getPeopleOverview(workspaceId: string) {
       .select({
         userId: taskTable.userId,
         open: sql<number>`count(*)::int`,
-        overdue: sql<number>`count(*) filter (where ${taskTable.dueDate} < ${nowSql})::int`,
+        overdue: sql<number>`count(*) filter (where ${taskTable.dueDate} < ${overdueSql})::int`,
       })
       .from(taskTable)
       .innerJoin(projectTable, eq(projectTable.id, taskTable.projectId))

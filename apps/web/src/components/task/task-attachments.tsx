@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/components/providers/auth-provider/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -234,26 +235,40 @@ export default function TaskAttachments({
     workspaceId,
     folder,
   });
-  const { canUpdateTasks, canUploadFiles } = useWorkspacePermission();
+  const { canUpdateTasks, canUploadFiles, canManageFiles } =
+    useWorkspacePermission();
+  const { user } = useAuth();
   const canEdit = canUpdateTasks();
   const canUpload = canEdit && canUploadFiles();
+  // Removing a file deletes it from the library, which the server allows
+  // only for its uploader or someone with file:manage.
+  const canRemove = (a: TaskAttachment) =>
+    canEdit &&
+    (a.kind === "link" ||
+      a.uploadedBy === user?.id ||
+      Boolean(canManageFiles()));
+  // Keyed per upload: pasted screenshots all share the name "image.png".
   const [uploading, setUploading] = useState<
-    { name: string; progress: number }[]
+    { id: string; name: string; progress: number }[]
   >([]);
   const [dragging, setDragging] = useState(false);
 
   const uploadFiles = async (files: File[]) => {
+    const batch = files.map((file) => ({
+      file,
+      id: crypto.randomUUID(),
+    }));
     setUploading((prev) => [
       ...prev,
-      ...files.map((f) => ({ name: f.name, progress: 0 })),
+      ...batch.map(({ file, id }) => ({ id, name: file.name, progress: 0 })),
     ]);
-    for (const file of files) {
+    for (const { file, id } of batch) {
       try {
         await upload.mutateAsync({
           file,
           onProgress: (progress) =>
             setUploading((prev) =>
-              prev.map((u) => (u.name === file.name ? { ...u, progress } : u)),
+              prev.map((u) => (u.id === id ? { ...u, progress } : u)),
             ),
         });
       } catch (error) {
@@ -263,7 +278,7 @@ export default function TaskAttachments({
             : t("tasks:attachments.uploadError"),
         );
       } finally {
-        setUploading((prev) => prev.filter((u) => u.name !== file.name));
+        setUploading((prev) => prev.filter((u) => u.id !== id));
       }
     }
   };
@@ -282,9 +297,14 @@ export default function TaskAttachments({
     }
   };
 
-  const removeAttachment = (id: string) =>
-    remove
-      .mutateAsync(id)
+  const removeAttachment = (attachment: TaskAttachment) => {
+    const question =
+      attachment.kind === "link"
+        ? t("tasks:attachments.confirmRemoveLink", { name: attachment.title })
+        : t("tasks:attachments.confirmRemoveFile", { name: attachment.title });
+    if (!window.confirm(question)) return;
+    return remove
+      .mutateAsync(attachment.id)
       .catch((error) =>
         toast.error(
           error instanceof Error
@@ -292,6 +312,7 @@ export default function TaskAttachments({
             : t("tasks:attachments.removeError"),
         ),
       );
+  };
 
   const images = attachments.filter(isImage);
   const others = attachments.filter((a) => !isImage(a));
@@ -368,10 +389,10 @@ export default function TaskAttachments({
                 <span className="truncate" title={image.title}>
                   {image.title}
                 </span>
-                {canEdit && (
+                {canRemove(image) && (
                   <RemoveButton
                     label={t("tasks:attachments.remove")}
-                    onClick={() => void removeAttachment(image.id)}
+                    onClick={() => void removeAttachment(image)}
                   />
                 )}
               </div>
@@ -390,10 +411,10 @@ export default function TaskAttachments({
                   attachment={attachment}
                   workspaceId={workspaceId}
                   action={
-                    canEdit ? (
+                    canRemove(attachment) ? (
                       <RemoveButton
                         label={t("tasks:attachments.remove")}
-                        onClick={() => void removeAttachment(attachment.id)}
+                        onClick={() => void removeAttachment(attachment)}
                       />
                     ) : null
                   }
@@ -430,10 +451,10 @@ export default function TaskAttachments({
                       .join(" · ")}
                   </p>
                 </div>
-                {canEdit && (
+                {canRemove(attachment) && (
                   <RemoveButton
                     label={t("tasks:attachments.remove")}
-                    onClick={() => void removeAttachment(attachment.id)}
+                    onClick={() => void removeAttachment(attachment)}
                   />
                 )}
               </li>
@@ -441,7 +462,7 @@ export default function TaskAttachments({
           })}
           {uploading.map((item) => (
             <li
-              key={`uploading-${item.name}`}
+              key={`uploading-${item.id}`}
               className="flex items-center gap-3 py-2 text-sm"
             >
               <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">

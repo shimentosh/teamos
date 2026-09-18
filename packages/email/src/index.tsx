@@ -4,6 +4,8 @@ export type { Tone } from "./layout/theme";
 export {
   type EmailResult,
   renderActivityEmail,
+  renderSystemEmail,
+  type SystemEmail,
   sendActivityEmail,
   sendMagicLinkEmail,
   sendNotificationEmail,
@@ -16,7 +18,10 @@ export { isSmtpConfigured } from "./smtp-config";
 export type { ActivityEmailProps } from "./templates/notifications/activity";
 export {
   deliverEmail,
+  emailEnv,
+  emailFrom,
   emailProvider,
   isEmailConfigured,
   type OutgoingEmail,
+  setEmailSettings,
 } from "./transport";

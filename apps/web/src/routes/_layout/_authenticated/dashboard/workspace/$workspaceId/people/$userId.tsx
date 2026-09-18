@@ -9,6 +9,7 @@ import PageTitle from "@/components/page-title";
 import { PersonPay } from "@/components/pay/person-pay";
 import { EditPersonDialog } from "@/components/people/edit-person-dialog";
 import { personStatusLabel, roleLabel } from "@/components/people/labels";
+import { PersonLive } from "@/components/people/live";
 import { PersonDevices } from "@/components/people/person-devices";
 import { PersonOverview } from "@/components/people/person-overview";
 import { PersonTasks } from "@/components/people/person-tasks";
@@ -155,7 +156,8 @@ function RouteComponent() {
                 <AttendanceMonth workspaceId={workspaceId} userId={userId} />
               </TabsContent>
               {canSeeActivity && (
-                <TabsContent value="activity" className="pt-4">
+                <TabsContent value="activity" className="space-y-6 pt-4">
+                  <PersonLive workspaceId={workspaceId} userId={userId} />
                   <ActivityView workspaceId={workspaceId} userId={userId} />
                 </TabsContent>
               )}

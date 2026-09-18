@@ -71,6 +71,11 @@ type TaskDetailsContentProps = {
   projectId: string;
   workspaceId: string;
   className?: string;
+  /**
+   * "responsive": the log sits above activity on narrow screens and in the
+   * properties sidebar on wide ones. "end": always last, as in the side panel.
+   */
+  timeLogPlacement?: "responsive" | "end";
 };
 
 export default function TaskDetailsContent({
@@ -78,6 +83,7 @@ export default function TaskDetailsContent({
   projectId,
   workspaceId,
   className,
+  timeLogPlacement = "responsive",
 }: TaskDetailsContentProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -464,7 +470,9 @@ export default function TaskDetailsContent({
       </div>
 
       {/* On wide screens the log lives in the properties sidebar. */}
-      <TaskTimeLog taskId={taskId} className="mt-2 lg:hidden" />
+      {timeLogPlacement === "responsive" && (
+        <TaskTimeLog taskId={taskId} className="mt-2 lg:hidden" />
+      )}
       <span className="text-sm font-medium text-muted-foreground h-[1px] bg-border w-full block shrink-0" />
       <div className="flex flex-col gap-4">
         <h1 className="text-md font-semibold">{t("tasks:detail.activity")}</h1>
@@ -496,6 +504,12 @@ export default function TaskDetailsContent({
           </p>
         )}
       </div>
+      {timeLogPlacement === "end" && (
+        <>
+          <span className="block h-[1px] w-full shrink-0 bg-border" />
+          <TaskTimeLog taskId={taskId} />
+        </>
+      )}
     </div>
   );
 }

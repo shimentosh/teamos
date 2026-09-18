@@ -8,6 +8,7 @@ import {
   workspaceTable,
   workspaceUserTable,
 } from "../../database/schema";
+import { visibleProjects } from "../../utils/task-visibility";
 import { escapeLikePattern } from "../like-pattern";
 import { TASK_SHORT_ID_PATTERN } from "../task-short-id";
 
@@ -24,6 +25,8 @@ type SearchParams = {
     | "activities";
   workspaceId?: string;
   projectId?: string;
+  // Set when the searcher only sees tasks assigned to them.
+  visibleTo?: string | null;
   limit?: number;
 };
 
@@ -109,6 +112,7 @@ async function globalSearch(params: SearchParams): Promise<{
     workspaceId,
     projectId,
     limit = 20,
+    visibleTo,
   } = params;
 
   let resolvedUserId = userId;
@@ -143,6 +147,10 @@ async function globalSearch(params: SearchParams): Promise<{
 
   const results: SearchResult[] = [];
   const searchPattern = `%${query.toLowerCase()}%`;
+
+  // Members who only see their own tasks find only those, and the comments
+  // and history on them.
+  const taskFilter = visibleTo ? eq(taskTable.userId, visibleTo) : undefined;
 
   const workspaceFilter = workspaceId
     ? eq(projectTable.workspaceId, workspaceId)
@@ -189,6 +197,7 @@ async function globalSearch(params: SearchParams): Promise<{
         .where(
           and(
             workspaceFilter,
+            taskFilter,
             projectId ? eq(taskTable.projectId, projectId) : undefined,
             // A project key may hold `_`, which `ilike` reads as "any one
             // character", so `DE_-23` would also match a task in `DEP` and the
@@ -257,6 +266,7 @@ async function globalSearch(params: SearchParams): Promise<{
       .where(
         and(
           workspaceFilter,
+          taskFilter,
           projectId ? eq(taskTable.projectId, projectId) : undefined,
           or(
             ilike(taskTable.title, searchPattern),
@@ -317,6 +327,7 @@ async function globalSearch(params: SearchParams): Promise<{
       .where(
         and(
           workspaceFilter,
+          visibleProjects(visibleTo ?? null),
           or(
             ilike(projectTable.name, searchPattern),
             ilike(projectTable.description, searchPattern),
@@ -431,6 +442,7 @@ async function globalSearch(params: SearchParams): Promise<{
       .where(
         and(
           workspaceFilter,
+          taskFilter,
           projectId ? eq(taskTable.projectId, projectId) : undefined,
           or(
             ilike(searchableActivityText, searchPattern),

@@ -4,6 +4,7 @@ import db from "../../database";
 import { columnTable, taskTable } from "../../database/schema";
 import { publishEvent } from "../../events";
 import { deleteOrphanedAssets } from "../../storage/cleanup-assets";
+import { syncTimerWithStatus } from "../../time-entry/auto-timer";
 import {
   assertAssignableUser,
   getProjectWorkspaceId,
@@ -88,6 +89,15 @@ async function updateTask(
   }
 
   if (existingTask.status !== status) {
+    if (currentUserId) {
+      await syncTimerWithStatus({
+        taskId: updatedTask.id,
+        actorId: currentUserId,
+        oldStatus: existingTask.status,
+        newStatus: status,
+      });
+    }
+
     await publishEvent("task.status_changed", {
       taskId: updatedTask.id,
       projectId: updatedTask.projectId,

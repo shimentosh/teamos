@@ -7,6 +7,7 @@ import {
   taskTable,
 } from "../database/schema";
 import { deleteS3Object } from "./s3";
+import { deleteStoredAsset, storedFileIdOf } from "./task-image";
 
 const ASSET_URL_PATTERN = /\/api\/asset\/([a-z0-9]+)/gi;
 
@@ -147,7 +148,10 @@ export async function deleteS3Keys(
   keys: string[],
 ): Promise<PromiseSettledResult<void>[]> {
   const deleteResults = await Promise.allSettled(
-    keys.map((key) => deleteS3Object(key)),
+    keys.map((key) => {
+      const fileId = storedFileIdOf(key);
+      return fileId ? deleteStoredAsset(fileId) : deleteS3Object(key);
+    }),
   );
 
   const failedDeletions = keys

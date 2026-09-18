@@ -25,6 +25,7 @@ describe("@kaneo/permissions statement surface", () => {
     expect(statement.task).toEqual([
       "create",
       "read",
+      "read_all",
       "update",
       "delete",
       "assign",
@@ -52,7 +53,7 @@ describe("@kaneo/permissions statement surface", () => {
 describe("built-in role privileges", () => {
   it("viewer can read but cannot create or modify", () => {
     expect(viewer.statements.project).toEqual(["read"]);
-    expect(viewer.statements.task).toEqual(["read"]);
+    expect(viewer.statements.task).toEqual(["read", "read_all"]);
     expect(viewer.statements.label).toEqual(["read"]);
     expect(viewer.statements.workspace).toEqual(["read"]);
   });
@@ -61,6 +62,8 @@ describe("built-in role privileges", () => {
     expect(member.statements.task).toContain("create");
     expect(member.statements.task).toContain("update");
     expect(member.statements.task).not.toContain("delete");
+    // Members see the tasks assigned to them, not the whole workspace.
+    expect(member.statements.task).not.toContain("read_all");
     expect(member.statements.project).toContain("create");
     expect(member.statements.project).not.toContain("delete");
     expect(member.statements.workspace).toEqual(["read"]);
@@ -77,7 +80,14 @@ describe("built-in role privileges", () => {
 
   it("owner has every TeamOS resource action including workspace:delete", () => {
     expect(owner.statements.task).toEqual(
-      expect.arrayContaining(["create", "read", "update", "delete", "assign"]),
+      expect.arrayContaining([
+        "create",
+        "read",
+        "read_all",
+        "update",
+        "delete",
+        "assign",
+      ]),
     );
     expect(owner.statements.project).toEqual(
       expect.arrayContaining(["create", "read", "update", "delete", "share"]),
@@ -154,11 +164,18 @@ describe("coversPermissions", () => {
     expect(coversPermissions([admin.statements], [member.statements])).toBe(
       true,
     );
-    expect(coversPermissions([member.statements], [viewer.statements])).toBe(
+    expect(coversPermissions([manager.statements], [viewer.statements])).toBe(
       true,
     );
     expect(coversPermissions([member.statements], [member.statements])).toBe(
       true,
+    );
+  });
+
+  it("keeps a member from granting a view of every task", () => {
+    // Viewers read all tasks; members only see their own.
+    expect(coversPermissions([member.statements], [viewer.statements])).toBe(
+      false,
     );
   });
 

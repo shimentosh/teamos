@@ -4,6 +4,7 @@ import { Plus, Shield, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import PageTitle from "@/components/page-title";
+import { RolesTransfer } from "@/components/roles/roles-transfer";
 import {
   Accordion,
   AccordionItem,
@@ -125,7 +126,12 @@ const PERMISSION_LABELS: Record<
   },
   "task:read": {
     label: "View tasks",
-    description: "View tasks across projects.",
+    description: "View the tasks assigned to them.",
+  },
+  "task:read_all": {
+    label: "See all tasks",
+    description:
+      "See every task in the workspace. Without it, people see only the tasks assigned to them.",
   },
   "task:update": {
     label: "Edit tasks",
@@ -291,20 +297,27 @@ function RouteComponent() {
                 {t("settings:workspaceRoles.sectionSubtitle")}
               </p>
             </div>
-            <Button
-              size="sm"
-              className="gap-1.5"
-              onClick={() => {
-                setDraftActive(true);
-                setOpenCustom((prev) =>
-                  prev.includes("__draft__") ? prev : [...prev, "__draft__"],
-                );
-              }}
-              disabled={draftActive}
-            >
-              <Plus className="w-3.5 h-3.5" />
-              {t("settings:workspaceRoles.newRole")}
-            </Button>
+            <div className="flex shrink-0 flex-wrap justify-end gap-2">
+              <RolesTransfer
+                workspaceId={workspaceId}
+                workspaceName={workspace?.name}
+                roles={sortedRoles}
+              />
+              <Button
+                size="sm"
+                className="gap-1.5"
+                onClick={() => {
+                  setDraftActive(true);
+                  setOpenCustom((prev) =>
+                    prev.includes("__draft__") ? prev : [...prev, "__draft__"],
+                  );
+                }}
+                disabled={draftActive}
+              >
+                <Plus className="w-3.5 h-3.5" />
+                {t("settings:workspaceRoles.newRole")}
+              </Button>
+            </div>
           </div>
           <div className="border border-border rounded-md bg-sidebar">
             {isLoading && !draftActive ? (

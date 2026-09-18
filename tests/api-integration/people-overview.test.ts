@@ -21,7 +21,9 @@ describe("people overview", () => {
       workspaceId: workspace.id,
     });
 
-    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    // Two days back: due dates round to the nearest day, so "24 hours ago"
+    // late in the day would still count as today.
+    const yesterday = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
     const inAWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     await db.insert(schema.taskTable).values([
       {

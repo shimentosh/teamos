@@ -4,6 +4,7 @@ import { HTTPException } from "hono/http-exception";
 import db from "../../database";
 import { taskTable, timeEntryTable } from "../../database/schema";
 import { publishEvent } from "../../events";
+import { moveToInProgressOnStart } from "../auto-timer";
 import { resolveDuration } from "../duration";
 import { stopRunningTimeEntries } from "./stop-running-time-entries";
 
@@ -43,6 +44,11 @@ async function createTimeEntry({
     throw new HTTPException(500, {
       message: "Failed to create time entry",
     });
+  }
+
+  // A running timer means work has started on the task.
+  if (!endTime) {
+    await moveToInProgressOnStart(taskId, userId);
   }
 
   const [task] = await db

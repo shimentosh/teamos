@@ -1,5 +1,17 @@
 import { randomBytes } from "node:crypto";
-import { and, count, desc, eq, isNull, like, ne, or, sql } from "drizzle-orm";
+import {
+  and,
+  count,
+  desc,
+  eq,
+  inArray,
+  isNotNull,
+  isNull,
+  like,
+  ne,
+  or,
+  sql,
+} from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import { HTTPException } from "hono/http-exception";
 import { recordAudit } from "../audit/record-audit";
@@ -7,6 +19,7 @@ import db from "../database";
 import {
   fileFolderTable,
   storedFileTable,
+  userAvatarTable,
   userStorageTable,
   userTable,
   workspaceStorageTable,
@@ -16,6 +29,8 @@ import {
   type BucketConfig,
   deleteBlob,
   getUserBucket,
+  hasOwnerRoleSql,
+  moveBlobToBucket,
   storeBlob,
   testBucket,
   workspaceOwnerId,
@@ -132,12 +147,7 @@ async function ownedWorkspaceIds(userId: string) {
   const rows = await db
     .select({ workspaceId: workspaceUserTable.workspaceId })
     .from(workspaceUserTable)
-    .where(
-      and(
-        eq(workspaceUserTable.userId, userId),
-        eq(workspaceUserTable.role, "owner"),
-      ),
-    );
+    .where(and(eq(workspaceUserTable.userId, userId), hasOwnerRoleSql));
   return rows.map((row) => row.workspaceId);
 }
 
@@ -227,6 +237,117 @@ export async function disconnectAccountStorage(userId: string) {
   await db.delete(userStorageTable).where(eq(userStorageTable.userId, userId));
   await auditOwned(userId, "storage.disconnected");
   return accountStorageStatus(userId);
+}
+
+/** How many files and profile pictures still sit in Postgres. */
+export async function filesLeftInDatabase(userId: string) {
+  const owned = await ownedWorkspaceIds(userId);
+  if (owned.length === 0) return { files: 0, avatars: 0 };
+  const [files] = await db
+    .select({ n: count() })
+    .from(storedFileTable)
+    .where(
+      and(
+        inArray(storedFileTable.workspaceId, owned),
+        eq(storedFileTable.storage, "db"),
+      ),
+    );
+  const [avatars] = await db
+    .select({ n: count() })
+    .from(userAvatarTable)
+    .where(
+      and(
+        isNotNull(userAvatarTable.data),
+        inArray(
+          userAvatarTable.userId,
+          db
+            .select({ id: workspaceUserTable.userId })
+            .from(workspaceUserTable)
+            .where(inArray(workspaceUserTable.workspaceId, owned)),
+        ),
+      ),
+    );
+  return { files: files?.n ?? 0, avatars: avatars?.n ?? 0 };
+}
+
+/**
+ * Copies everything the owner's workspaces kept in Postgres (before the
+ * bucket was connected) into their bucket: files, receipts, pasted task
+ * images and the members' profile pictures. Safe to run again; each file
+ * moves once, and a failure leaves that file where it was.
+ */
+export async function moveFilesToAccountStorage(userId: string) {
+  const config = await getUserBucket(userId);
+  if (!config) {
+    throw new HTTPException(409, {
+      message: "Connect a bucket before moving files into it",
+    });
+  }
+  const owned = await ownedWorkspaceIds(userId);
+  let moved = 0;
+  let failed = 0;
+
+  for (const workspaceId of owned) {
+    const files = await db
+      .select()
+      .from(storedFileTable)
+      .where(
+        and(
+          eq(storedFileTable.workspaceId, workspaceId),
+          eq(storedFileTable.storage, "db"),
+        ),
+      );
+    for (const file of files) {
+      try {
+        if (await moveBlobToBucket(file, config, userId)) moved += 1;
+      } catch {
+        failed += 1;
+      }
+    }
+
+    const avatars = await db
+      .select({
+        id: userAvatarTable.id,
+        userId: userAvatarTable.userId,
+        mimeType: userAvatarTable.mimeType,
+        data: userAvatarTable.data,
+      })
+      .from(userAvatarTable)
+      .innerJoin(
+        workspaceUserTable,
+        eq(workspaceUserTable.userId, userAvatarTable.userId),
+      )
+      .where(
+        and(
+          eq(workspaceUserTable.workspaceId, workspaceId),
+          isNotNull(userAvatarTable.data),
+        ),
+      );
+    for (const avatar of avatars) {
+      if (!avatar.data) continue;
+      try {
+        const stored = await storeBlob({
+          workspaceId,
+          uploadedBy: avatar.userId,
+          filename: `avatar.${avatar.mimeType.split("/")[1] ?? "img"}`,
+          mimeType: avatar.mimeType,
+          bytes: avatar.data,
+          kind: "avatar",
+        });
+        // Same avatar id, so every cached URL keeps working.
+        await db
+          .update(userAvatarTable)
+          .set({ data: null, storedFileId: stored.id })
+          .where(eq(userAvatarTable.id, avatar.id));
+        moved += 1;
+      } catch {
+        failed += 1;
+      }
+    }
+  }
+
+  await auditOwned(userId, "storage.files_moved", { moved, failed });
+  return { moved, failed, ...(await filesLeftInDatabase(userId)) };
 }
 
 /** Drops a leftover workspace bucket once nothing is stored in it. */

@@ -30,6 +30,22 @@ pub struct Status {
     pub last_error: Option<String>,
     pub track_domains: bool,
     pub attendance: Option<Attendance>,
+    /// The app in front right now, as the server sees it. Shown in the window
+    /// so people see exactly what is shared.
+    pub current_app: Option<String>,
+    pub current_domain: Option<String>,
+    /// The workspace runs Ask TeamOS on people's own Claude Code.
+    pub ai_bridge: bool,
+    /// This person allowed it on this computer.
+    pub allow_ai: bool,
+}
+
+/// What the Ask TeamOS bridge needs to reach the server.
+pub struct AiContext {
+    pub api_base: String,
+    pub token: String,
+    pub workspace_wants: bool,
+    pub allowed: bool,
 }
 
 impl Status {
@@ -60,7 +76,22 @@ struct Shared {
     /// Set by pause/resume/connect so the loop reports promptly.
     sync_now: bool,
     attendance: Option<Attendance>,
+    current: Option<Current>,
+    /// What the server was last told is in front, to report switches soon.
+    reported: Option<(Option<String>, Option<String>)>,
 }
+
+/// The app (and site) in front, and since when.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Current {
+    pub app: Option<String>,
+    pub domain: Option<String>,
+    pub since: DateTime<Utc>,
+}
+
+/// A switch is reported once it has lasted this long, so alt-tabbing through
+/// windows doesn't send a heartbeat for each.
+const REPORT_SWITCH_AFTER: Duration = Duration::from_secs(10);
 
 pub struct Tracker {
     dir: PathBuf,
@@ -99,6 +130,8 @@ impl Tracker {
                 generation: 0,
                 sync_now: true,
                 attendance: None,
+                current: None,
+                reported: None,
             }),
             dir,
             wake: Condvar::new(),
@@ -120,6 +153,29 @@ impl Tracker {
     /// Spans waiting for upload (oldest first); used by the debug CLI.
     pub fn queued(&self, max: usize) -> Vec<spans::Span> {
         self.lock().queue.front(max)
+    }
+
+    pub fn ai_context(&self) -> Option<AiContext> {
+        let s = self.lock();
+        let (config, token) = (s.config.as_ref()?, s.token.as_ref()?);
+        Some(AiContext {
+            api_base: config.api_base.clone(),
+            token: token.clone(),
+            workspace_wants: config.settings.ai_bridge,
+            allowed: config.allow_ai,
+        })
+    }
+
+    /// The person's consent for Ask TeamOS to use their Claude Code.
+    pub fn set_allow_ai(&self, allow: bool) {
+        {
+            let mut s = self.lock();
+            if let Some(config) = s.config.as_mut() {
+                config.allow_ai = allow;
+                let _ = config::save(&self.dir, config);
+            }
+        }
+        self.notify();
     }
 
     pub fn is_connected(&self) -> bool {
@@ -148,6 +204,8 @@ impl Tracker {
             workspace_name: paired.workspace_name,
             user_name: paired.user_name,
             settings: paired.settings.clamped(),
+            // Running Claude is opt-in, per computer.
+            allow_ai: false,
         };
         config::save(&self.dir, &config).map_err(|e| format!("Could not save settings: {e}"))?;
         {
@@ -236,6 +294,27 @@ impl Tracker {
             domain: observation.domain.filter(|_| config.settings.track_domains),
         };
         s.last_state = state;
+        let now = sample.at;
+        let changed = s
+            .current
+            .as_ref()
+            .is_none_or(|c| c.app != sample.app || c.domain != sample.domain);
+        if changed {
+            s.current = Some(Current {
+                app: sample.app.clone(),
+                domain: sample.domain.clone(),
+                since: now,
+            });
+        }
+        if let Some(current) = &s.current {
+            let settled = (now - current.since)
+                .to_std()
+                .is_ok_and(|held| held >= REPORT_SWITCH_AFTER);
+            let key = (current.app.clone(), current.domain.clone());
+            if settled && s.reported.as_ref() != Some(&key) {
+                s.sync_now = true;
+            }
+        }
         if let Some(span) = s.builder.push(sample) {
             let _ = s.queue.push(span);
         }
@@ -296,20 +375,27 @@ impl Tracker {
             };
 
             if batch.is_empty() {
-                if report.uploaded == 0 {
-                    let state = {
-                        let s = self.lock();
-                        if s.paused {
-                            "paused"
-                        } else {
-                            s.last_state.as_str()
-                        }
+                // Every sync ends with a heartbeat: it carries the live "now"
+                // even when spans were just uploaded.
+                let (state, current) = {
+                    let s = self.lock();
+                    let state = if s.paused {
+                        "paused"
+                    } else {
+                        s.last_state.as_str()
                     };
-                    let reply = client.heartbeat(&token, state)?;
-                    report.heartbeat = true;
-                    self.apply_settings(reply.settings, generation);
-                    self.apply_attendance(reply.attendance, generation);
+                    (state, if s.paused { None } else { s.current.clone() })
+                };
+                let reply = client.heartbeat(&token, state, current.as_ref())?;
+                report.heartbeat = true;
+                {
+                    let mut s = self.lock();
+                    if s.generation == generation {
+                        s.reported = current.map(|c| (c.app, c.domain));
+                    }
                 }
+                self.apply_settings(reply.settings, generation);
+                self.apply_attendance(reply.attendance, generation);
                 return Ok(());
             }
 
@@ -386,6 +472,8 @@ impl Tracker {
             s.last_sync = None;
             s.last_error = reason;
             s.attendance = None;
+            s.current = None;
+            s.reported = None;
             s.generation += 1;
         }
         self.notify();
@@ -479,6 +567,18 @@ fn status_of(s: &Shared) -> Status {
         last_error: s.last_error.clone(),
         track_domains: config.is_some_and(|c| c.settings.track_domains),
         attendance: s.attendance.clone(),
+        current_app: if s.paused {
+            None
+        } else {
+            s.current.as_ref().and_then(|c| c.app.clone())
+        },
+        current_domain: if s.paused {
+            None
+        } else {
+            s.current.as_ref().and_then(|c| c.domain.clone())
+        },
+        ai_bridge: config.is_some_and(|c| c.settings.ai_bridge),
+        allow_ai: config.is_some_and(|c| c.allow_ai),
     }
 }
 

@@ -6,6 +6,7 @@ import {
   useLocation,
 } from "@tanstack/react-router";
 import {
+  Bell,
   Building2,
   CreditCard,
   ScrollText,
@@ -96,6 +97,11 @@ function RouteComponent() {
       title: t("settings:workspaceLabels.title", { defaultValue: "Labels" }),
       url: "/dashboard/settings/workspace/labels",
       icon: Tag,
+    },
+    {
+      title: t("notificationPolicy:title"),
+      url: "/dashboard/settings/workspace/notifications",
+      icon: Bell,
     },
     ...(canReadAudit()
       ? [

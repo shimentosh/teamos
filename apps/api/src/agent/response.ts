@@ -10,6 +10,10 @@ export const agentSettingsSchema = z
     heartbeatSeconds: z.number(),
     syncSeconds: z.number(),
     idleAfterSeconds: z.number(),
+    aiBridge: z.boolean().openapi({
+      description:
+        "The workspace runs Ask TeamOS on people's own Claude Code: poll /device/ai-jobs/next.",
+    }),
   })
   .openapi("AgentSettings");
 

@@ -106,6 +106,27 @@ const monthName = (year: number | null, month: number | null) =>
       }).format(new Date(Date.UTC(year, month - 1, 15)))
     : null;
 
+type Brief = { title: string; ref: string | null; daysLate?: number };
+
+/** A list of tasks from event data, as "REF Title" lines. */
+const briefs = (data: Data, key: string): Brief[] => {
+  const value = data?.[key];
+  return Array.isArray(value)
+    ? value.filter(
+        (item): item is Brief =>
+          typeof item === "object" &&
+          item !== null &&
+          typeof (item as Brief).title === "string",
+      )
+    : [];
+};
+
+const line = (task: Brief) =>
+  task.ref ? `${task.ref} · ${task.title}` : task.title;
+
+const plural = (count: number, one: string, many = `${one}s`) =>
+  `${count} ${count === 1 ? one : many}`;
+
 const humanStatus = (status: string | null) =>
   status
     ? status.replace(/[-_]+/g, " ").replace(/^\w/, (c) => c.toUpperCase())
@@ -169,6 +190,57 @@ export function buildNotificationEmail(input: {
         },
       };
     }
+    case "project_task_created": {
+      const who = str(data, "actorName") ?? "Someone";
+      const where = project ?? str(data, "projectName");
+      const heading = `${who} added ${task}`;
+      return {
+        subject: where ? `New in ${where}: ${task}` : `New task: ${task}`,
+        category: "project_activity",
+        props: {
+          ...base,
+          preview: `${who} added a task${where ? ` to ${where}` : ""}.`,
+          eyebrow: "New task",
+          heading,
+          intro:
+            "A new task in a project you're on. Open it to see who has it and when it's due.",
+          card: { ...taskCard, status: { label: "New", tone: "info" } },
+          primary: openTask,
+          reason: "You get this because you're on this project's team.",
+        },
+      };
+    }
+    case "task_deleted":
+    case "project_task_deleted": {
+      const who = str(data, "actorName") ?? "Someone";
+      const where = project ?? str(data, "projectName");
+      const yours = type === "task_deleted";
+      const heading = yours
+        ? `${who} deleted your task ${task}`
+        : `${who} deleted ${task}`;
+      return {
+        subject: heading,
+        category: yours ? "task_deleted" : "project_activity",
+        props: {
+          ...base,
+          preview: `${task} was deleted${where ? ` from ${where}` : ""}.`,
+          eyebrow: "Task deleted",
+          heading,
+          intro: yours
+            ? "It's off your list. If it was deleted by mistake, ask them or a workspace admin about it."
+            : "It's no longer on the project's board.",
+          card: {
+            title: task,
+            subtitle: where ? `${where} · ${workspace}` : workspace,
+            status: { label: "Deleted", tone: "danger" },
+          },
+          primary: open ? { label: "Open project", url: open } : null,
+          reason: yours
+            ? "You get this because the task was assigned to you."
+            : "You get this because you're on this project's team.",
+        },
+      };
+    }
     case "task_status_changed": {
       const from = humanStatus(str(data, "oldStatus"));
       const to = humanStatus(str(data, "newStatus"));
@@ -219,36 +291,296 @@ export function buildNotificationEmail(input: {
         },
       };
     }
-    case "due_date_reminder":
-    case "task_overdue": {
-      const overdue = type === "task_overdue";
+    case "due_date_reminder": {
       const when = leadTime(num(data, "leadTimeMinutes"));
       const due = formatDay(str(data, "dueDate"));
       return {
-        subject: overdue ? `Overdue: ${task}` : `Due ${when}: ${task}`,
-        category: overdue ? "task_overdue" : "task_due",
+        subject: `Due ${when}: ${task}`,
+        category: "task_due",
         props: {
           ...base,
-          preview: overdue
-            ? `${task} is past its due date.`
-            : `${task} is due ${when}.`,
-          eyebrow: overdue ? "Overdue" : "Due soon",
-          heading: overdue ? `${task} is overdue` : `${task} is due ${when}`,
+          preview: `${task} is due ${when}. Plan the time for it now.`,
+          eyebrow: "Coming up",
+          heading: `${task} is due ${when}`,
+          intro:
+            "A heads-up while there's still time to plan. If it won't make it, move the date now rather than later.",
           card: {
             ...taskCard,
-            status: overdue
-              ? { label: "Overdue", tone: "danger" }
-              : { label: "Due soon", tone: "warning" },
+            status: { label: `Due ${when}`, tone: "info" },
             details: due ? [{ label: "Due", value: due }] : [],
           },
-          callout: overdue
-            ? {
-                tone: "danger",
-                text: "Finish it, or move the due date so the plan stays honest.",
-              }
-            : null,
           primary: openTask,
           reason: "You get this because the task is assigned to you.",
+        },
+      };
+    }
+    case "task_due_today": {
+      const due = formatDay(str(data, "dueDate"));
+      return {
+        subject: `Due today: ${task}`,
+        category: "task_due_today",
+        props: {
+          ...base,
+          preview: `${task} is due today.`,
+          eyebrow: "Due today",
+          heading: `${task} is due today`,
+          intro:
+            "Make it one of today's first things. Mark it done when you finish, so nobody has to chase it.",
+          card: {
+            ...taskCard,
+            status: { label: "Due today", tone: "warning" },
+            details: due ? [{ label: "Due", value: due }] : [],
+          },
+          primary: openTask,
+          reason: "You get this because the task is assigned to you.",
+        },
+      };
+    }
+    case "task_due_soon": {
+      return {
+        subject: `Last call: ${task} is due by end of day`,
+        category: "task_last_call",
+        props: {
+          ...base,
+          preview: `About two hours left today for ${task}.`,
+          eyebrow: "Last call",
+          heading: `${task} is due by end of day`,
+          intro:
+            "About two hours of the workday are left. Finish it, or move the due date before it turns overdue.",
+          card: {
+            ...taskCard,
+            status: { label: "Due in ~2 hours", tone: "warning" },
+          },
+          callout: {
+            tone: "warning",
+            text: "Moving the date is fine. An honest plan beats a surprise tomorrow.",
+          },
+          primary: openTask,
+          reason: "You get this because the task is assigned to you.",
+        },
+      };
+    }
+    case "task_overdue": {
+      const late = num(data, "daysOverdue") ?? 1;
+      const due = formatDay(str(data, "dueDate"));
+      const lateText = `${late} ${late === 1 ? "day" : "days"}`;
+      const escalated = str(data, "stage") === "escalate";
+      return {
+        subject: `Overdue by ${lateText}: ${task}`,
+        category: "task_overdue",
+        props: {
+          ...base,
+          preview: `${task} was due ${due ?? "earlier"} and is still open.`,
+          eyebrow: "Overdue",
+          heading: `${task} is ${lateText} overdue`,
+          intro: escalated
+            ? "It's been a few workdays, so your manager has been told as well. Finish it, move the date, or leave a comment on what's blocking it."
+            : "It's still open. Finish it, move the date, or leave a comment on what's blocking it.",
+          card: {
+            ...taskCard,
+            status: { label: `${lateText} late`, tone: "danger" },
+            details: due ? [{ label: "Was due", value: due }] : [],
+          },
+          primary: openTask,
+          reason: "You get this because the task is assigned to you.",
+        },
+      };
+    }
+    case "daily_digest": {
+      const dueToday = briefs(data, "dueToday");
+      const overdue = briefs(data, "overdue");
+      const fresh = briefs(data, "fresh");
+      const dueCount = num(data, "dueTodayCount") ?? dueToday.length;
+      const lateCount = num(data, "overdueCount") ?? overdue.length;
+      const newCount = num(data, "newCount") ?? fresh.length;
+      const parts = [
+        dueCount ? `${dueCount} due today` : null,
+        lateCount ? `${lateCount} overdue` : null,
+        newCount ? `${newCount} new` : null,
+      ].filter(Boolean);
+      const summary = parts.join(", ") || "a clear board";
+      const more = (shown: number, total: number) =>
+        total > shown ? [`…and ${total - shown} more`] : [];
+      return {
+        subject: `Your day in ${workspace}: ${summary}`,
+        category: "daily_digest",
+        props: {
+          ...base,
+          preview: `Today: ${summary}.`,
+          eyebrow: "Your day",
+          heading: `Good morning. Today: ${summary}`,
+          intro:
+            "Start with anything overdue, then what's due today. Move a date if a plan changed, so your team isn't surprised.",
+          card: {
+            title: workspace,
+            details: [
+              { label: "Due today", value: String(dueCount) },
+              { label: "Overdue", value: String(lateCount) },
+              { label: "New for you", value: String(newCount) },
+              {
+                label: "Open in total",
+                value: String(num(data, "openCount") ?? 0),
+              },
+            ],
+          },
+          body: [
+            ...(overdue.length
+              ? [
+                  "Overdue",
+                  ...overdue.map(
+                    (t) =>
+                      `• ${line(t)}${t.daysLate ? ` (${plural(t.daysLate, "workday")} late)` : ""}`,
+                  ),
+                  ...more(overdue.length, lateCount),
+                ]
+              : []),
+            ...(dueToday.length
+              ? [
+                  "Due today",
+                  ...dueToday.map((t) => `• ${line(t)}`),
+                  ...more(dueToday.length, dueCount),
+                ]
+              : []),
+            ...(fresh.length
+              ? [
+                  "New for you",
+                  ...fresh.map((t) => `• ${line(t)}`),
+                  ...more(fresh.length, newCount),
+                ]
+              : []),
+          ],
+          primary: open ? { label: "Open My work", url: open } : null,
+          reason: `You get this each workday morning when something needs you in ${workspace}.`,
+        },
+      };
+    }
+    case "task_not_started": {
+      const days = num(data, "workdays") ?? 2;
+      return {
+        subject: `Not started yet: ${task}`,
+        category: "task_not_started",
+        props: {
+          ...base,
+          preview: `${task} was assigned to you ${plural(days, "workday")} ago.`,
+          eyebrow: "Waiting to start",
+          heading: `${task} hasn't been started`,
+          intro: `It was assigned to you ${plural(days, "workday")} ago and is still in the first column. Move it along when you begin, or say what's in the way.`,
+          card: {
+            ...taskCard,
+            status: { label: "Not started", tone: "warning" },
+          },
+          primary: openTask,
+          reason: "You get this because the task is assigned to you.",
+        },
+      };
+    }
+    case "task_stuck": {
+      const days = num(data, "workdays") ?? 3;
+      const since = formatDay(str(data, "since"));
+      return {
+        subject: `No progress for ${plural(days, "workday")}: ${task}`,
+        category: "task_stuck",
+        props: {
+          ...base,
+          preview: `Nothing has changed on ${task} since ${since ?? "a while"}.`,
+          eyebrow: "Stuck?",
+          heading: `${task} hasn't moved in ${plural(days, "workday")}`,
+          intro:
+            "No updates, comments or time logged since then. A quick comment on where it stands helps everyone, and so does asking for help.",
+          card: {
+            ...taskCard,
+            status: { label: "In progress", tone: "info" },
+            details: since ? [{ label: "Last activity", value: since }] : [],
+          },
+          primary: openTask,
+          reason: "You get this because the task is assigned to you.",
+        },
+      };
+    }
+    case "end_of_day":
+      return {
+        subject: "What did you work on today?",
+        category: "end_of_day",
+        props: {
+          ...base,
+          preview: "No time logged on any task today.",
+          eyebrow: "End of day",
+          heading: "What did you work on today?",
+          intro:
+            "You're clocked in, but no time is logged on a task yet. Log it now, or add a short note when you clock out, while the day is fresh.",
+          primary: open ? { label: "Open attendance", url: open } : null,
+          reason: `You get this on workdays you clock in to ${workspace} without logging time.`,
+        },
+      };
+    case "team_summary": {
+      const people = Array.isArray(data?.people)
+        ? (data.people as {
+            name: string;
+            done: number;
+            open: number;
+            overdue: number;
+          }[])
+        : [];
+      const done = num(data, "doneCount") ?? 0;
+      const late = num(data, "overdueCount") ?? 0;
+      return {
+        subject: `${workspace} this week: ${done} done, ${late} overdue`,
+        category: "team_summary",
+        props: {
+          ...base,
+          preview: `${done} tasks finished last week; ${late} overdue now.`,
+          eyebrow: "Team summary",
+          heading: `Last week in ${workspace}`,
+          intro:
+            late > 0
+              ? "Most of the week went through. The overdue ones are worth a quick check-in: help, a new date, or someone else."
+              : "Nothing is overdue. A good week.",
+          card: {
+            title: workspace,
+            details: [
+              { label: "Finished last week", value: String(done) },
+              { label: "Open now", value: String(num(data, "openCount") ?? 0) },
+              { label: "Overdue now", value: String(late) },
+            ],
+          },
+          body: people.length
+            ? [
+                "By person",
+                ...people.map(
+                  (p) =>
+                    `• ${p.name}: ${p.done} done · ${p.open} open${p.overdue ? ` · ${p.overdue} overdue` : ""}`,
+                ),
+              ]
+            : null,
+          primary: open ? { label: "Open people", url: open } : null,
+          reason: `You get this on the first workday of each week because you look after people in ${workspace}.`,
+        },
+      };
+    }
+    case "task_overdue_escalated": {
+      const late = num(data, "daysOverdue") ?? 3;
+      const due = formatDay(str(data, "dueDate"));
+      const who = str(data, "assigneeName") ?? "Someone";
+      const lateText = `${late} ${late === 1 ? "day" : "days"}`;
+      return {
+        subject: `${who}'s task is ${lateText} overdue: ${task}`,
+        category: "task_escalated",
+        props: {
+          ...base,
+          preview: `${task} (assigned to ${who}) is ${lateText} late.`,
+          eyebrow: "Needs attention",
+          heading: `${task} is ${lateText} overdue`,
+          intro: `${who} has had reminders since the due date. A quick check-in usually unblocks it: help, move the date, or reassign.`,
+          card: {
+            ...taskCard,
+            status: { label: `${lateText} late`, tone: "danger" },
+            details: [
+              { label: "Assigned to", value: who },
+              ...(due ? [{ label: "Was due", value: due }] : []),
+            ],
+          },
+          primary: openTask,
+          reason: `You get this because you look after people in ${workspace}.`,
         },
       };
     }
@@ -486,6 +818,75 @@ export function buildNotificationEmail(input: {
         },
       };
     }
+    case "chat_mention": {
+      const who = str(data, "senderName") ?? "Someone";
+      const where = str(data, "conversationTitle");
+      const excerpt = plain(str(data, "excerpt"));
+      const heading = where
+        ? `${who} mentioned you in ${where}`
+        : `${who} mentioned you in chat`;
+      return {
+        subject: heading,
+        category: "chat_mention",
+        props: {
+          ...base,
+          preview: excerpt ?? heading,
+          eyebrow: "Mentioned in chat",
+          heading,
+          quote: excerpt ? { author: who, text: excerpt } : null,
+          primary: open ? { label: "Reply in chat", url: open } : null,
+          reason: `You get this because someone mentioned you in ${workspace}'s chat.`,
+        },
+      };
+    }
+    case "role_changed": {
+      const role = humanStatus(str(data, "newRole")) ?? "a new role";
+      const previous = humanStatus(str(data, "oldRole"));
+      const by = str(data, "changedByName");
+      return {
+        subject: `You're now ${role} in ${workspace}`,
+        category: "membership",
+        props: {
+          ...base,
+          preview: `Your role in ${workspace} changed to ${role}.`,
+          eyebrow: "Role changed",
+          heading: `You're now ${role} in ${workspace}`,
+          intro: by
+            ? `${by} changed your role. What you can see and do in ${workspace} follows the new role right away.`
+            : `What you can see and do in ${workspace} follows the new role right away.`,
+          card: {
+            title: workspace,
+            status: { label: role, tone: "info" },
+            details: previous
+              ? [{ label: "Changed", value: `${previous} → ${role}` }]
+              : [],
+          },
+          primary: open ? { label: "Open workspace", url: open } : null,
+          reason: `You get this because you're a member of ${workspace}.`,
+        },
+      };
+    }
+    case "member_removed": {
+      const by = str(data, "removedByName");
+      return {
+        subject: `You were removed from ${workspace}`,
+        category: "membership",
+        props: {
+          ...base,
+          preview: `You no longer have access to ${workspace}.`,
+          eyebrow: "Access removed",
+          heading: `You were removed from ${workspace}`,
+          intro: by
+            ? `${by} removed you from ${workspace}. Its projects, chat and files are no longer available to you.`
+            : "Its projects, chat and files are no longer available to you.",
+          callout: {
+            tone: "neutral",
+            text: "If this looks like a mistake, ask an admin of the workspace to invite you again.",
+          },
+          reason: `You get this because you were a member of ${workspace}.`,
+        },
+      };
+    }
     case "workspace_created":
       return {
         subject: `Welcome to ${workspace}`,
@@ -514,4 +915,33 @@ export function buildNotificationEmail(input: {
         },
       };
   }
+}
+
+/**
+ * Sent once, right after someone creates an account. Not tied to a
+ * workspace, so it has no notification switch; it is transactional.
+ */
+// The address isn't verified yet when this goes out, so it carries nothing
+// the person typed: a signup can't turn it into a message to a stranger.
+export function buildWelcomeEmail(): NotificationEmail {
+  const app = clientUrl();
+  return {
+    subject: "Welcome to TeamOS",
+    category: "welcome",
+    props: {
+      brand: { name: "TeamOS", logoUrl: null },
+      preview: "Your account is ready. Here's how to get your team going.",
+      eyebrow: "Welcome",
+      heading: "Welcome to TeamOS",
+      intro:
+        "Your account is ready. TeamOS keeps your team's work, time, attendance and pay in one place.",
+      body: [
+        "1. Create a workspace for your company, or open the invitation someone sent you.",
+        "2. Invite your team and set their roles, departments and working hours.",
+        "3. Start a project, assign tasks, and clock in from the sidebar or the desktop app.",
+      ],
+      primary: { label: "Open TeamOS", url: `${app}/dashboard` },
+      reason: "You get this because you just created a TeamOS account.",
+    },
+  };
 }

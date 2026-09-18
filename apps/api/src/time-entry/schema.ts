@@ -41,9 +41,30 @@ export const createTimeEntryBody = z.object({
   description: z.string().optional(),
 });
 
+// A link or a plain reference ("PR #42", "JIRA-12"). Anything with a URL
+// scheme must be http(s), so it can never become a javascript: link.
+export const timeEntryReference = z
+  .string()
+  .trim()
+  .max(500)
+  .refine(
+    (value) =>
+      !/^[a-z][a-z0-9+.-]*:/i.test(value) || /^https?:\/\//i.test(value),
+    { message: "Links must start with http:// or https://" },
+  )
+  .openapi({ example: "https://github.com/acme/app/pull/42" });
+
 export const stopTimeEntryBody = z.object({
   description: z.string().trim().max(1000).optional().openapi({
     description: "What was done; replaces the entry's note when given.",
+  }),
+  reference: timeEntryReference.optional(),
+});
+
+export const timeEntryNoteBody = z.object({
+  description: z.string().trim().max(1000).optional(),
+  reference: timeEntryReference.nullable().optional().openapi({
+    description: "Null or empty clears it.",
   }),
 });
 

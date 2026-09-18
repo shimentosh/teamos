@@ -16,6 +16,7 @@ import getTimeEntry from "./controllers/get-time-entry";
 import listTimeEntries from "./controllers/list-time-entries";
 import stopTimeEntry from "./controllers/stop-time-entry";
 import updateTimeEntry from "./controllers/update-time-entry";
+import updateTimeEntryNote from "./controllers/update-time-entry-note";
 import {
   runningTimeEntrySchema,
   timeEntryDetailListSchema,
@@ -28,6 +29,7 @@ import {
   runningTimeEntryQuery,
   stopTimeEntryBody,
   taskIdParam,
+  timeEntryNoteBody,
   timeEntryParam,
   updateTimeEntryBody,
 } from "./schema";
@@ -96,7 +98,7 @@ const stopTimeEntryRoute = createRoute({
   tags: ["Time Entries"],
   summary: "Stop time entry",
   description:
-    "Stop a running entry now. An optional JSON body `{ \"description\": \"...\" }` saves what was done. Stopping an entry that already ended returns it unchanged.",
+    'Stop a running entry now. An optional JSON body `{ "description": "..." }` saves what was done. Stopping an entry that already ended returns it unchanged.',
   middleware: [
     workspaceAccess.fromTimeEntry(),
     requireWorkspacePermission({ task: ["update"] }),
@@ -207,6 +209,34 @@ const updateTimeEntryRoute = createRoute({
   },
 });
 
+const noteRoute = createRoute({
+  method: "patch",
+  operationId: "updateTimeEntryNote",
+  path: "/{id}/note",
+  tags: ["Time Entries"],
+  summary: "Add a note to a time entry",
+  description:
+    "Set what was done and an optional reference (a link or ticket) without touching the times, e.g. right after a timer stops. Other people's entries need timeEntry:manage_all.",
+  middleware: [
+    workspaceAccess.fromTimeEntry(),
+    requireWorkspacePermission({ task: ["update"] }),
+  ] as const,
+  request: {
+    params: timeEntryParam,
+    body: {
+      required: true,
+      content: { "application/json": { schema: timeEntryNoteBody } },
+    },
+  },
+  responses: {
+    200: jsonResponse("The time entry", timeEntrySchema),
+    400: errorResponse("The reference isn't an http(s) link or plain text"),
+    403: errorResponse(
+      "No workspace access, missing task:update permission, or not your entry without timeEntry:manage_all",
+    ),
+  },
+});
+
 const timeEntry = apiRouter()
   // Static paths are registered before /{id} so "running" is never read as an id.
   .openapi(listTimeEntriesRoute, async (c) => {
@@ -238,6 +268,7 @@ const timeEntry = apiRouter()
     await assertCanManageTimeEntry(c, id);
     const raw = await c.req.text();
     let description: string | undefined;
+    let reference: string | undefined;
     if (raw.trim()) {
       let json: unknown;
       try {
@@ -247,11 +278,26 @@ const timeEntry = apiRouter()
       }
       const parsed = stopTimeEntryBody.safeParse(json);
       if (!parsed.success) {
-        throw new HTTPException(400, { message: "Invalid description" });
+        throw new HTTPException(400, {
+          message: parsed.error.issues[0]?.message ?? "Invalid note",
+        });
       }
       description = parsed.data.description;
+      reference = parsed.data.reference || undefined;
     }
-    return c.json(await stopTimeEntry(id, description), 200);
+    return c.json(await stopTimeEntry(id, description, reference), 200);
+  })
+  .openapi(noteRoute, async (c) => {
+    const { id } = c.req.valid("param");
+    await assertCanManageTimeEntry(c, id);
+    const { description, reference } = c.req.valid("json");
+    return c.json(
+      await updateTimeEntryNote(id, {
+        description,
+        reference: reference === undefined ? undefined : reference || null,
+      }),
+      200,
+    );
   })
   .openapi(deleteTimeEntryRoute, async (c) => {
     const { id } = c.req.valid("param");

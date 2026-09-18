@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
+import { and, eq } from "drizzle-orm";
 import db, { schema } from "../../../apps/api/src/database";
 import { DEFAULT_PROJECT_COLUMNS } from "../../../apps/api/src/project/controllers/create-project";
+import { defaultRolePayloads } from "../../../packages/permissions/src";
 
 export type SeededMemberContext = {
   user: typeof schema.userTable.$inferSelect;
@@ -12,6 +14,10 @@ export async function createWorkspaceMember(
     userName: string;
     workspaceName: string;
     role: string;
+    // Members see only their own tasks unless their role has task:read_all.
+    // Most tests are about what a member may do, not what they may see, so
+    // the seeded member role sees every task unless a test opts out.
+    seeAllTasks: boolean;
   }>,
 ): Promise<SeededMemberContext> {
   const userId = `user-${randomUUID()}`;
@@ -44,7 +50,35 @@ export async function createWorkspaceMember(
     joinedAt: new Date(),
   });
 
+  if (
+    (overrides?.role ?? "member") === "member" &&
+    overrides?.seeAllTasks !== false
+  ) {
+    await grantSeeAllTasks(workspace.id);
+  }
+
   return { user, workspace };
+}
+
+/** Gives a workspace role task:read_all, the whole-board view. */
+export async function grantSeeAllTasks(workspaceId: string, role = "member") {
+  const base =
+    defaultRolePayloads[role as keyof typeof defaultRolePayloads] ?? {};
+  const permission = {
+    ...base,
+    task: [...new Set([...(base.task ?? []), "read_all"])],
+  };
+  await db
+    .delete(schema.workspaceRoleTable)
+    .where(
+      and(
+        eq(schema.workspaceRoleTable.workspaceId, workspaceId),
+        eq(schema.workspaceRoleTable.role, role),
+      ),
+    );
+  await db
+    .insert(schema.workspaceRoleTable)
+    .values({ workspaceId, role, permission: JSON.stringify(permission) });
 }
 
 export async function createProjectFixture({

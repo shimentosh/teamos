@@ -77,6 +77,8 @@ type TaskPropertiesSidebarProps = {
   workspaceId: string;
   className?: string;
   compact?: boolean;
+  /** The side panel shows the time log at the end of the task instead. */
+  showTimeLog?: boolean;
 };
 
 export default function TaskPropertiesSidebar({
@@ -85,6 +87,7 @@ export default function TaskPropertiesSidebar({
   workspaceId,
   className,
   compact = false,
+  showTimeLog = true,
 }: TaskPropertiesSidebarProps) {
   const { t } = useTranslation();
   const { data: task } = useGetTask(taskId ?? "");
@@ -765,7 +768,9 @@ export default function TaskPropertiesSidebar({
               )}
             </div>
           </div>
-          {taskId && <TaskTimeLog taskId={taskId} className="mt-2" />}
+          {showTimeLog && taskId && (
+            <TaskTimeLog taskId={taskId} className="mt-2" />
+          )}
         </div>
       </div>
     </div>

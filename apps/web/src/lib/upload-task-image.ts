@@ -1,6 +1,4 @@
-import createImageUpload, {
-  finalizeImageUpload,
-} from "@/fetchers/task/create-image-upload";
+import { uploadImageDirect } from "@/fetchers/task/create-image-upload";
 
 const allowedImageMimeTypes = new Set([
   "image/apng",
@@ -48,30 +46,10 @@ export async function uploadTaskImage({
 
   const contentType = file.type || "application/octet-stream";
 
-  const upload = await createImageUpload({
+  const asset = await uploadImageDirect({
     taskId,
-    filename: file.name || "image",
+    file,
     contentType,
-    size: file.size,
-    surface,
-  });
-
-  const response = await fetch(upload.uploadUrl, {
-    method: "PUT",
-    headers: upload.headers,
-    body: file,
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to upload file to storage.");
-  }
-
-  const asset = await finalizeImageUpload({
-    taskId,
-    key: upload.key,
-    filename: file.name || "image",
-    contentType,
-    size: file.size,
     surface,
   });
 

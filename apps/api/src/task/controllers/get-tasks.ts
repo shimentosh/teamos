@@ -21,6 +21,8 @@ import {
 } from "../../database/schema";
 
 type GetTasksOptions = {
+  // Only tasks assigned to this user; null or absent means every task.
+  visibleTo?: string | null;
   assigneeId?: string;
   dueAfter?: string;
   dueBefore?: string;
@@ -80,6 +82,10 @@ async function getTasks(projectId: string, options: GetTasksOptions = {}) {
   }
 
   const conditions = [eq(taskTable.projectId, projectId)];
+
+  if (options.visibleTo) {
+    conditions.push(eq(taskTable.userId, options.visibleTo));
+  }
 
   if (options.status) {
     conditions.push(eq(taskTable.status, options.status));

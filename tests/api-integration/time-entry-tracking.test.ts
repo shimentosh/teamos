@@ -9,6 +9,7 @@ import { resetTestDatabase } from "./helpers/database";
 import {
   createProjectFixture,
   createWorkspaceMember,
+  grantSeeAllTasks,
 } from "./helpers/fixtures";
 
 type User = typeof schema.userTable.$inferSelect;
@@ -176,6 +177,8 @@ describe("time tracking: one running timer per person", () => {
 describe("time tracking: who can change and see whose time", () => {
   it("keeps members away from other people's entries but lets admins fix them", async () => {
     const { workspace } = await createWorkspaceMember({ role: "owner" });
+    // Bob can see the task; what's tested is that he can't touch Alice's time.
+    await grantSeeAllTasks(workspace.id);
     const alice = await addMember(workspace.id, "member");
     const bob = await addMember(workspace.id, "member");
     const admin = await addMember(workspace.id, "admin");

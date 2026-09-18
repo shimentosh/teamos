@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import WorkspaceLayout from "@/components/common/workspace-layout";
 import PageTitle from "@/components/page-title";
 import { AddSalaryDialog } from "@/components/pay/add-salary-dialog";
+import { LiveBoard } from "@/components/people/live";
 import { PeopleSummary } from "@/components/people/people-summary";
 import { useAuth } from "@/components/providers/auth-provider/hooks/use-auth";
 import { Approvals } from "@/components/requests/approvals";
@@ -16,6 +17,7 @@ import {
   useCurrentSalaries,
   useOpenRequests,
 } from "@/hooks/queries/company-os";
+import useLivePeople from "@/hooks/queries/people/use-live-people";
 import usePeople from "@/hooks/queries/people/use-people";
 import usePeopleOverview from "@/hooks/queries/people/use-people-overview";
 import useGetFullWorkspace from "@/hooks/queries/workspace/use-get-full-workspace";
@@ -70,6 +72,11 @@ function RouteComponent() {
     (inv) => inv.status !== "accepted" && inv.status !== "canceled",
   ).length;
 
+  const { data: live = [], byUser: liveByUser } = useLivePeople(workspaceId);
+  const working = live.filter(
+    (p) => p.state === "active" || p.state === "idle",
+  ).length;
+
   const byUser = useMemo(
     () => new Map(people.map((person) => [person.userId, person])),
     [people],
@@ -92,6 +99,7 @@ function RouteComponent() {
         users={workspace?.members ?? []}
         invitations={workspace?.invitations ?? []}
         people={byUser}
+        live={liveByUser}
         canOpenPerson={(userId) => seeEveryone || userId === user?.id}
         onOpenPerson={(userId) =>
           navigate({
@@ -135,12 +143,19 @@ function RouteComponent() {
           ) : null
         }
       >
-        {canApprove ? (
-          <Tabs defaultValue="people" className="pt-4">
-            <TabsList className="mx-4">
-              <TabsTrigger value="people">
-                {t("people:tabs.people")}
-              </TabsTrigger>
+        <Tabs defaultValue="people" className="pt-4">
+          <TabsList className="mx-4">
+            <TabsTrigger value="people">{t("people:tabs.people")}</TabsTrigger>
+            <TabsTrigger value="live" className="gap-1.5">
+              <span className="size-1.5 rounded-full bg-emerald-500" />
+              {t("people:tabs.live")}
+              {working > 0 && (
+                <span className="rounded-sm border border-border px-1 text-[11px] tabular-nums">
+                  {working}
+                </span>
+              )}
+            </TabsTrigger>
+            {canApprove && (
               <TabsTrigger value="requests">
                 {t("people:tabs.requests")}
                 {waiting > 0 && (
@@ -149,15 +164,27 @@ function RouteComponent() {
                   </span>
                 )}
               </TabsTrigger>
-            </TabsList>
-            <TabsContent value="people">{table}</TabsContent>
+            )}
+          </TabsList>
+          <TabsContent value="people">{table}</TabsContent>
+          <TabsContent value="live" className="p-4">
+            <LiveBoard
+              workspaceId={workspaceId}
+              onOpenPerson={(userId) =>
+                (seeEveryone || userId === user?.id) &&
+                navigate({
+                  to: "/dashboard/workspace/$workspaceId/people/$userId",
+                  params: { workspaceId, userId },
+                })
+              }
+            />
+          </TabsContent>
+          {canApprove && (
             <TabsContent value="requests" className="p-4">
               <Approvals workspaceId={workspaceId} />
             </TabsContent>
-          </Tabs>
-        ) : (
-          table
-        )}
+          )}
+        </Tabs>
 
         {salaryFor && overview && (
           <AddSalaryDialog

@@ -61,6 +61,29 @@ function parseBearerToken(authHeader: string | undefined): {
   };
 }
 
+// A read-only agent key may look at anything its owner can, and change
+// nothing, including routes that don't check a permission of their own.
+function assertKeyMayWrite(
+  c: Context,
+  metadata: Record<string, unknown> | string | null,
+) {
+  let meta: unknown = metadata;
+  if (typeof meta === "string") {
+    try {
+      meta = JSON.parse(meta);
+    } catch {
+      meta = null;
+    }
+  }
+  const scope = (meta as { scope?: unknown } | null)?.scope;
+  const reading = ["GET", "HEAD", "OPTIONS"].includes(c.req.method);
+  if (scope === "read" && !reading) {
+    throw new HTTPException(403, {
+      message: "This key is read-only",
+    });
+  }
+}
+
 export async function authenticateApiRequest(c: Context): Promise<void> {
   const { token, malformed } = parseBearerToken(c.req.header("Authorization"));
   if (malformed) {
@@ -74,6 +97,7 @@ export async function authenticateApiRequest(c: Context): Promise<void> {
       throw new HTTPException(401, { message: "Unauthorized" });
     }
     const key = apiKeyResult.key;
+    assertKeyMayWrite(c, key.metadata);
     c.set("userId", key.userId);
     c.set("userEmail", "");
     c.set("user", null);
@@ -92,6 +116,7 @@ export async function authenticateApiRequest(c: Context): Promise<void> {
     const apiKeyResult = await verifyApiKey(token);
     if (apiKeyResult?.valid && apiKeyResult.key) {
       const key = apiKeyResult.key;
+      assertKeyMayWrite(c, key.metadata);
       c.set("userId", key.userId);
       c.set("userEmail", "");
       c.set("user", null);

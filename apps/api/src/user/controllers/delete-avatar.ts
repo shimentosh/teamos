@@ -1,8 +1,10 @@
 import { eq } from "drizzle-orm";
 import db from "../../database";
 import { userAvatarTable } from "../../database/schema";
+import { releaseAvatarFile } from "./save-avatar";
 
 export async function deleteAvatar(userId: string) {
+  await releaseAvatarFile(userId);
   const deleted = await db
     .delete(userAvatarTable)
     .where(eq(userAvatarTable.userId, userId))

@@ -1,5 +1,6 @@
 import { and, desc, eq, gt, gte, isNull, lt, lte, sql } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
+import { getAiSettings } from "../ai/change-sets";
 import {
   attendanceStatus,
   autoClockIn,
@@ -18,7 +19,9 @@ import {
   companySettingsTable,
   userTable,
   workspaceTable,
+  workspaceUserTable,
 } from "../database/schema";
+import { broadcastToUser } from "../ws";
 import {
   type AuthenticatedDevice,
   hashSecret,
@@ -30,11 +33,16 @@ import {
 const PAIRING_TTL_MS = 10 * 60 * 1000;
 
 async function agentSettings(workspaceId: string) {
-  const company = await getCompanySettings(workspaceId);
+  const [company, ai] = await Promise.all([
+    getCompanySettings(workspaceId),
+    getAiSettings(workspaceId),
+  ]);
   return {
+    aiBridge: ai.enabled && ai.engine === "desktop",
     trackDomains: company.trackDomains,
     heartbeatSeconds: 60,
-    syncSeconds: 60,
+    // Also the live view's freshness; the agent syncs sooner on an app switch.
+    syncSeconds: 30,
     idleAfterSeconds: 300,
   };
 }
@@ -132,11 +140,14 @@ export async function pairDevice(input: {
  * the keyboard: a heartbeat reports the present, an upload reports when its
  * active spans ran (which can be long ago for an offline queue).
  */
+type CurrentApp = { app: string | null; domain?: string | null; since: string };
+
 export async function heartbeat(
   device: AuthenticatedDevice,
   state: string,
   agentVersion?: string,
   activity?: { from: Date; to: Date } | null,
+  current?: CurrentApp,
 ) {
   const now = new Date();
   const active =
@@ -149,6 +160,7 @@ export async function heartbeat(
     active && (!device.lastActiveAt || active.to > device.lastActiveAt)
       ? active.to
       : undefined;
+  const live = current ? await liveFields(device, state, current) : {};
   await db
     .update(agentDeviceTable)
     .set({
@@ -156,8 +168,15 @@ export async function heartbeat(
       lastState: state,
       ...(agentVersion && { agentVersion }),
       ...(lastActiveAt && { lastActiveAt }),
+      ...live,
     })
     .where(eq(agentDeviceTable.id, device.id));
+  if (
+    device.lastState !== state ||
+    ("currentApp" in live && live.currentApp !== device.currentApp)
+  ) {
+    await announcePresence(device.workspaceId);
+  }
   if (active) await autoClockIn(device, active, now);
   return {
     settings: await agentSettings(device.workspaceId),
@@ -166,12 +185,54 @@ export async function heartbeat(
   };
 }
 
+// Paused means "don't watch me": nothing about the app is kept. Domains are
+// kept only while the company tracks them, and a `since` from a skewed
+// clock is pulled back to now.
+async function liveFields(
+  device: AuthenticatedDevice,
+  state: string,
+  current: CurrentApp,
+) {
+  if (state === "paused" || !current.app) {
+    return { currentApp: null, currentDomain: null, currentSince: null };
+  }
+  const company = await getCompanySettings(device.workspaceId);
+  const since = new Date(current.since);
+  const now = new Date();
+  return {
+    currentApp: current.app,
+    currentDomain: company.trackDomains ? (current.domain ?? null) : null,
+    currentSince: since > now ? now : since,
+  };
+}
+
+/**
+ * Tells everyone in the workspace that someone's live state changed. Only a
+ * nudge: each viewer refetches /people/live, which applies their permissions.
+ */
+async function announcePresence(workspaceId: string) {
+  const members = await db
+    .select({ userId: workspaceUserTable.userId })
+    .from(workspaceUserTable)
+    .where(eq(workspaceUserTable.workspaceId, workspaceId));
+  for (const { userId } of members) {
+    broadcastToUser(userId, { type: "PRESENCE_CHANGED", workspaceId });
+  }
+}
+
 /** The app quit: clock its person out now unless another device is still on. */
 export async function goOffline(device: AuthenticatedDevice) {
   await db
     .update(agentDeviceTable)
-    .set({ lastSeenAt: new Date(), lastState: "offline" })
+    .set({
+      lastSeenAt: new Date(),
+      lastState: "offline",
+      currentApp: null,
+      currentDomain: null,
+      currentSince: null,
+    })
     .where(eq(agentDeviceTable.id, device.id));
+  await announcePresence(device.workspaceId);
   await autoClockOut(new Date(), {
     workspaceId: device.workspaceId,
     userId: device.userId,

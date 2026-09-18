@@ -18,7 +18,14 @@ pub fn run(args: &[String]) -> Option<i32> {
     let command = args.first()?.as_str();
     if !matches!(
         command,
-        "--pair" | "--once" | "--sync" | "--status" | "--disconnect" | "--register-native-host"
+        "--pair"
+            | "--once"
+            | "--sync"
+            | "--status"
+            | "--disconnect"
+            | "--register-native-host"
+            | "--allow-ai"
+            | "--ai-once"
     ) {
         return None;
     }
@@ -62,6 +69,27 @@ pub fn run(args: &[String]) -> Option<i32> {
             sync(&tracker)
         }
         "--sync" => sync(&tracker),
+        // Consent for Ask TeamOS to use this computer's Claude Code.
+        "--allow-ai" => {
+            let allow = args.get(1).map(|v| v != "off").unwrap_or(true);
+            tracker.set_allow_ai(allow);
+            0
+        }
+        // Heartbeat (to learn the workspace setting), then run one request.
+        "--ai-once" => {
+            let _ = tracker.sync_once();
+            let seconds = args.get(1).and_then(|s| s.parse().ok()).unwrap_or(120u64);
+            match crate::ai_bridge::run_once(&tracker, Duration::from_secs(seconds)) {
+                Ok(summary) => {
+                    println!("ai job: {summary}");
+                    0
+                }
+                Err(e) => {
+                    eprintln!("ai job: {e}");
+                    1
+                }
+            }
+        }
         "--disconnect" => {
             tracker.disconnect();
             0

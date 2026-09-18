@@ -1,12 +1,16 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import db from "../../database";
 import {
   customFieldDefinitionTable,
   customFieldValueTable,
   taskTable,
 } from "../../database/schema";
+import { visibleTasks } from "../../utils/task-visibility";
 
-async function getCustomFieldValuesByProject(projectId: string) {
+async function getCustomFieldValuesByProject(
+  projectId: string,
+  viewer: string | null = null,
+) {
   return db
     .select({
       id: customFieldValueTable.id,
@@ -24,7 +28,7 @@ async function getCustomFieldValuesByProject(projectId: string) {
       customFieldDefinitionTable,
       eq(customFieldValueTable.fieldId, customFieldDefinitionTable.id),
     )
-    .where(eq(taskTable.projectId, projectId));
+    .where(and(eq(taskTable.projectId, projectId), visibleTasks(viewer)));
 }
 
 export default getCustomFieldValuesByProject;

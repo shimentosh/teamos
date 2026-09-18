@@ -4,6 +4,7 @@ import { Check, Paperclip, Plus, Search, Tags, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { monthLabel } from "@/components/pay/labels";
+import { useAuth } from "@/components/providers/auth-provider/hooks/use-auth";
 import { AddExpenseDialog } from "@/components/requests/add-expense-dialog";
 import {
   requestStatusLabel,
@@ -91,6 +92,7 @@ export function ExpensesOverview({
   const { t, i18n } = useTranslation();
   const { canApproveRequests, canSeePay, canManagePay, canManageWorkspace } =
     useWorkspacePermission();
+  const { user } = useAuth();
   const { data: categoryList = [] } = useExpenseCategories(workspaceId);
   const iconFor = (name: string) =>
     categoryList.find((c) => c.name.toLowerCase() === name.toLowerCase())?.icon;
@@ -175,6 +177,8 @@ export function ExpensesOverview({
       ? undefined
       : runs.find((r) => r.year === year && r.month === month);
   const committed = sum(approved) + sum(paid);
+  // Payroll only adds up with expenses when both are in the same currency.
+  const payrollInCurrency = run && run.currency === currency ? run.netTotal : 0;
 
   const counts = Object.fromEntries(
     STATUSES.map((s) => [
@@ -306,7 +310,7 @@ export function ExpensesOverview({
             />
             <Stat
               label={t("expenses:summary.totalCost")}
-              value={money(committed + (run?.netTotal ?? 0))}
+              value={money(committed + payrollInCurrency)}
               hint={t("expenses:summary.totalHint")}
               tone="strong"
             />
@@ -499,50 +503,54 @@ export function ExpensesOverview({
                   </td>
                   <td className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      {seeAll && expense.status === "pending" && (
-                        <>
-                          <PaymentPicker
-                            title={t("expenses:payment.approveTitle")}
-                            confirmLabel={t("expenses:approve")}
-                            busy={decideExpense.isPending}
-                            onConfirm={(payment) =>
-                              act(() =>
-                                decideExpense.mutateAsync({
-                                  id: expense.id,
-                                  decision: "approved",
-                                  ...payment,
-                                }),
-                              )
-                            }
-                            trigger={
-                              <Button
-                                variant="outline"
-                                size="xs"
-                                className="gap-1"
-                              >
-                                <Check className="size-3" />
-                                {t("expenses:approve")}
-                              </Button>
-                            }
-                          />
-                          <Button
-                            variant="ghost"
-                            size="xs"
-                            aria-label={t("expenses:reject")}
-                            title={t("expenses:reject")}
-                            onClick={() =>
-                              act(() =>
-                                decideExpense.mutateAsync({
-                                  id: expense.id,
-                                  decision: "rejected",
-                                }),
-                              )
-                            }
-                          >
-                            <X className="size-3.5" />
-                          </Button>
-                        </>
-                      )}
+                      {/* Approvers decide others' expenses; their own they
+                          can only withdraw, like everyone else. */}
+                      {seeAll &&
+                        expense.status === "pending" &&
+                        expense.userId !== user?.id && (
+                          <>
+                            <PaymentPicker
+                              title={t("expenses:payment.approveTitle")}
+                              confirmLabel={t("expenses:approve")}
+                              busy={decideExpense.isPending}
+                              onConfirm={(payment) =>
+                                act(() =>
+                                  decideExpense.mutateAsync({
+                                    id: expense.id,
+                                    decision: "approved",
+                                    ...payment,
+                                  }),
+                                )
+                              }
+                              trigger={
+                                <Button
+                                  variant="outline"
+                                  size="xs"
+                                  className="gap-1"
+                                >
+                                  <Check className="size-3" />
+                                  {t("expenses:approve")}
+                                </Button>
+                              }
+                            />
+                            <Button
+                              variant="ghost"
+                              size="xs"
+                              aria-label={t("expenses:reject")}
+                              title={t("expenses:reject")}
+                              onClick={() =>
+                                act(() =>
+                                  decideExpense.mutateAsync({
+                                    id: expense.id,
+                                    decision: "rejected",
+                                  }),
+                                )
+                              }
+                            >
+                              <X className="size-3.5" />
+                            </Button>
+                          </>
+                        )}
                       {managePay && expense.status === "approved" && (
                         <PaymentPicker
                           title={t("expenses:payment.paidTitle")}
@@ -564,17 +572,18 @@ export function ExpensesOverview({
                           }
                         />
                       )}
-                      {!seeAll && expense.status === "pending" && (
-                        <Button
-                          variant="ghost"
-                          size="xs"
-                          onClick={() =>
-                            act(() => cancelExpense.mutateAsync(expense.id))
-                          }
-                        >
-                          {t("myWork:cancel")}
-                        </Button>
-                      )}
+                      {expense.userId === user?.id &&
+                        expense.status === "pending" && (
+                          <Button
+                            variant="ghost"
+                            size="xs"
+                            onClick={() =>
+                              act(() => cancelExpense.mutateAsync(expense.id))
+                            }
+                          >
+                            {t("myWork:cancel")}
+                          </Button>
+                        )}
                     </div>
                   </td>
                 </tr>

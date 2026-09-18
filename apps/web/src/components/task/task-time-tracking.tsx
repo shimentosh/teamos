@@ -3,9 +3,13 @@ import { Play, Square, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import useAuth from "@/components/providers/auth-provider/hooks/use-auth";
+import {
+  type TimeNote,
+  TimeNoteFields,
+} from "@/components/time/time-note-fields";
+import { TimeReference } from "@/components/time/time-reference";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverPopup, PopoverTrigger } from "@/components/ui/popover";
-import { Textarea } from "@/components/ui/textarea";
 import useCreateTimeEntry from "@/hooks/mutations/time-entry/use-create-time-entry";
 import useDeleteTimeEntry from "@/hooks/mutations/time-entry/use-delete-time-entry";
 import useStopTimeEntry from "@/hooks/mutations/time-entry/use-stop-time-entry";
@@ -61,10 +65,14 @@ function useTaskTime(taskId: string) {
       create
         .mutateAsync({ taskId, startTime: new Date().toISOString() })
         .catch(fail("time:task.startError")),
-    stop: (description?: string) =>
+    stop: (note?: TimeNote) =>
       mine
         ? stopEntry
-            .mutateAsync({ id: mine.id, description })
+            .mutateAsync({
+              id: mine.id,
+              description: note?.note,
+              reference: note?.reference,
+            })
             .catch(fail("time:task.stopError"))
         : undefined,
     remove: (id: string) =>
@@ -83,13 +91,13 @@ export function TaskTimerButton({ taskId }: { taskId: string }) {
   const { t } = useTranslation();
   const time = useTaskTime(taskId);
   const [asking, setAsking] = useState(false);
-  const [note, setNote] = useState("");
+  const [note, setNote] = useState<TimeNote>({ note: "", reference: "" });
   if (!time.canTrack) return null;
 
   if (time.mine) {
     const finish = async (withNote: boolean) => {
       await time.stop(withNote ? note : undefined);
-      setNote("");
+      setNote({ note: "", reference: "" });
       setAsking(false);
     };
     return (
@@ -132,20 +140,10 @@ export function TaskTimerButton({ taskId }: { taskId: string }) {
                 })}
               </p>
             </div>
-            <Textarea
-              autoFocus
-              rows={3}
-              maxLength={1000}
+            <TimeNoteFields
               value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder={t("time:task.whatDidYouDoPlaceholder")}
-              aria-label={t("time:task.whatDidYouDo")}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                  e.preventDefault();
-                  void finish(true);
-                }
-              }}
+              onChange={setNote}
+              onSubmit={() => void finish(true)}
             />
             <div className="flex justify-end gap-2">
               <Button
@@ -242,6 +240,12 @@ export function TaskTimeLog({
                     <span className="mt-0.5 line-clamp-2 block text-[11px] text-foreground/80">
                       {entry.description}
                     </span>
+                  )}
+                  {entry.reference && (
+                    <TimeReference
+                      reference={entry.reference}
+                      className="mt-0.5"
+                    />
                   )}
                 </span>
                 <span className="shrink-0 text-xs tabular-nums text-muted-foreground">

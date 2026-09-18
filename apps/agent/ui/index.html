@@ -28,7 +28,15 @@
       <section id="connected" hidden>
         <p id="who"></p>
         <p class="status"><span id="dot" class="dot"></span><span id="status"></span></p>
+        <p id="now" class="now" hidden></p>
         <p id="attendance" class="attendance" hidden></p>
+        <label id="ai" class="ai" hidden>
+          <input id="ai-allow" type="checkbox" />
+          <span>
+            Run Claude for TeamOS
+            <small>Ask TeamOS uses the Claude Code on this computer. Claude only reads TeamOS and proposes changes; you apply them in the web.</small>
+          </span>
+        </label>
         <p id="last-sync" class="muted"></p>
         <p id="sync-error" class="error" role="alert" hidden></p>
         <button id="toggle" type="button"></button>

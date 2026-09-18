@@ -115,7 +115,13 @@ export async function clockOut(
       // Keeps the desktop app from clocking them straight back in today.
       clockOutSource: "web",
     })
-    .where(eq(attendanceSessionTable.id, open.id));
+    // Only while still open: a double submit mustn't append the note twice.
+    .where(
+      and(
+        eq(attendanceSessionTable.id, open.id),
+        isNull(attendanceSessionTable.clockOut),
+      ),
+    );
   return getStatus(workspaceId, userId);
 }
 

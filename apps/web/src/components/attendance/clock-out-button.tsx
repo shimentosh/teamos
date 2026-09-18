@@ -78,8 +78,9 @@ export function ClockOutButton({
       return next.slice(0, MAX_NOTE);
     });
 
-  const submit = () =>
-    clockOut
+  const submit = () => {
+    if (clockOut.isPending) return Promise.resolve();
+    return clockOut
       .mutateAsync(note)
       .then(() => {
         setOpen(false);
@@ -90,6 +91,7 @@ export function ClockOutButton({
           error instanceof Error ? error.message : t("attendance:card.error"),
         ),
       );
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

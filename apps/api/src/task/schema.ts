@@ -131,6 +131,11 @@ export const imageUploadBody = z.object({
   surface,
 });
 
+export const directImageUploadQuery = z.object({
+  filename: z.string().trim().min(1).max(200),
+  surface,
+});
+
 export const finalizeImageUploadBody = z.object({
   key: z
     .string()

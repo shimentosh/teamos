@@ -17,6 +17,9 @@ pub struct Config {
     pub workspace_name: String,
     pub user_name: String,
     pub settings: Settings,
+    /// The person allowed TeamOS to run their Claude Code for Ask TeamOS.
+    #[serde(default)]
+    pub allow_ai: bool,
 }
 
 /// `KANEO_AGENT_DATA_DIR` overrides the location (used by the debug CLI and tests).

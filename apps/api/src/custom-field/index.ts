@@ -5,6 +5,7 @@ import {
   jsonResponse,
 } from "../openapi";
 import { requireWorkspacePermission } from "../utils/require-workspace-permission";
+import { taskViewer } from "../utils/task-visibility";
 import { workspaceAccess } from "../utils/workspace-access-middleware";
 import createCustomField from "./controllers/create-custom-field";
 import deleteCustomField from "./controllers/delete-custom-field";
@@ -230,7 +231,10 @@ const customField = apiRouter()
   )
   .openapi(getCustomFieldValuesByProjectRoute, async (c) =>
     c.json(
-      await getCustomFieldValuesByProject(c.req.valid("param").projectId),
+      await getCustomFieldValuesByProject(
+        c.req.valid("param").projectId,
+        await taskViewer(c),
+      ),
       200,
     ),
   )

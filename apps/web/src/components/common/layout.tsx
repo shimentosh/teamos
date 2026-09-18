@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ChatWidget } from "@/components/chat/chat-widget";
 import { DemoAlert } from "@/components/demo-alert";
+import { TimerNoteDialog } from "@/components/time/timer-note-dialog";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { isDemoMode } from "@/constants/urls";
 import { useUserPreferencesEffects } from "@/hooks/use-user-preferences-effects";
@@ -73,6 +74,7 @@ function Layout({ children, className }: LayoutProps) {
         </SidebarInset>
         {/* Inside the provider: it sits beside the sidebar and follows it. */}
         <ChatWidget />
+        <TimerNoteDialog />
       </SidebarProvider>
     </div>
   );

@@ -15,6 +15,7 @@ import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 import activity from "./activity";
 import agent from "./agent";
+import ai from "./ai";
 import attendance from "./attendance";
 import { auth } from "./auth";
 import { organizationRoutes } from "./auth-openapi";
@@ -31,6 +32,7 @@ import { prepareDatabaseStartup } from "./database/prepare-database-startup";
 import { waitForDatabase } from "./database/wait-for-database";
 import discordIntegration from "./discord-integration";
 import emailLog from "./email";
+import emailTemplates from "./email/templates";
 import { eventContext } from "./events";
 import expenseCategory from "./expense-category";
 import externalLink from "./external-link";
@@ -41,6 +43,7 @@ import githubIntegration, {
   handleGithubWebhookRoute,
 } from "./github-integration";
 import getInstanceStatus from "./instance/controllers/get-instance-status";
+import instanceEmail, { watchEmailSettings } from "./instance-settings";
 import invitation from "./invitation";
 import label from "./label";
 import linkPreview from "./link-preview";
@@ -49,6 +52,7 @@ import mcpRoutes, { mcpWellKnownRoutes } from "./mcp";
 import { migrateColumns } from "./migrations/column-migration";
 import notification from "./notification";
 import notificationPreferences from "./notification-preferences";
+import notificationPolicy from "./notification-preferences/policy-routes";
 import oauth from "./oauth";
 import { createRoute, jsonResponse, z } from "./openapi";
 import overview from "./overview";
@@ -64,6 +68,12 @@ import { initializeScheduler, shutdownScheduler } from "./scheduler";
 import search from "./search";
 import slackIntegration from "./slack-integration";
 import { getPrivateObject } from "./storage/s3";
+import { openStoredAsset, storedFileIdOf } from "./storage/task-image";
+import {
+  FILE_SECURITY_HEADERS,
+  safeDisposition,
+  servedType,
+} from "./storage/workspace-storage";
 import task from "./task";
 import taskAttachment from "./task-attachment";
 import taskRelation from "./task-relation";
@@ -324,6 +334,35 @@ export function createApp() {
       }
 
       await authorizeAssetAccess(c, asset);
+
+      // Pasted into a task while the workspace had its own storage (R2).
+      const storedFileId = storedFileIdOf(asset.objectKey);
+      if (storedFileId) {
+        const stored = await openStoredAsset(storedFileId);
+        if (!stored) {
+          throw new HTTPException(404, { message: "Asset object not found" });
+        }
+        const cache = asset.isPublic
+          ? "public, max-age=300"
+          : "private, max-age=120";
+        if ("redirect" in stored.blob) {
+          return new Response(null, {
+            status: 302,
+            headers: { Location: stored.blob.redirect, "Cache-Control": cache },
+          });
+        }
+        return new Response(new Uint8Array(stored.blob.bytes), {
+          headers: {
+            "Cache-Control": cache,
+            "Content-Type": servedType(stored.file.mimeType),
+            "Content-Disposition": safeDisposition(
+              stored.file.mimeType,
+              stored.file.filename,
+            ),
+            ...FILE_SECURITY_HEADERS,
+          },
+        });
+      }
 
       try {
         const object = await getPrivateObject(asset.objectKey);
@@ -604,6 +643,7 @@ export function createApp() {
   const linkPreviewApi = api.route("/link-preview", linkPreview);
   const emailLogApi = api.route("/email-log", emailLog);
   const reportsApi = api.route("/reports", reports);
+  const aiApi = api.route("/ai", ai);
   const checklistApi = api.route("/checklist", checklist);
   const overviewApi = api.route("/overview", overview);
   const requestsApi = api.route("/requests", requests);
@@ -645,6 +685,12 @@ export function createApp() {
   const externalLinkApi = api.route("/external-link", externalLink);
   const taskAttachmentApi = api.route("/task-attachment", taskAttachment);
   const expenseCategoryApi = api.route("/expense-category", expenseCategory);
+  const instanceEmailApi = api.route("/instance/email", instanceEmail);
+  const emailTemplatesApi = api.route("/email-templates", emailTemplates);
+  const notificationPolicyApi = api.route(
+    "/notification-policy",
+    notificationPolicy,
+  );
   const workflowRuleApi = api.route("/workflow-rule", workflowRule);
   const invitationApi = api.route("/invitation", invitation);
   const workspaceApi = api.route("/workspace", workspace);
@@ -798,6 +844,9 @@ export function createApp() {
     externalLinkApi,
     taskAttachmentApi,
     expenseCategoryApi,
+    instanceEmailApi,
+    emailTemplatesApi,
+    notificationPolicyApi,
     genericWebhookIntegrationApi,
     githubIntegrationApi,
     giteaIntegrationApi,
@@ -820,6 +869,7 @@ export function createApp() {
     linkPreviewApi,
     emailLogApi,
     reportsApi,
+    aiApi,
     checklistApi,
     overviewApi,
     requestsApi,
@@ -869,6 +919,7 @@ export async function runStartupTasks() {
   await seedDefaultWorkspaceRoles();
 
   initializePlugins();
+  watchEmailSettings();
   initializeScheduler();
   await initializeWebSocketAdapter();
 }
@@ -933,6 +984,9 @@ const {
   externalLinkApi,
   taskAttachmentApi,
   expenseCategoryApi,
+  instanceEmailApi,
+  emailTemplatesApi,
+  notificationPolicyApi,
   genericWebhookIntegrationApi,
   githubIntegrationApi,
   giteaIntegrationApi,
@@ -955,6 +1009,7 @@ const {
   linkPreviewApi,
   emailLogApi,
   reportsApi,
+  aiApi,
   checklistApi,
   overviewApi,
   requestsApi,
@@ -994,6 +1049,7 @@ export type AppType =
   | typeof linkPreviewApi
   | typeof emailLogApi
   | typeof reportsApi
+  | typeof aiApi
   | typeof checklistApi
   | typeof overviewApi
   | typeof requestsApi
@@ -1017,6 +1073,9 @@ export type AppType =
   | typeof externalLinkApi
   | typeof taskAttachmentApi
   | typeof expenseCategoryApi
+  | typeof instanceEmailApi
+  | typeof emailTemplatesApi
+  | typeof notificationPolicyApi
   | typeof workflowRuleApi
   | typeof invitationApi
   | typeof workspaceApi
