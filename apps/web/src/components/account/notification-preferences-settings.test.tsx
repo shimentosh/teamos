@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   cleanup,
   fireEvent,
@@ -9,6 +10,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NotificationPreferencesSettings } from "./notification-preferences-settings";
 
 const updatePreferences = vi.fn();
+// The event switches save through the fetcher directly.
+const saveEvent = vi.fn();
 const preferences = {
   emailAddress: "mina@example.com",
   emailEnabled: false,
@@ -33,20 +36,45 @@ const preferences = {
   taskStatusChangeEnabled: true,
   dueDateReminderEnabled: true,
   dueDateReminderLeadTimeMinutes: 1440,
+  events: [
+    { key: "task_assigned", audience: "everyone", inApp: true, email: true },
+    { key: "task_due", audience: "everyone", inApp: true, email: true },
+    { key: "leave_requested", audience: "approvers", inApp: true, email: true },
+  ],
   workspaces: [],
   createdAt: null,
   updatedAt: null,
 };
 
 vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({
+    t: (key: string, options?: { event?: string }) =>
+      options?.event ? `${key}:${options.event}` : key,
+  }),
 }));
+
+vi.mock(
+  "@/fetchers/notification-preferences/update-notification-preferences",
+  () => ({ default: (json: unknown) => saveEvent(json) }),
+);
+
+let current = preferences;
+function renderSettings(overrides: Partial<typeof preferences> = {}) {
+  current = { ...preferences, ...overrides };
+  const queryClient = new QueryClient();
+  queryClient.setQueryData(["notification-preferences"], current);
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <NotificationPreferencesSettings />
+    </QueryClientProvider>,
+  );
+}
 
 vi.mock(
   "@/hooks/queries/notification-preferences/use-get-notification-preferences",
   () => ({
     default: () => ({
-      data: preferences,
+      data: current,
       isLoading: false,
     }),
   }),
@@ -74,80 +102,86 @@ describe("NotificationPreferencesSettings", () => {
   beforeEach(() => {
     updatePreferences.mockReset();
     updatePreferences.mockResolvedValue(undefined);
+    saveEvent.mockReset();
+    saveEvent.mockImplementation(async () => current);
   });
 
-  it("saves event preferences and a configurable reminder lead time", async () => {
-    render(<NotificationPreferencesSettings />);
+  const saveTiming = () =>
+    screen.getByRole("button", {
+      name: "settings:notificationsPage.saveReminderTiming",
+    });
+  const leadTime = () =>
+    screen.getByLabelText("settings:notificationsPage.reminderLeadTimeLabel");
+  const title = (key: string) =>
+    `settings:notificationsPage.events.${key}.title`;
 
-    fireEvent.click(
-      screen.getByRole("switch", {
-        name: "settings:notificationsPage.eventTaskAssignments",
-      }),
-    );
-    fireEvent.change(
-      screen.getByLabelText("settings:notificationsPage.reminderLeadTimeLabel"),
-      { target: { value: "2" } },
-    );
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "settings:notificationsPage.saveEventPreferences",
-      }),
-    );
+  it("saves the reminder lead time on its own", async () => {
+    renderSettings();
+    fireEvent.change(leadTime(), { target: { value: "2" } });
+    fireEvent.click(saveTiming());
 
     await waitFor(() =>
       expect(updatePreferences).toHaveBeenCalledWith({
-        taskAssignmentEnabled: false,
-        taskCommentEnabled: true,
-        taskStatusChangeEnabled: true,
-        dueDateReminderEnabled: true,
         dueDateReminderLeadTimeMinutes: 2880,
       }),
     );
   });
 
   it("blocks saving a cleared reminder lead time", () => {
-    render(<NotificationPreferencesSettings />);
-
-    fireEvent.change(
-      screen.getByLabelText("settings:notificationsPage.reminderLeadTimeLabel"),
-      { target: { value: "" } },
-    );
+    renderSettings();
+    fireEvent.change(leadTime(), { target: { value: "" } });
 
     expect(
       screen.getByText("settings:notificationsPage.reminderLeadTimeInvalid"),
     ).toBeTruthy();
-    expect(
-      screen.getByRole("button", {
-        name: "settings:notificationsPage.saveEventPreferences",
-      }),
-    ).toHaveProperty("disabled", true);
+    expect(saveTiming()).toHaveProperty("disabled", true);
   });
 
-  it("saves disabled reminders without validating their retained lead time", async () => {
-    render(<NotificationPreferencesSettings />);
-
-    fireEvent.change(
-      screen.getByLabelText("settings:notificationsPage.reminderLeadTimeLabel"),
-      { target: { value: "0" } },
-    );
+  it("saves an event switch straight away", async () => {
+    renderSettings();
     fireEvent.click(
       screen.getByRole("switch", {
-        name: "settings:notificationsPage.eventDueDateReminders",
+        name: `settings:notificationsPage.inAppFor:${title("leave_requested")}`,
       }),
     );
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "settings:notificationsPage.saveEventPreferences",
-      }),
-    );
-
     await waitFor(() =>
-      expect(updatePreferences).toHaveBeenCalledWith({
-        taskAssignmentEnabled: true,
-        taskCommentEnabled: true,
-        taskStatusChangeEnabled: true,
-        dueDateReminderEnabled: false,
+      expect(saveEvent).toHaveBeenCalledWith({
+        events: { leave_requested: { inApp: false } },
       }),
     );
+  });
+
+  it("groups events by who receives them", () => {
+    renderSettings();
+    expect(
+      screen.getByText("settings:notificationsPage.audience.everyone"),
+    ).toBeTruthy();
+    expect(
+      screen.getByText("settings:notificationsPage.audience.approvers"),
+    ).toBeTruthy();
+    // No admin events in this list, so no empty admin group.
+    expect(
+      screen.queryByText("settings:notificationsPage.audience.admins"),
+    ).toBeNull();
+  });
+
+  it("disables event emails while the email channel is off", () => {
+    renderSettings({ emailEnabled: false });
+    expect(
+      screen.getByRole("switch", {
+        name: `settings:notificationsPage.emailFor:${title("task_assigned")}`,
+      }),
+    ).toHaveAttribute("data-disabled");
+  });
+
+  it("leaves the lead time alone while due-date reminders are off", () => {
+    renderSettings({
+      events: preferences.events.map((event) =>
+        event.key === "task_due" ? { ...event, inApp: false } : event,
+      ),
+    });
+    expect(leadTime()).toHaveProperty("disabled", true);
+    fireEvent.change(leadTime(), { target: { value: "0" } });
+    expect(saveTiming()).toHaveProperty("disabled", false);
   });
 });

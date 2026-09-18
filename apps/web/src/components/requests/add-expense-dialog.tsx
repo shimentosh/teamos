@@ -1,6 +1,7 @@
 import { format } from "date-fns";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { CategoryCombobox } from "@/components/expenses/category-combobox";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,10 +23,13 @@ import {
 } from "@/components/ui/select";
 import { useRequestActions } from "@/hooks/mutations/company-os";
 import useGetProjects from "@/hooks/queries/project/use-get-projects";
+import { useGetTasks } from "@/hooks/queries/task/use-get-tasks";
+import { useWorkspacePermission } from "@/hooks/use-workspace-permission";
 import { parseMoneyInput } from "@/lib/money";
 import { toast } from "@/lib/toast";
 
 const NO_PROJECT = "__none__";
+const NO_TASK = "__none__";
 const MAX_RECEIPT_BYTES = 5 * 1024 * 1024;
 
 export function AddExpenseDialog({
@@ -48,7 +52,24 @@ export function AddExpenseDialog({
   const [description, setDescription] = useState("");
   const [spentOn, setSpentOn] = useState("");
   const [projectId, setProjectId] = useState(NO_PROJECT);
+  const [taskId, setTaskId] = useState(NO_TASK);
   const [file, setFile] = useState<File | null>(null);
+  const { canManageWorkspace } = useWorkspacePermission();
+  const { data: board } = useGetTasks(
+    open && projectId !== NO_PROJECT ? projectId : "",
+  );
+  // Open work first; finished tasks can still be picked for late receipts.
+  const tasks = useMemo(() => {
+    const data = board;
+    if (!data) return [];
+    return [
+      ...data.columns.flatMap((column) => column.tasks),
+      ...data.plannedTasks,
+    ].map((task) => ({
+      id: task.id,
+      label: `${data.slug}-${task.number} ${task.title}`,
+    }));
+  }, [board]);
 
   useEffect(() => {
     if (!open) return;
@@ -57,6 +78,7 @@ export function AddExpenseDialog({
     setDescription("");
     setSpentOn(format(new Date(), "yyyy-MM-dd"));
     setProjectId(NO_PROJECT);
+    setTaskId(NO_TASK);
     setFile(null);
   }, [open]);
 
@@ -83,6 +105,8 @@ export function AddExpenseDialog({
         description: description.trim() || undefined,
         spentOn,
         projectId: projectId === NO_PROJECT ? undefined : projectId,
+        taskId:
+          projectId !== NO_PROJECT && taskId !== NO_TASK ? taskId : undefined,
         receiptFileId: receipt?.id,
       });
       toast.success(t("requests:expense.sent"));
@@ -131,20 +155,13 @@ export function AddExpenseDialog({
             <Label htmlFor={`${id}-category`}>
               {t("requests:expense.category")}
             </Label>
-            <Input
-              id={`${id}-category`}
-              list={`${id}-categories`}
+            <CategoryCombobox
+              inputId={`${id}-category`}
+              workspaceId={workspaceId}
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              placeholder={t("requests:expense.categoryPlaceholder")}
+              onChange={setCategory}
+              canManage={Boolean(canManageWorkspace())}
             />
-            <datalist id={`${id}-categories`}>
-              <option value={t("requests:expense.categories.travel")} />
-              <option value={t("requests:expense.categories.meals")} />
-              <option value={t("requests:expense.categories.equipment")} />
-              <option value={t("requests:expense.categories.software")} />
-              <option value={t("requests:expense.categories.other")} />
-            </datalist>
           </div>
           <div className="space-y-1">
             <Label htmlFor={`${id}-description`}>
@@ -161,7 +178,10 @@ export function AddExpenseDialog({
             <Select
               value={projectId}
               onValueChange={(value) => {
-                if (typeof value === "string") setProjectId(value);
+                if (typeof value === "string") {
+                  setProjectId(value);
+                  setTaskId(NO_TASK);
+                }
               }}
             >
               <SelectTrigger>
@@ -179,6 +199,35 @@ export function AddExpenseDialog({
               </SelectContent>
             </Select>
           </div>
+          {projectId !== NO_PROJECT && (
+            <div className="space-y-1">
+              <Label>{t("expenses:task")}</Label>
+              <Select
+                value={taskId}
+                onValueChange={(value) => {
+                  if (typeof value === "string") setTaskId(value);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue>
+                    {taskId === NO_TASK
+                      ? t("expenses:noTask")
+                      : (tasks.find((task) => task.id === taskId)?.label ?? "")}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_TASK}>
+                    {t("expenses:noTask")}
+                  </SelectItem>
+                  {tasks.map((task) => (
+                    <SelectItem key={task.id} value={task.id}>
+                      {task.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="space-y-1">
             <Label htmlFor={`${id}-receipt`}>
               {t("requests:expense.receipt")}

@@ -68,10 +68,36 @@ export const leaveBody = z
     { message: "Request at most 90 days at a time", path: ["endDate"] },
   );
 
+export const PAYMENT_METHODS = [
+  "bank",
+  "cash",
+  "bkash",
+  "nagad",
+  "paypal",
+  "usdt",
+  "card",
+  "other",
+] as const;
+
+const payment = {
+  paymentMethod: z.enum(PAYMENT_METHODS).optional().openapi({
+    description: "How the money is paid back.",
+  }),
+  paymentReference: z.string().trim().max(200).optional().openapi({
+    description: "Transfer id, wallet hash or similar, for tracing.",
+  }),
+};
+
 export const decideBody = z.object({
   workspaceId: z.string(),
   decision: z.enum(["approved", "rejected"]),
   note: z.string().max(500).optional(),
+  ...payment,
+});
+
+export const markPaidBody = z.object({
+  workspaceId: z.string(),
+  ...payment,
 });
 
 export const workspaceBody = z.object({ workspaceId: z.string() });
@@ -88,6 +114,9 @@ export const expenseBody = z.object({
   description: z.string().max(500).optional(),
   spentOn: calendarDay,
   projectId: z.string().optional(),
+  taskId: z.string().optional().openapi({
+    description: "A task inside `projectId` the money went to.",
+  }),
   receiptFileId: z.string().optional(),
 });
 

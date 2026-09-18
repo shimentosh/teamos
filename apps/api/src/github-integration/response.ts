@@ -15,7 +15,7 @@ export const githubIntegrationSchema = z
     }),
     commentTaskLinkOnGitHubIssue: z.boolean().optional().openapi({
       description:
-        "When on, Company OS comments a link back to the task on the linked GitHub issue.",
+        "When on, TeamOS comments a link back to the task on the linked GitHub issue.",
     }),
     isActive: z.boolean().nullable(),
     createdAt: responseTimestamp,

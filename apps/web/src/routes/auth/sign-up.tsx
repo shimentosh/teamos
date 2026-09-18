@@ -104,7 +104,7 @@ function SignUp() {
         title={
           isInstanceAdminSetup
             ? t("auth:signUp.instanceAdminTitle", {
-                defaultValue: "Set up your Company OS instance",
+                defaultValue: "Set up your TeamOS instance",
               })
             : t("auth:signUp.title")
         }

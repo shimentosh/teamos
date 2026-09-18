@@ -138,7 +138,7 @@ function DeviceApprovePage() {
   return (
     <AuthLayout
       title="Approve device"
-      subtitle="A device is requesting access to your Company OS account."
+      subtitle="A device is requesting access to your TeamOS account."
     >
       <div className="space-y-4">
         <p className="text-center font-mono text-sm tracking-wide">

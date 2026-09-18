@@ -119,7 +119,7 @@ export function StorageSettings() {
           storage.connected ? t("files:storage.secretKept") : "",
           true,
         )}
-        {field("keyPrefix", t("files:storage.prefix"), "company-os/")}
+        {field("keyPrefix", t("files:storage.prefix"), "teamos/")}
       </div>
       <p className="text-xs text-muted-foreground">{t("files:storage.help")}</p>
       <div className="flex gap-2">

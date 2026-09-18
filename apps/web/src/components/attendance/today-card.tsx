@@ -1,10 +1,7 @@
 import { LogIn, LogOut, Palmtree } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import {
-  useClockIn,
-  useClockOut,
-} from "@/hooks/mutations/attendance/use-attendance-mutations";
+import { useClockIn } from "@/hooks/mutations/attendance/use-attendance-mutations";
 import { useAttendanceStatus } from "@/hooks/queries/attendance/use-attendance";
 import useCompanySettings from "@/hooks/queries/company/use-company-settings";
 import { useNow } from "@/hooks/use-now";
@@ -13,6 +10,7 @@ import { formatHours } from "@/lib/format-duration";
 import { toast } from "@/lib/toast";
 import { zonedClock } from "@/lib/zoned-time";
 import { leaveTypeLabel } from "../requests/labels";
+import { ClockOutButton } from "./clock-out-button";
 import { DayStatusBadge } from "./day-status";
 
 /** "GMT+6" for Asia/Dhaka: what people recognise, next to the zone name. */
@@ -56,7 +54,6 @@ export function TodayCard({ workspaceId }: { workspaceId: string }) {
   const { data: status, dataUpdatedAt } = useAttendanceStatus(workspaceId);
   const { data: company } = useCompanySettings(workspaceId);
   const clockIn = useClockIn(workspaceId);
-  const clockOut = useClockOut(workspaceId);
   const now = useNow(true);
   const timeZone = company?.timezone ?? "UTC";
 
@@ -127,16 +124,14 @@ export function TodayCard({ workspaceId }: { workspaceId: string }) {
               })}
             </div>
           ) : status?.clockedIn ? (
-            <Button
+            <ClockOutButton
+              workspaceId={workspaceId}
               size="lg"
-              variant="outline"
               className="min-w-40 gap-2 border-rose-500/40 text-rose-600 hover:bg-rose-500/10 dark:text-rose-400"
-              disabled={clockOut.isPending}
-              onClick={() => clockOut.mutateAsync().catch(fail)}
             >
               <LogOut className="size-4" />
               {t("attendance:card.clockOut")}
-            </Button>
+            </ClockOutButton>
           ) : (
             <Button
               size="lg"

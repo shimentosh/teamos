@@ -33,7 +33,7 @@ pub fn foreground_app() -> Option<String> {
 }
 
 /// Active tab URL for Safari and Google Chrome via AppleScript. macOS asks the
-/// user once to allow "Company OS Agent" to control each browser (Automation). The
+/// user once to allow "TeamOS Agent" to control each browser (Automation). The
 /// caller reduces the URL to its hostname immediately.
 pub fn browser_url(app: &str) -> Option<String> {
     let script = match app {

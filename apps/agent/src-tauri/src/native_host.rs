@@ -1,4 +1,4 @@
-//! Chrome/Edge native messaging host for the "Company OS Agent connector" extension.
+//! Chrome/Edge native messaging host for the "TeamOS Agent connector" extension.
 //!
 //! The browser starts the host with the caller origin as an argument
 //! (`chrome-extension://<id>/`, plus `--parent-window=<hwnd>` on Windows) and
@@ -238,7 +238,7 @@ fn write_atomically(path: &Path, bytes: &[u8]) -> io::Result<()> {
 pub fn manifest_json(host_path: &Path) -> String {
     let manifest = serde_json::json!({
         "name": HOST_NAME,
-        "description": "Company OS Agent",
+        "description": "TeamOS Agent",
         "path": host_path.to_string_lossy(),
         "type": "stdio",
         "allowed_origins": [format!("chrome-extension://{EXTENSION_ID}/")],
@@ -525,7 +525,7 @@ mod tests {
 
     #[test]
     fn manifest_names_the_host_and_the_extension() {
-        let path = PathBuf::from(r"C:\Program Files\Company OS Agent\kaneo-agent.exe");
+        let path = PathBuf::from(r"C:\Program Files\TeamOS Agent\kaneo-agent.exe");
         let json: Value = serde_json::from_str(&manifest_json(&path)).unwrap();
         assert_eq!(json["name"], "app.kaneo.agent");
         assert_eq!(json["type"], "stdio");

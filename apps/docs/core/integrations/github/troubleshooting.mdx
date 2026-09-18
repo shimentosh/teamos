@@ -13,7 +13,7 @@ This guide helps you diagnose and fix common issues with the GitHub integration.
 **Problem**: Verification shows the app isn't installed on the repository.
 
 **Symptoms**:
-- Red error message in Company OS UI
+- Red error message in TeamOS UI
 - "Connect Repository" button remains disabled
 - Repository doesn't appear in the browser modal
 
@@ -34,7 +34,7 @@ This guide helps you diagnose and fix common issues with the GitHub integration.
    - Verify the repository exists and you have access to it
 
 <Tip>
-Use the "Browse Repositories" feature in Company OS to see which repositories your app can access.
+Use the "Browse Repositories" feature in TeamOS to see which repositories your app can access.
 </Tip>
 
 ### "Missing Permissions" Error
@@ -58,7 +58,7 @@ Use the "Browse Repositories" feature in Company OS to see which repositories yo
 2. **Update Installation**
    - After changing app permissions, you may need to update the installation
    - Go to [GitHub App installations](https://github.com/settings/installations)
-   - Click "Configure" on your Company OS app
+   - Click "Configure" on your TeamOS app
    - Review and accept the new permissions
    - Go to [GitHub App installations](https://github.com/settings/installations)
    - Click "Configure" next to your app
@@ -134,10 +134,10 @@ Make sure your private key doesn't have any extra characters or missing newlines
 
 ### Webhook Not Receiving Events
 
-**Problem**: GitHub events aren't reaching Company OS.
+**Problem**: GitHub events aren't reaching TeamOS.
 
 **Symptoms**:
-- Webhook events listed in GitHub but no logs in Company OS
+- Webhook events listed in GitHub but no logs in TeamOS
 - Webhook delivery failures in GitHub App settings
 
 **Solutions**:
@@ -158,7 +158,7 @@ Make sure your private key doesn't have any extra characters or missing newlines
 
 ### Webhook Signature Verification Fails
 
-**Problem**: Webhooks reach Company OS but signature verification fails.
+**Problem**: Webhooks reach TeamOS but signature verification fails.
 
 **Symptoms**:
 - "Invalid signature" errors in logs
@@ -226,11 +226,11 @@ Test the automatic transitions by:
 
 ### Issue Label Synchronization Issues
 
-**Problem**: Labels aren't syncing between Company OS and GitHub.
+**Problem**: Labels aren't syncing between TeamOS and GitHub.
 
 **Symptoms**:
-- Changing priority in Company OS doesn't update GitHub labels
-- Adding labels in GitHub doesn't reflect in Company OS
+- Changing priority in TeamOS doesn't update GitHub labels
+- Adding labels in GitHub doesn't reflect in TeamOS
 - Labels have wrong colors or formats
 
 **Solutions**:
@@ -246,7 +246,7 @@ Test the automatic transitions by:
 
 3. **Check Webhook Events**
    - Ensure **Issues** events are subscribed (especially "labeled" and "unlabeled")
-   - Without these, label changes from GitHub won't sync to Company OS
+   - Without these, label changes from GitHub won't sync to TeamOS
 
 ## Testing and Debugging
 
@@ -263,7 +263,7 @@ Follow these steps to systematically test your integration:
    ```
 
 2. **Test Repository Access**
-   - Use the "Browse Repositories" feature in Company OS
+   - Use the "Browse Repositories" feature in TeamOS
    - Verify your target repository appears in the list
    - Try connecting a test repository first
 
@@ -329,12 +329,12 @@ If you're still experiencing issues:
 
 2. **Gather Information**
    - Note the exact error messages
-   - Check both Company OS logs and GitHub webhook delivery logs
+   - Check both TeamOS logs and GitHub webhook delivery logs
    - Document your environment (Docker, Kubernetes, etc.)
 
 3. **Test Basic Functionality**
    - Try creating a task without GitHub integration
-   - Verify your Company OS instance is working normally
+   - Verify your TeamOS instance is working normally
    - Test with different repositories if possible
 
 ### Support Channels
@@ -346,7 +346,7 @@ If you're still experiencing issues:
 ### What to Include in Support Requests
 
 1. **Environment Details**
-   - Company OS version
+   - TeamOS version
    - Deployment method (Docker, Kubernetes, etc.)
    - Operating system
 
@@ -366,4 +366,4 @@ When sharing logs or error messages, always redact sensitive information like pr
 
 ---
 
-**Still stuck?** The Company OS community is here to help! Join our [Discord](https://discord.gg/rU4tSyhXXU) for real-time support.
+**Still stuck?** The TeamOS community is here to help! Join our [Discord](https://discord.gg/rU4tSyhXXU) for real-time support.

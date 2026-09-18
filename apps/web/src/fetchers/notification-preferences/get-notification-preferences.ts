@@ -15,7 +15,16 @@ export type NotificationPreferenceWorkspaceRule = {
   updatedAt: string;
 };
 
+export type NotificationEventSetting = {
+  key: string;
+  /** Who gets it: anyone involved, request approvers, or workspace admins. */
+  audience: "everyone" | "approvers" | "admins";
+  inApp: boolean;
+  email: boolean;
+};
+
 export type NotificationPreferences = {
+  events: NotificationEventSetting[];
   emailAddress: string | null;
   emailEnabled: boolean;
   ntfyEnabled: boolean;

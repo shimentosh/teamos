@@ -299,6 +299,58 @@ export function buildNotificationEmail(input: {
         },
       };
     }
+    case "leave_withdrawn": {
+      const who = str(data, "userName") ?? "Someone";
+      const kind = LEAVE_TYPES[str(data, "type") ?? ""] ?? "Leave";
+      const range = dateRange(str(data, "startDate"), str(data, "endDate"));
+      return {
+        subject: `${who} withdrew their ${kind.toLowerCase()} request${range ? ` (${range})` : ""}`,
+        category: "leave_withdrawn",
+        props: {
+          ...base,
+          preview: `Nothing to decide: ${who} withdrew the request.`,
+          eyebrow: "Leave request",
+          heading: `${who} withdrew a ${kind.toLowerCase()} request`,
+          intro:
+            "There's nothing left to decide. Those days stay working days.",
+          card: {
+            title: kind,
+            subtitle: range,
+            status: { label: "Withdrawn", tone: "neutral" },
+            details: [{ label: "Workspace", value: workspace }],
+          },
+          primary: open ? { label: "View requests", url: open } : null,
+          reason: `You get this because you approve leave in ${workspace}.`,
+        },
+      };
+    }
+    case "member_joined": {
+      const who = str(data, "userName") ?? "Someone";
+      const email = str(data, "email");
+      const role = humanStatus(str(data, "role"));
+      return {
+        subject: `${who} joined ${workspace}`,
+        category: "member_joined",
+        props: {
+          ...base,
+          preview: `${who} accepted the invitation to ${workspace}.`,
+          eyebrow: "New member",
+          heading: `${who} joined ${workspace}`,
+          intro:
+            "They accepted their invitation. Check their role, department and working hours so attendance and pay work from day one.",
+          card: {
+            title: who,
+            subtitle: email,
+            details: [
+              ...(role ? [{ label: "Role", value: role }] : []),
+              { label: "Workspace", value: workspace },
+            ],
+          },
+          primary: open ? { label: "Open people", url: open } : null,
+          reason: `You get this because you manage ${workspace}.`,
+        },
+      };
+    }
     case "leave_approved":
     case "leave_rejected":
     case "leave_cancelled": {
@@ -421,7 +473,7 @@ export function buildNotificationEmail(input: {
           heading: `Your payslip${forPeriod} is ready`,
           // Pay is private: the email only says where to look.
           intro:
-            "For your privacy the amounts are not in this email. Open Company OS to see them.",
+            "For your privacy the amounts are not in this email. Open TeamOS to see them.",
           card: period
             ? {
                 title: period,
@@ -457,7 +509,7 @@ export function buildNotificationEmail(input: {
           preview: fallback.body,
           heading: fallback.title,
           intro: fallback.body,
-          primary: open ? { label: "Open in Company OS", url: open } : null,
+          primary: open ? { label: "Open in TeamOS", url: open } : null,
           reason: `You get this because you're a member of ${workspace}.`,
         },
       };

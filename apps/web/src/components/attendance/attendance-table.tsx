@@ -89,6 +89,10 @@ export function AttendanceTable({
               row.status === "off" ||
               row.status === "upcoming" ||
               row.status === "notJoined";
+            const notes = row.sessions
+              .map((s) => s.note)
+              .filter(Boolean)
+              .join("\n");
             return (
               <TableRow
                 key={row.key}
@@ -98,7 +102,18 @@ export function AttendanceTable({
                 )}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
               >
-                <TableCell className="ps-4">{row.label}</TableCell>
+                <TableCell className="ps-4">
+                  {row.label}
+                  {/* What they said they worked on when clocking out. */}
+                  {notes && (
+                    <p
+                      className="mt-0.5 line-clamp-2 max-w-md whitespace-pre-line text-muted-foreground text-xs"
+                      title={notes}
+                    >
+                      {notes}
+                    </p>
+                  )}
+                </TableCell>
                 <TableCell>{!off && <DayStatusBadge day={row} />}</TableCell>
                 <TableCell className="text-right tabular-nums">
                   {row.firstIn ? zonedClock(row.firstIn, timeZone) : "–"}

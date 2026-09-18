@@ -51,7 +51,7 @@ async function requireBillingManager(userId: string, workspaceId: string) {
 
 // Excluded from the app-wide auth middleware: authenticity comes from the
 // provider's webhook signature instead of a session.
-// Company OS Cloud only: still served, but kept out of the published document so the
+// TeamOS Cloud only: still served, but kept out of the published document so the
 // self-hosted API reference does not advertise a paid tier that does not exist.
 const cloudOnly = { hide: true } as const;
 

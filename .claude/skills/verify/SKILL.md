@@ -1,9 +1,9 @@
 ---
 name: verify
-description: Build/launch/drive recipe for verifying Company OS changes end-to-end on a local dev instance
+description: Build/launch/drive recipe for verifying TeamOS changes end-to-end on a local dev instance
 ---
 
-# Verifying Company OS changes
+# Verifying TeamOS changes
 
 ## Launch
 

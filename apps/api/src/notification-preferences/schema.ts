@@ -1,4 +1,5 @@
 import { z } from "../openapi";
+import { isNotificationEventKey } from "./events";
 
 export const workspaceIdParam = z.object({ workspaceId: z.string() });
 
@@ -19,6 +20,22 @@ export const updatePreferencesBody = z.object({
   taskCommentEnabled: z.boolean().optional(),
   taskStatusChangeEnabled: z.boolean().optional(),
   dueDateReminderEnabled: z.boolean().optional(),
+  events: z
+    .record(
+      z.string(),
+      z.object({
+        inApp: z.boolean().optional(),
+        email: z.boolean().optional(),
+      }),
+    )
+    .refine((events) => Object.keys(events).every(isNotificationEventKey), {
+      message: "Unknown notification event",
+    })
+    .optional()
+    .openapi({
+      description:
+        "Per-event switches to change, e.g. { leave_requested: { email: false } }. Events left out keep their setting.",
+    }),
   dueDateReminderLeadTimeMinutes: z
     .number()
     .int()

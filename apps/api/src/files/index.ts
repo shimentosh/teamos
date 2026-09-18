@@ -173,7 +173,7 @@ const connectAccountStorageRoute = createRoute({
   tags,
   summary: "Connect my bucket",
   description:
-    "Save R2 credentials after checking Company OS can write to the bucket. Leave the secret empty to keep the saved one. Switching buckets is refused while files live in the current one. Audit logged in each workspace you own.",
+    "Save R2 credentials after checking TeamOS can write to the bucket. Leave the secret empty to keep the saved one. Switching buckets is refused while files live in the current one. Audit logged in each workspace you own.",
   request: { body: json(connectStorageBody) },
   responses: {
     200: jsonResponse("Connected", accountStorageSchema),

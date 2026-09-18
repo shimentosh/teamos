@@ -1,5 +1,5 @@
 name: "Bug Report"
-description: Create a report to help us improve Company OS
+description: Create a report to help us improve TeamOS
 title: "[Bug]: "
 labels: ["bug"]
 body:
@@ -57,7 +57,7 @@ body:
       label: "Environment"
       placeholder: |
         Example:
-        - Company OS Version: [e.g., 1.0.0]
+        - TeamOS Version: [e.g., 1.0.0]
         - Deployment Method: [e.g., Docker, Kubernetes, etc.]
         - Browser: [e.g., Chrome 120, Firefox 119]
         - OS: [e.g., Windows 11, macOS Sonoma, Ubuntu 22.04]

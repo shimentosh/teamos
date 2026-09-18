@@ -30,6 +30,7 @@ import {
 import useGetNotificationPreferences from "@/hooks/queries/notification-preferences/use-get-notification-preferences";
 import useGetProjects from "@/hooks/queries/project/use-get-projects";
 import useGetWorkspaces from "@/hooks/queries/workspace/use-get-workspaces";
+import { NotificationEventMatrix } from "./notification-event-matrix";
 
 type WorkspaceSummary = {
   id: string;
@@ -567,6 +568,10 @@ export function NotificationPreferencesSettings() {
     [preferences?.workspaces],
   );
 
+  const dueRemindersOn =
+    preferences?.events.find((event) => event.key === "task_due")?.inApp ??
+    true;
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -589,49 +594,10 @@ export function NotificationPreferencesSettings() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-4">
-          <ChannelToggle
-            checked={eventPrefs.taskAssignmentEnabled}
-            label={t("settings:notificationsPage.eventTaskAssignments")}
-            onCheckedChange={(checked) =>
-              setEventPrefs((current) => ({
-                ...current,
-                taskAssignmentEnabled: checked,
-              }))
-            }
-          />
-          <ChannelToggle
-            checked={eventPrefs.taskCommentEnabled}
-            hint={t("settings:notificationsPage.eventCommentsHint")}
-            label={t("settings:notificationsPage.eventComments")}
-            onCheckedChange={(checked) =>
-              setEventPrefs((current) => ({
-                ...current,
-                taskCommentEnabled: checked,
-              }))
-            }
-          />
-          <ChannelToggle
-            checked={eventPrefs.taskStatusChangeEnabled}
-            label={t("settings:notificationsPage.eventStatusChanges")}
-            onCheckedChange={(checked) =>
-              setEventPrefs((current) => ({
-                ...current,
-                taskStatusChangeEnabled: checked,
-              }))
-            }
-          />
-          <ChannelToggle
-            checked={eventPrefs.dueDateReminderEnabled}
-            label={t("settings:notificationsPage.eventDueDateReminders")}
-            onCheckedChange={(checked) =>
-              setEventPrefs((current) => ({
-                ...current,
-                dueDateReminderEnabled: checked,
-              }))
-            }
-          />
-        </div>
+        <NotificationEventMatrix
+          events={preferences?.events ?? []}
+          emailEnabled={preferences?.emailEnabled ?? true}
+        />
 
         <div className="flex max-w-sm flex-col gap-1">
           <Label htmlFor="due-date-reminder-lead-time">
@@ -640,7 +606,7 @@ export function NotificationPreferencesSettings() {
           <div className="flex gap-2">
             <NumberField
               className="w-36"
-              disabled={!eventPrefs.dueDateReminderEnabled}
+              disabled={!dueRemindersOn}
               id="due-date-reminder-lead-time"
               max={leadTimeMax}
               min={1}
@@ -660,7 +626,7 @@ export function NotificationPreferencesSettings() {
               </NumberFieldGroup>
             </NumberField>
             <Select
-              disabled={!eventPrefs.dueDateReminderEnabled}
+              disabled={!dueRemindersOn}
               onValueChange={(unit) =>
                 setEventPrefs((current) => ({
                   ...current,
@@ -686,7 +652,7 @@ export function NotificationPreferencesSettings() {
               </SelectContent>
             </Select>
           </div>
-          {eventPrefs.dueDateReminderEnabled && !leadTimeValid ? (
+          {dueRemindersOn && !leadTimeValid ? (
             <p className="text-xs text-destructive">
               {t("settings:notificationsPage.reminderLeadTimeInvalid", {
                 max: leadTimeMax,
@@ -701,30 +667,18 @@ export function NotificationPreferencesSettings() {
 
         <div>
           <Button
-            disabled={
-              isSavingPreferences ||
-              (eventPrefs.dueDateReminderEnabled && !leadTimeValid)
-            }
+            disabled={isSavingPreferences || (dueRemindersOn && !leadTimeValid)}
             onClick={async () => {
+              // The switches above save on their own; this saves the timing.
               await updatePreferences({
-                taskAssignmentEnabled: eventPrefs.taskAssignmentEnabled,
-                taskCommentEnabled: eventPrefs.taskCommentEnabled,
-                taskStatusChangeEnabled: eventPrefs.taskStatusChangeEnabled,
-                dueDateReminderEnabled: eventPrefs.dueDateReminderEnabled,
-                ...(eventPrefs.dueDateReminderEnabled
-                  ? {
-                      dueDateReminderLeadTimeMinutes:
-                        eventPrefs.dueDateReminderLeadAmount *
-                        (eventPrefs.dueDateReminderLeadUnit === "days"
-                          ? 1440
-                          : 60),
-                    }
-                  : {}),
+                dueDateReminderLeadTimeMinutes:
+                  eventPrefs.dueDateReminderLeadAmount *
+                  (eventPrefs.dueDateReminderLeadUnit === "days" ? 1440 : 60),
               });
             }}
             type="button"
           >
-            {t("settings:notificationsPage.saveEventPreferences")}
+            {t("settings:notificationsPage.saveReminderTiming")}
           </Button>
         </div>
       </div>

@@ -8,7 +8,7 @@ type PageTitleProps = {
 
 export default function PageTitle({
   title,
-  suffix = "Company OS",
+  suffix = "TeamOS",
   hideAppName = false,
 }: PageTitleProps) {
   useEffect(() => {

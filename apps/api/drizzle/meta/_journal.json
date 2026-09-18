@@ -477,6 +477,20 @@
       "when": 1789757961750,
       "tag": "0067_empty_marvex",
       "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1789758581910,
+      "tag": "0068_abnormal_power_pack",
+      "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1789759185326,
+      "tag": "0069_smooth_namor",
+      "breakpoints": true
     }
   ]
 }

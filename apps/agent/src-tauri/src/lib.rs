@@ -105,15 +105,15 @@ fn run_app(start_minimized: bool) {
                     &items.status,
                     &PredefinedMenuItem::separator(handle)?,
                     &items.toggle,
-                    &MenuItem::with_id(handle, "open", "Open Company OS Agent", true, None::<&str>)?,
+                    &MenuItem::with_id(handle, "open", "Open TeamOS Agent", true, None::<&str>)?,
                     &PredefinedMenuItem::separator(handle)?,
-                    &MenuItem::with_id(handle, "quit", "Quit Company OS Agent", true, None::<&str>)?,
+                    &MenuItem::with_id(handle, "quit", "Quit TeamOS Agent", true, None::<&str>)?,
                 ],
             )?;
 
             let tray = TrayIconBuilder::with_id("main")
                 .icon(app.default_window_icon().cloned().expect("bundle icon"))
-                .tooltip("Company OS Agent")
+                .tooltip("TeamOS Agent")
                 .menu(&menu)
                 .show_menu_on_left_click(false)
                 .on_menu_event(|app, event| match event.id.as_ref() {
@@ -141,7 +141,7 @@ fn run_app(start_minimized: bool) {
             let app_handle = handle.clone();
             tracker.on_change(move |status| {
                 let label = status.label();
-                let _ = tray.set_tooltip(Some(format!("Company OS Agent: {label}")));
+                let _ = tray.set_tooltip(Some(format!("TeamOS Agent: {label}")));
                 let _ = items.status.set_text(format!("Status: {label}"));
                 let _ = items.toggle.set_enabled(status.mode != "not_connected");
                 let _ = items.toggle.set_text(if status.mode == "paused" {
@@ -170,7 +170,7 @@ fn run_app(start_minimized: bool) {
             }
         })
         .build(tauri::generate_context!())
-        .expect("failed to start Company OS Agent");
+        .expect("failed to start TeamOS Agent");
 
     app.run(|app, event| {
         if let RunEvent::Exit = event {

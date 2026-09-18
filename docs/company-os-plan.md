@@ -1,12 +1,12 @@
-# Company OS plan
+# TeamOS plan
 
-Company OS stays a project tool first. This plan adds a thin company layer (people,
+TeamOS stays a project tool first. This plan adds a thin company layer (people,
 attendance, activity, pay, leave, expenses) around the existing
 project → task → time workflow, without redesigning anything.
 
 Guiding rule: if a feature makes routine project work heavier, it is wrong.
 
-## 1. What Company OS already has (audit)
+## 1. What TeamOS already has (audit)
 
 | Area | Today | Where |
 |---|---|---|
@@ -61,7 +61,7 @@ pages, an existing dialog pattern, or Settings.
 
 Four everyday roles, mapped onto what exists:
 
-| Role | Company OS role | Change |
+| Role | TeamOS role | Change |
 |---|---|---|
 | Owner | `owner` | none |
 | Admin | `admin` | gets the new resources below |

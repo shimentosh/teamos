@@ -1,4 +1,4 @@
-# Company OS project instructions
+# TeamOS project instructions
 
 Canonical guidance: [AGENTS.md](./AGENTS.md)
 

@@ -1,6 +1,6 @@
-# Contributing to Company OS
+# Contributing to TeamOS
 
-Thanks for wanting to contribute to Company OS! Whether you're fixing bugs, adding features, or improving docs, we appreciate your help.
+Thanks for wanting to contribute to TeamOS! Whether you're fixing bugs, adding features, or improving docs, we appreciate your help.
 
 ## Table of Contents
 
@@ -117,7 +117,7 @@ We use [conventional commits](https://www.conventionalcommits.org/) to keep our 
 
 ### Localization (i18n)
 
-Company OS uses [i18next](https://www.i18next.com/) with [react-i18next](https://react.i18next.com/) in the web app. We want user-facing copy to stay consistent, translatable, and easy to maintain.
+TeamOS uses [i18next](https://www.i18next.com/) with [react-i18next](https://react.i18next.com/) in the web app. We want user-facing copy to stay consistent, translatable, and easy to maintain.
 
 #### Approach
 
@@ -229,8 +229,8 @@ For more context, see [this blog article](https://roe.dev/blog/using-ai-in-open-
 
 - **Bug fixes** - Found something broken? Fix it!
 - **New features** - Have an idea? Let's discuss it first
-- **Documentation** - Help others understand how to use Company OS
+- **Documentation** - Help others understand how to use TeamOS
 - **Performance improvements** - Make things faster
-- **Accessibility** - Help make Company OS usable for everyone
+- **Accessibility** - Help make TeamOS usable for everyone
 
-Thanks for contributing to Company OS! 🚀
+Thanks for contributing to TeamOS! 🚀

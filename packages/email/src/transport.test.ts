@@ -10,7 +10,7 @@ describe("emailProvider", () => {
     expect(
       emailProvider({
         RESEND_API_KEY: "re_x",
-        EMAIL_FROM: "Company OS <hi@example.com>",
+        EMAIL_FROM: "TeamOS <hi@example.com>",
         SMTP_HOST: "smtp.example.com",
         SMTP_FROM: "old@example.com",
       }),
@@ -34,7 +34,7 @@ describe("emailProvider", () => {
 });
 
 describe("deliverEmail with Resend", () => {
-  const env = { RESEND_API_KEY: "re_secret", EMAIL_FROM: "Company OS <k@x.com>" };
+  const env = { RESEND_API_KEY: "re_secret", EMAIL_FROM: "TeamOS <k@x.com>" };
 
   it("posts the email and returns Resend's id", async () => {
     const fetchMock = vi.fn(
@@ -64,7 +64,7 @@ describe("deliverEmail with Resend", () => {
       "Bearer re_secret",
     );
     expect(JSON.parse(init.body as string)).toMatchObject({
-      from: "Company OS <k@x.com>",
+      from: "TeamOS <k@x.com>",
       to: ["nusrat@example.com"],
       subject: "Leave approved",
       text: "ok",

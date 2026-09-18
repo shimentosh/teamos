@@ -5,7 +5,7 @@ alwaysApply: false
 ---
 # Deployment & DevOps Guidelines
 
-Company OS supports multiple deployment methods: Docker Compose for development/testing and Kubernetes for production. This document outlines deployment patterns and best practices.
+TeamOS supports multiple deployment methods: Docker Compose for development/testing and Kubernetes for production. This document outlines deployment patterns and best practices.
 
 ## Docker Compose
 

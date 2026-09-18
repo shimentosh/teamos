@@ -1,10 +1,10 @@
 ---
 title: Configuration & Setup
-description: Configure Company OS with your GitHub App credentials and connect projects to repositories. Includes Docker Compose and Kubernetes examples.
+description: Configure TeamOS with your GitHub App credentials and connect projects to repositories. Includes Docker Compose and Kubernetes examples.
 ---
 
 
-This guide covers configuring Company OS with your GitHub App credentials and connecting projects to repositories.
+This guide covers configuring TeamOS with your GitHub App credentials and connecting projects to repositories.
 
 <Info>
 Make sure you've completed the [GitHub App setup](/core/integrations/github/setup) before proceeding.
@@ -12,7 +12,7 @@ Make sure you've completed the [GitHub App setup](/core/integrations/github/setu
 
 ## Environment Variables
 
-Add the following environment variables to your Company OS deployment:
+Add the following environment variables to your TeamOS deployment:
 
 ```bash
 # GitHub App (integration only: repository sync, webhooks)
@@ -138,7 +138,7 @@ Once your environment variables are configured and your backend is restarted, yo
 <Step>
 **Navigate to Project Settings**
 
-1. Open your Company OS project
+1. Open your TeamOS project
 2. Go to **Project Settings**
 3. Find the **GitHub Integration** section
 </Step>
@@ -162,7 +162,7 @@ You have two options to connect a repository:
 <Step>
 **Verify and Connect**
 
-1. Company OS will verify that your GitHub App has access
+1. TeamOS will verify that your GitHub App has access
 2. If successful, click "Connect Repository"
 3. You should see a green "Connected" status
 
@@ -180,7 +180,7 @@ After connecting a repository, test the integration thoroughly:
 <Step>
 **Test Task to Issue Creation**
 
-Create a new task in your connected Company OS project with:
+Create a new task in your connected TeamOS project with:
 - A clear title
 - A description
 - Set priority and status
@@ -188,7 +188,7 @@ Create a new task in your connected Company OS project with:
 Navigate to your GitHub repository and verify:
 - A new issue was created
 - The issue has `priority:*` and `status:*` labels
-- A comment links back to the Company OS task
+- A comment links back to the TeamOS task
 </Step>
 
 <Step>
@@ -215,7 +215,7 @@ In GitHub:
 1. Create a new issue
 2. Add labels like `priority:high` or `status:in-progress`
 
-In Company OS:
+In TeamOS:
 - Verify a task was created from the issue
 - Check that priority and status match the labels
 - Confirm the task links to the GitHub issue
@@ -225,9 +225,9 @@ In Company OS:
 **Test Label Synchronization**
 
 Test both directions:
-1. Change task priority in Company OS → Check issue labels in GitHub
-2. Add/remove labels in GitHub → Check task in Company OS
-3. Change task status in Company OS → Check if issue is closed/reopened
+1. Change task priority in TeamOS → Check issue labels in GitHub
+2. Add/remove labels in GitHub → Check task in TeamOS
+3. Change task status in TeamOS → Check if issue is closed/reopened
 </Step>
 
 </Steps>
@@ -236,7 +236,7 @@ Test both directions:
 
 ### Branch Naming Patterns
 
-Configure how Company OS matches branches to tasks in your project's GitHub integration settings:
+Configure how TeamOS matches branches to tasks in your project's GitHub integration settings:
 
 **Predefined Patterns:**
 - `{slug}-{number}` (default) - e.g., `proj-123`
@@ -271,22 +271,22 @@ Status transitions only apply if the task is not already in "done" status. This 
 
 ### Label Synchronization
 
-Company OS automatically creates and syncs these label types:
+TeamOS automatically creates and syncs these label types:
 
 **System Labels** (managed automatically):
 - `priority:low`, `priority:medium`, `priority:high`, `priority:urgent`
 - `status:to-do`, `status:in-progress`, `status:in-review`, `status:done`, `status:planned`, `status:archived`
 
 **Custom Labels:**
-- Any labels added to GitHub issues (not starting with `priority:` or `status:`) are synced to Company OS
-- Labels added in Company OS can be synced to GitHub (if configured)
+- Any labels added to GitHub issues (not starting with `priority:` or `status:`) are synced to TeamOS
+- Labels added in TeamOS can be synced to GitHub (if configured)
 
 ### Multiple Organizations
 If you need to connect repositories from multiple GitHub organizations:
 
 1. Install your GitHub App on each organization
 2. Grant appropriate permissions for each organization
-3. Each Company OS project can connect to any repository where your app is installed
+3. Each TeamOS project can connect to any repository where your app is installed
 
 ---
 

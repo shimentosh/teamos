@@ -1,6 +1,6 @@
-# Company OS Mintlify Docs
+# TeamOS Mintlify Docs
 
-This directory contains Company OS documentation powered by Mintlify.
+This directory contains TeamOS documentation powered by Mintlify.
 
 ## Monorepo setup
 

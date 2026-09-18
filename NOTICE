@@ -1,16 +1,16 @@
-Company OS
+TeamOS
 https://github.com/shimentosh/companyos
 
-Company OS is a fork of Kaneo (https://github.com/usekaneo/kaneo),
+TeamOS is a fork of Kaneo (https://github.com/usekaneo/kaneo),
 Copyright (c) 2024 Andrej Acevski and the Kaneo contributors,
 used under the MIT License. The original license and copyright notice are
 kept in the LICENSE file.
 
-Company OS adds a company layer on top of Kaneo (people, attendance, the
+TeamOS adds a company layer on top of Kaneo (people, attendance, the
 desktop agent, payroll, expenses, files, chat, reports and more) and renames
 the product in its user interface. Internal identifiers such as the
 `@kaneo/*` package names and the `KANEO_*` environment variables are kept
 from Kaneo for compatibility.
 
-"Kaneo" is the name of the original project; Company OS is not affiliated
+"Kaneo" is the name of the original project; TeamOS is not affiliated
 with or endorsed by the Kaneo project.

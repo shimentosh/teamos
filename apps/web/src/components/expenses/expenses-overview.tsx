@@ -1,5 +1,6 @@
+import { Link } from "@tanstack/react-router";
 import { format, lastDayOfMonth } from "date-fns";
-import { Check, Paperclip, Plus, Search, X } from "lucide-react";
+import { Check, Paperclip, Plus, Search, Tags, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { monthLabel } from "@/components/pay/labels";
@@ -25,11 +26,16 @@ import {
   useExpenses,
   usePayrollRuns,
 } from "@/hooks/queries/company-os";
+import { useExpenseCategories } from "@/hooks/queries/use-expense-categories";
 import { useWorkspacePermission } from "@/hooks/use-workspace-permission";
 import { cn } from "@/lib/cn";
+import { ExpenseCategoryIcon } from "@/lib/expense-icons";
 import { formatDateMedium } from "@/lib/format";
 import { formatMoney } from "@/lib/money";
 import { toast } from "@/lib/toast";
+import { CategoryBreakdown, type CategoryTotal } from "./category-breakdown";
+import { ManageCategoriesDialog } from "./manage-categories-dialog";
+import { PaymentMethodBadge, PaymentPicker } from "./payment-method";
 
 const ALL = "__all__";
 const STATUSES = ["all", "pending", "approved", "paid", "rejected"] as const;
@@ -83,8 +89,12 @@ export function ExpensesOverview({
   currency: string;
 }) {
   const { t, i18n } = useTranslation();
-  const { canApproveRequests, canSeePay, canManagePay } =
+  const { canApproveRequests, canSeePay, canManagePay, canManageWorkspace } =
     useWorkspacePermission();
+  const { data: categoryList = [] } = useExpenseCategories(workspaceId);
+  const iconFor = (name: string) =>
+    categoryList.find((c) => c.name.toLowerCase() === name.toLowerCase())?.icon;
+  const [manageOpen, setManageOpen] = useState(false);
   const seeAll = Boolean(canApproveRequests());
   const seePay = Boolean(canSeePay());
   const managePay = Boolean(canManagePay());
@@ -144,14 +154,20 @@ export function ExpensesOverview({
   const otherCurrency = live.filter((e) => e.currency !== currency).length;
 
   const byCategory = useMemo(() => {
-    const totals = new Map<string, number>();
+    const totals = new Map<string, CategoryTotal>();
     for (const e of live) {
       if (e.currency !== currency) continue;
-      totals.set(e.category, (totals.get(e.category) ?? 0) + e.amount);
+      const row = totals.get(e.category) ?? {
+        name: e.category,
+        amount: 0,
+        count: 0,
+      };
+      row.amount += e.amount;
+      row.count += 1;
+      totals.set(e.category, row);
     }
-    return [...totals.entries()].sort(([, a], [, b]) => b - a);
+    return [...totals.values()].sort((a, b) => b.amount - a.amount);
   }, [live, currency]);
-  const categoryMax = byCategory[0]?.[1] ?? 0;
 
   const [year, month] = period.split("-").map(Number);
   const run =
@@ -220,9 +236,20 @@ export function ExpensesOverview({
             <SelectItem value={ALL}>{t("expenses:allTime")}</SelectItem>
           </SelectContent>
         </Select>
+        {canManageWorkspace() && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="ms-auto gap-1"
+            onClick={() => setManageOpen(true)}
+          >
+            <Tags className="size-3.5" />
+            {t("expenses:categories.manage")}
+          </Button>
+        )}
         <Button
           size="sm"
-          className="ms-auto gap-1"
+          className={cn("gap-1", !canManageWorkspace() && "ms-auto")}
           onClick={() => setAddOpen(true)}
         >
           <Plus className="size-3.5" />
@@ -288,40 +315,13 @@ export function ExpensesOverview({
       </div>
 
       {byCategory.length > 0 && (
-        <section className="rounded-lg border border-border p-4">
-          <h3 className="mb-3 text-xs font-medium text-muted-foreground">
-            {t("expenses:byCategory")}
-          </h3>
-          <ul className="grid gap-x-8 gap-y-2 sm:grid-cols-2">
-            {byCategory.slice(0, 8).map(([name, amount]) => (
-              <li key={name}>
-                <button
-                  type="button"
-                  onClick={() => setCategory(category === name ? ALL : name)}
-                  className={cn(
-                    "w-full space-y-1 rounded-md text-left",
-                    category !== ALL && category !== name && "opacity-50",
-                  )}
-                >
-                  <div className="flex items-center justify-between gap-2 text-sm">
-                    <span className="truncate">{name}</span>
-                    <span className="shrink-0 tabular-nums text-muted-foreground">
-                      {money(amount)}
-                    </span>
-                  </div>
-                  <div className="h-1.5 overflow-hidden rounded bg-muted">
-                    <div
-                      className="h-full rounded bg-primary"
-                      style={{
-                        width: `${categoryMax ? (amount / categoryMax) * 100 : 0}%`,
-                      }}
-                    />
-                  </div>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <CategoryBreakdown
+          rows={byCategory}
+          iconFor={iconFor}
+          money={money}
+          selected={category === ALL ? null : category}
+          onSelect={(name) => setCategory(name ?? ALL)}
+        />
       )}
 
       <div className="flex flex-wrap items-center gap-2">
@@ -438,7 +438,11 @@ export function ExpensesOverview({
                   )}
                   <td className="max-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-xs">
+                      <span className="flex shrink-0 items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-xs">
+                        <ExpenseCategoryIcon
+                          icon={iconFor(expense.category)}
+                          className="size-3 text-muted-foreground"
+                        />
                         {expense.category}
                       </span>
                       <span className="truncate text-muted-foreground">
@@ -460,37 +464,67 @@ export function ExpensesOverview({
                       )}
                     </div>
                   </td>
-                  <td className="max-w-0 truncate text-xs text-muted-foreground">
-                    {expense.projectName ?? "–"}
+                  <td className="max-w-0 text-xs text-muted-foreground">
+                    <span className="block truncate">
+                      {expense.projectName ?? "–"}
+                    </span>
+                    {expense.taskId && expense.projectId && (
+                      <Link
+                        to="/dashboard/workspace/$workspaceId/project/$projectId/task/$taskId"
+                        params={{
+                          workspaceId,
+                          projectId: expense.projectId,
+                          taskId: expense.taskId,
+                        }}
+                        title={expense.taskTitle ?? undefined}
+                        className="block truncate text-foreground/80 hover:underline"
+                      >
+                        {expense.taskRef} {expense.taskTitle}
+                      </Link>
+                    )}
                   </td>
                   <td className="text-right font-medium tabular-nums">
                     {money(expense.amount, expense.currency)}
                   </td>
                   <td>
-                    <Badge variant={requestStatusVariant(expense.status)}>
-                      {requestStatusLabel(t, expense.status)}
-                    </Badge>
+                    <div className="flex flex-col items-start gap-1">
+                      <Badge variant={requestStatusVariant(expense.status)}>
+                        {requestStatusLabel(t, expense.status)}
+                      </Badge>
+                      <PaymentMethodBadge
+                        method={expense.paymentMethod}
+                        reference={expense.paymentReference}
+                      />
+                    </div>
                   </td>
                   <td className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       {seeAll && expense.status === "pending" && (
                         <>
-                          <Button
-                            variant="outline"
-                            size="xs"
-                            className="gap-1"
-                            onClick={() =>
+                          <PaymentPicker
+                            title={t("expenses:payment.approveTitle")}
+                            confirmLabel={t("expenses:approve")}
+                            busy={decideExpense.isPending}
+                            onConfirm={(payment) =>
                               act(() =>
                                 decideExpense.mutateAsync({
                                   id: expense.id,
                                   decision: "approved",
+                                  ...payment,
                                 }),
                               )
                             }
-                          >
-                            <Check className="size-3" />
-                            {t("expenses:approve")}
-                          </Button>
+                            trigger={
+                              <Button
+                                variant="outline"
+                                size="xs"
+                                className="gap-1"
+                              >
+                                <Check className="size-3" />
+                                {t("expenses:approve")}
+                              </Button>
+                            }
+                          />
                           <Button
                             variant="ghost"
                             size="xs"
@@ -510,15 +544,25 @@ export function ExpensesOverview({
                         </>
                       )}
                       {managePay && expense.status === "approved" && (
-                        <Button
-                          variant="outline"
-                          size="xs"
-                          onClick={() =>
-                            act(() => markExpensePaid.mutateAsync(expense.id))
+                        <PaymentPicker
+                          title={t("expenses:payment.paidTitle")}
+                          confirmLabel={t("expenses:markPaid")}
+                          initialMethod={expense.paymentMethod}
+                          busy={markExpensePaid.isPending}
+                          onConfirm={(payment) =>
+                            act(() =>
+                              markExpensePaid.mutateAsync({
+                                id: expense.id,
+                                ...payment,
+                              }),
+                            )
                           }
-                        >
-                          {t("expenses:markPaid")}
-                        </Button>
+                          trigger={
+                            <Button variant="outline" size="xs">
+                              {t("expenses:markPaid")}
+                            </Button>
+                          }
+                        />
                       )}
                       {!seeAll && expense.status === "pending" && (
                         <Button
@@ -540,6 +584,11 @@ export function ExpensesOverview({
         </table>
       </div>
 
+      <ManageCategoriesDialog
+        open={manageOpen}
+        onClose={() => setManageOpen(false)}
+        workspaceId={workspaceId}
+      />
       <AddExpenseDialog
         open={addOpen}
         onClose={() => setAddOpen(false)}

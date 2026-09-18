@@ -77,7 +77,30 @@ subscribeToEvent<LeaveRequested>("leave.requested", async (data) => {
   );
 });
 
+subscribeToEvent<Omit<LeaveRequested, "days" | "reason">>(
+  "leave.withdrawn",
+  async (data) => {
+    const [recipients, userName] = await Promise.all([
+      approvers(data.workspaceId, data.userId),
+      nameOf(data.userId),
+    ]);
+    await Promise.all(
+      recipients.map((userId) =>
+        createNotification({
+          userId,
+          type: "leave_withdrawn",
+          eventData: { ...data, userName },
+          resourceId: data.requestId,
+          resourceType: "leave_request",
+        }),
+      ),
+    );
+  },
+);
+
 subscribeToEvent<LeaveDecided>("leave.decided", async (data) => {
+  // Deciding your own request needs no telling.
+  if (data.actorId === data.userId) return;
   await createNotification({
     userId: data.userId,
     type: `leave_${data.decision}`,

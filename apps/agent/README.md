@@ -1,6 +1,6 @@
-# Company OS Agent
+# TeamOS Agent
 
-A small desktop app (Tauri v2) that reports which application you are using and whether you are active or idle to your Company OS workspace. It runs in the tray, starts at login once paired, and always shows its state: **Tracking**, **Paused** or **Not connected**. You can pause and resume from the tray at any time.
+A small desktop app (Tauri v2) that reports which application you are using and whether you are active or idle to your TeamOS workspace. It runs in the tray, starts at login once paired, and always shows its state: **Tracking**, **Paused** or **Not connected**. You can pause and resume from the tray at any time.
 
 ## What it collects
 
@@ -8,7 +8,7 @@ Every 5 seconds it samples:
 
 - **Seconds since the last keyboard or mouse input**, used only to decide *active* or *idle* (idle after the workspace's `idleAfterSeconds`, 300 s by default). Windows: `GetLastInputInfo`. macOS: `CGEventSourceSecondsSinceLastEventType`.
 - **The name of the foreground application**, such as "Visual Studio Code" or "Google Chrome". Windows reads the executable's product description, falling back to the file name. macOS uses `lsappinfo`.
-- **The website domain** in the browser, where supported and only when the workspace enables `trackDomains`. On macOS this works for Safari and Google Chrome through AppleScript. On Windows it works for Chrome, Edge and Brave through the [Company OS Agent connector](browser-extension/README.md) extension (see below). Only the hostname is kept (`github.com`). The scheme, path, query and fragment are dropped, and so is `www.`.
+- **The website domain** in the browser, where supported and only when the workspace enables `trackDomains`. On macOS this works for Safari and Google Chrome through AppleScript. On Windows it works for Chrome, Edge and Brave through the [TeamOS Agent connector](browser-extension/README.md) extension (see below). Only the hostname is kept (`github.com`). The scheme, path, query and fragment are dropped, and so is `www.`.
 
 Samples are merged into spans of at most 5 minutes. Each span has a start, an end, the state, the app and, where enabled, the domain.
 
@@ -31,11 +31,11 @@ Windows offers no supported way to read a browser's address bar, so domains come
 
 ## Pairing
 
-In Company OS, open **Settings → Account → Devices** and create a one-time code. Then enter your Company OS address and the code in the agent. The address can be the web address or the API address. The agent calls `<address>/api`, and an address that already ends in `/api` is used unchanged.
+In TeamOS, open **Settings → Account → Devices** and create a one-time code. Then enter your TeamOS address and the code in the agent. The address can be the web address or the API address. The agent calls `<address>/api`, and an address that already ends in `/api` is used unchanged.
 
 The agent never asks for your password or admin credentials. Pairing returns a device token, which is stored in the OS keychain: Windows Credential Manager or the macOS Keychain. If the keychain is unavailable, the token goes to a file in the app data directory instead.
 
-"Disconnect this computer" removes the token and unsent activity from this computer. An admin or the user can also revoke the device in Company OS. The agent's next request then gets `401`, and the agent clears its token and returns to **Not connected**.
+"Disconnect this computer" removes the token and unsent activity from this computer. An admin or the user can also revoke the device in TeamOS. The agent's next request then gets `401`, and the agent clears its token and returns to **Not connected**.
 
 ## Sync
 
@@ -74,7 +74,7 @@ kaneo-agent --register-native-host   # Windows: write the browser host manifest 
 ## macOS notes
 
 - No Accessibility or Screen Recording permission is needed.
-- Reading the browser domain needs the **Automation** permission. macOS asks once per browser ("Company OS Agent wants to control Safari/Google Chrome"). If you decline, domains are simply not reported.
+- Reading the browser domain needs the **Automation** permission. macOS asks once per browser ("TeamOS Agent wants to control Safari/Google Chrome"). If you decline, domains are simply not reported.
 - Code signing and notarization are not set up. Unsigned builds must be opened with right-click → Open the first time.
 
 ## Known limitations

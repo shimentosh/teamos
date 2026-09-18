@@ -1,27 +1,27 @@
 ---
 title: App Setup
-description: Learn how to create and configure a GitHub App for Company OS integration. Step-by-step guide to register your Company OS instance with GitHub.
+description: Learn how to create and configure a GitHub App for TeamOS integration. Step-by-step guide to register your TeamOS instance with GitHub.
 ---
 
 
-This guide walks you through creating and configuring a GitHub App to enable the Company OS integration. **Start here before deploying or configuring your Company OS instance.**
+This guide walks you through creating and configuring a GitHub App to enable the TeamOS integration. **Start here before deploying or configuring your TeamOS instance.**
 
 ## Overview
 
-A GitHub App provides secure, granular access to your repositories and enables powerful bidirectional synchronization between Company OS and GitHub:
+A GitHub App provides secure, granular access to your repositories and enables powerful bidirectional synchronization between TeamOS and GitHub:
 
 **Task to GitHub:**
 - Automatically create GitHub issues when you create tasks
 - Update issue status and priority labels when you change tasks
-- Add comments linking to Company OS tasks
+- Add comments linking to TeamOS tasks
 - Close/reopen issues based on task status changes
 
-**GitHub to Company OS:**
+**GitHub to TeamOS:**
 - Create tasks from GitHub issues
 - Sync issue labels (priority, status) to task properties
 - Link pull requests to tasks automatically
 - Update task status based on branch activity (push, PR open/merge)
-- Sync GitHub labels to Company OS task labels
+- Sync GitHub labels to TeamOS task labels
 
 **Automatic Status Transitions:**
 - Branch push → Move task to "in-progress"
@@ -33,7 +33,7 @@ GitHub Apps are more secure than personal access tokens and provide fine-grained
 </Info>
 
 <Warning>
-**Important**: Complete this GitHub App setup **before** deploying Company OS. You'll need the app credentials during deployment configuration.
+**Important**: Complete this GitHub App setup **before** deploying TeamOS. You'll need the app credentials during deployment configuration.
 </Warning>
 
 ## Step 1: Create a GitHub App
@@ -51,13 +51,13 @@ Go to [GitHub Developer Settings](https://github.com/settings/developers) and cl
 Fill in the basic app information:
 
 - **GitHub App name**: `kaneo-[your-instance-name]` (must be unique across GitHub)
-- **Description**: `Company OS project management integration`
-- **Homepage URL**: Your planned Company OS instance URL (e.g., `https://kaneo.yourdomain.com`)
+- **Description**: `TeamOS project management integration`
+- **Homepage URL**: Your planned TeamOS instance URL (e.g., `https://kaneo.yourdomain.com`)
 - **Webhook URL**: `https://your-kaneo-instance.com/api/github-integration/webhook`
 - **Webhook secret**: Generate a secure random string (save this for later)
 
 <Warning>
-Replace `your-kaneo-instance.com` with your planned Company OS domain. The webhook URL must be publicly accessible once deployed.
+Replace `your-kaneo-instance.com` with your planned TeamOS domain. The webhook URL must be publicly accessible once deployed.
 </Warning>
 </Step>
 
@@ -127,7 +127,7 @@ Click "Create GitHub App" to create your app. You'll be redirected to the app se
 3. Download the `.pem` file - you'll need its contents for configuration
 
 <Warning>
-Keep this private key secure! It's used to authenticate your Company OS instance with GitHub.
+Keep this private key secure! It's used to authenticate your TeamOS instance with GitHub.
 </Warning>
 </Step>
 
@@ -140,7 +140,7 @@ From the app settings page, note down these important values:
 - **Webhook Secret** (the one you created earlier)
 - **Private Key** (contents of the downloaded `.pem` file)
 
-The GitHub App also shows an OAuth **Client ID** and **Client Secret** under "Basic information". Company OS’s **repository integration** does not use those environment variables; they are only relevant if you enable **Sign in with GitHub** using `GITHUB_OAUTH_CLIENT_ID` / `GITHUB_OAUTH_CLIENT_SECRET` (see [GitHub SSO](/core/social-providers/github)).
+The GitHub App also shows an OAuth **Client ID** and **Client Secret** under "Basic information". TeamOS’s **repository integration** does not use those environment variables; they are only relevant if you enable **Sign in with GitHub** using `GITHUB_OAUTH_CLIENT_ID` / `GITHUB_OAUTH_CLIENT_SECRET` (see [GitHub SSO](/core/social-providers/github)).
 
 <Info>
 You need **App ID**, **private key**, and **webhook secret** for the [configuration step](/core/integrations/github/configuration).
@@ -178,7 +178,7 @@ After installation, you should see your app listed in:
 ## Security Best Practices
 
 ### App Configuration
-- **Use descriptive names**: Make it clear the app is for Company OS integration
+- **Use descriptive names**: Make it clear the app is for TeamOS integration
 - **Limit permissions**: Only grant the minimum required permissions
 - **Repository scope**: Install only on repositories that need integration
 
@@ -196,7 +196,7 @@ If your desired app name is taken, try:
 - Using a different naming convention: `mycompany-kaneo`
 
 ### Webhook URL Not Accessible
-Ensure your Company OS instance is:
+Ensure your TeamOS instance is:
 - Publicly accessible on the internet
 - Using HTTPS (GitHub requires this for webhooks)
 - Not behind authentication that would block GitHub's webhook calls
@@ -218,8 +218,8 @@ If automatic synchronization isn't happening:
 
 Now that your GitHub App is created and configured:
 
-1. **[Deploy Company OS](/core)** - Deploy your Company OS instance with the GitHub App credentials
-2. **[Configure GitHub Integration](/core/integrations/github/configuration)** - Complete the integration setup in your deployed Company OS instance
+1. **[Deploy TeamOS](/core)** - Deploy your TeamOS instance with the GitHub App credentials
+2. **[Configure GitHub Integration](/core/integrations/github/configuration)** - Complete the integration setup in your deployed TeamOS instance
 3. **[Connect Repositories](/core/integrations/github/configuration#connecting-repositories)** - Link your projects to GitHub repositories
 
 <Info>

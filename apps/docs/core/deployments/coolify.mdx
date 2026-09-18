@@ -1,11 +1,11 @@
 ---
 title: Coolify
-description: Deploy Company OS to Coolify using the bundled Docker Compose file.
+description: Deploy TeamOS to Coolify using the bundled Docker Compose file.
 ---
 
 ## Coolify
 
-Company OS ships a [Coolify-optimized Docker Compose file](https://github.com/usekaneo/kaneo/blob/main/compose.coolify.yml) so you can deploy the pre-built `ghcr.io/usekaneo/kaneo` image from the repository without building anything.
+TeamOS ships a [Coolify-optimized Docker Compose file](https://github.com/usekaneo/kaneo/blob/main/compose.coolify.yml) so you can deploy the pre-built `ghcr.io/usekaneo/kaneo` image from the repository without building anything.
 
 ## Deployment Steps
 
@@ -20,14 +20,14 @@ Company OS ships a [Coolify-optimized Docker Compose file](https://github.com/us
    - `AUTH_SECRET` (auto-generated 64-character hex, editable).
    - PostgreSQL password (auto-generated, shared with both services).
    - **Do not set `KANEO_API_URL`** to `localhost` or an internal address. Leave it unset — the container derives it from `KANEO_CLIENT_URL` (`https://kaneo.example.com/api`). The browser must reach the API over the same public domain, not a host-internal URL.
-   - `KANEO_IMAGE_TAG` (optional): the Company OS image version to deploy. It defaults to `latest`; set it to a release tag such as `2.20.0` to hold the deployment on a known version.
+   - `KANEO_IMAGE_TAG` (optional): the TeamOS image version to deploy. It defaults to `latest`; set it to a release tag such as `2.20.0` to hold the deployment on a known version.
 6. **Deploy**.
 
 ## What the Compose File Sets Up
 
-- **PostgreSQL 16** with a persistent volume; Company OS waits for its health check before starting.
-- **Company OS bundled image** (nginx + API in one container) on port `5173`.
-- **Company OS version**: the image tracks `latest`, so a redeploy picks up the newest release. The API runs database migrations on startup, so set `KANEO_IMAGE_TAG` to a release tag if you would rather upgrade deliberately.
+- **PostgreSQL 16** with a persistent volume; TeamOS waits for its health check before starting.
+- **TeamOS bundled image** (nginx + API in one container) on port `5173`.
+- **TeamOS version**: the image tracks `latest`, so a redeploy picks up the newest release. The API runs database migrations on startup, so set `KANEO_IMAGE_TAG` to a release tag if you would rather upgrade deliberately.
 - **`KANEO_API_URL` is derived automatically** from `KANEO_CLIENT_URL` by the container entrypoint — no extra API URL configuration needed.
 - **No host port mappings or custom networks**: Coolify's proxy handles all external traffic.
 

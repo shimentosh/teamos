@@ -1,6 +1,6 @@
 ---
 name: Question or Help
-about: Ask a question or request help with Company OS
+about: Ask a question or request help with TeamOS
 title: 'question: '
 labels: question
 assignees: ''
@@ -16,7 +16,7 @@ Steps you've already taken to find an answer:
 3. Tried to...
 
 ## Environment (if relevant)
-- Company OS Version: [e.g., 1.0.0]
+- TeamOS Version: [e.g., 1.0.0]
 - Deployment Method: [e.g., Docker, Kubernetes, etc.]
 - Browser: [e.g., Chrome, Firefox]
 - OS: [e.g., Windows, macOS, Linux]

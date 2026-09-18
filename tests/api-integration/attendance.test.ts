@@ -10,6 +10,39 @@ beforeEach(async () => {
 });
 
 describe("attendance", () => {
+  it("keeps an optional note from clocking out, after the clock-in note", async () => {
+    const { user, workspace } = await createWorkspaceMember({ role: "member" });
+    const request = requestAs(user);
+    const body = { workspaceId: workspace.id };
+    const notes = async () =>
+      (
+        await db
+          .select({ note: schema.attendanceSessionTable.note })
+          .from(schema.attendanceSessionTable)
+          .orderBy(schema.attendanceSessionTable.clockIn)
+      ).map((row) => row.note);
+
+    await request("/attendance/clock-in", {
+      method: "POST",
+      body: { ...body, note: "From home" },
+    });
+    await request("/attendance/clock-out", {
+      method: "POST",
+      body: { ...body, note: "  Fixed the login page  " },
+    });
+    expect(await notes()).toEqual(["From home\nFixed the login page"]);
+
+    // Leaving the box empty still clocks out and changes nothing.
+    await db.delete(schema.attendanceSessionTable);
+    await request("/attendance/clock-in", { method: "POST", body });
+    const out = await request("/attendance/clock-out", {
+      method: "POST",
+      body: { ...body, note: "   " },
+    });
+    expect(out.status).toBe(200);
+    expect(await notes()).toEqual([null]);
+  });
+
   it("clocks in once, refuses a second clock-in, and clocks out", async () => {
     const { user, workspace } = await createWorkspaceMember({ role: "member" });
     const request = requestAs(user);

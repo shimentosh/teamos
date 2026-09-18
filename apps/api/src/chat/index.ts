@@ -359,7 +359,7 @@ const presenceRoute = createRoute({
   tags,
   summary: "Who is online",
   description:
-    "Ids of workspace members online now: Company OS open in a browser, or the desktop app reporting in.",
+    "Ids of workspace members online now: TeamOS open in a browser, or the desktop app reporting in.",
   middleware: [workspaceAccess.fromQuery()] as const,
   request: { query: workspaceQuery },
   responses: {

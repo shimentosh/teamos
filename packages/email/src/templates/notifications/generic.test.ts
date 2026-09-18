@@ -13,7 +13,7 @@ describe("NotificationEmail", () => {
         locale: "ja-JP",
       }),
     );
-    expect(html).toContain("Company OS で開く");
+    expect(html).toContain("TeamOS で開く");
     expect(html).toContain("配信設定に一致する通知がありました。");
   });
 });

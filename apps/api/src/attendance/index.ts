@@ -76,7 +76,8 @@ const clockOutRoute = createRoute({
   path: "/clock-out",
   tags,
   summary: "Clock out",
-  description: "End the open attendance session now.",
+  description:
+    "End the open attendance session now. An optional `note` (what you worked on) is saved on the session, after any note from clocking in.",
   middleware: [workspaceAccess.fromBody()] as const,
   request: {
     body: {
@@ -198,8 +199,8 @@ const attendance = apiRouter()
     return c.json(await clockIn(workspaceId, c.get("userId"), note), 200);
   })
   .openapi(clockOutRoute, async (c) => {
-    const { workspaceId } = c.req.valid("json");
-    return c.json(await clockOut(workspaceId, c.get("userId")), 200);
+    const { workspaceId, note } = c.req.valid("json");
+    return c.json(await clockOut(workspaceId, c.get("userId"), note), 200);
   })
   .openapi(daysRoute, async (c) => {
     const { workspaceId, userId, from, to } = c.req.valid("query");

@@ -4,7 +4,15 @@ import {
   Outlet,
   useLocation,
 } from "@tanstack/react-router";
-import { Bell, Code, HardDrive, Monitor, Settings, User } from "lucide-react";
+import {
+  Bell,
+  Code,
+  HardDrive,
+  Mail,
+  Monitor,
+  Settings,
+  User,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import useAuth from "@/components/providers/auth-provider/hooks/use-auth";
 import SettingsSidebar from "@/components/SettingsSidebar";
@@ -41,6 +49,11 @@ function RouteComponent() {
       title: t("settings:notifications"),
       url: "/dashboard/settings/account/notifications",
       icon: Bell,
+    },
+    {
+      title: t("emailLog:title"),
+      url: "/dashboard/settings/account/email",
+      icon: Mail,
     },
     {
       title: t("settings:preferences"),

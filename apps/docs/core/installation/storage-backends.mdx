@@ -5,14 +5,14 @@ description: Configure private uploads with MinIO, AWS S3, or Cloudflare R2.
 
 ## Overview
 
-Company OS uses S3-compatible object storage for uploads in:
+TeamOS uses S3-compatible object storage for uploads in:
 
 - task descriptions
 - task comments
 
 The browser uploads directly to the configured storage backend using presigned URLs.
 
-Company OS then serves uploaded assets back through its own API.
+TeamOS then serves uploaded assets back through its own API.
 
 Current behavior:
 
@@ -26,7 +26,7 @@ That means one rule matters for every backend:
 
 Do not use a Docker-internal hostname such as `http://minio:9000` for a public deployment unless the browser can actually reach it.
 
-## Required Company OS variables
+## Required TeamOS variables
 
 ```env
 S3_ENDPOINT=
@@ -63,7 +63,7 @@ S3_REGION=us-east-1
 S3_FORCE_PATH_STYLE=true
 ```
 
-This works when Company OS and MinIO are on the same Docker network and your browser reaches MinIO through `localhost`.
+This works when TeamOS and MinIO are on the same Docker network and your browser reaches MinIO through `localhost`.
 
 ### Public deployment
 
@@ -71,7 +71,7 @@ For a public deployment, expose MinIO on its own hostname through your reverse p
 
 Example:
 
-- Company OS: `https://cloud.kaneo.app`
+- TeamOS: `https://cloud.kaneo.app`
 - MinIO: `https://files.cloud.kaneo.app`
 
 This can be done with Caddy, Nginx, Traefik, or any other reverse proxy.
@@ -91,7 +91,7 @@ You also need:
 
 - a created bucket
 - a dedicated, non-root MinIO user with access limited to that bucket
-- MinIO CORS allowing your Company OS origin
+- MinIO CORS allowing your TeamOS origin
 - no anonymous bucket read policy is required
 
 <Warning>
@@ -122,8 +122,8 @@ For another AWS region, adjust:
 
 ### Using an IAM role instead of an access key
 
-If Company OS runs on AWS (EC2, ECS, or EKS), you can omit `S3_ACCESS_KEY_ID` and
-`S3_SECRET_ACCESS_KEY` entirely and let Company OS authenticate with the instance's
+If TeamOS runs on AWS (EC2, ECS, or EKS), you can omit `S3_ACCESS_KEY_ID` and
+`S3_SECRET_ACCESS_KEY` entirely and let TeamOS authenticate with the instance's
 IAM role. Leave both unset and the AWS SDK resolves credentials from its default
 provider chain (instance profile, ECS task role, or EKS IRSA).
 
@@ -171,11 +171,11 @@ S3_FORCE_PATH_STYLE=false
 Notes:
 
 - `S3_REGION=auto` is typical for R2
-- a public bucket is not required for Company OS's current private asset flow
+- a public bucket is not required for TeamOS's current private asset flow
 
 ## One copy-paste self-hosted example
 
-This example gives you Company OS + MinIO in one Compose file.
+This example gives you TeamOS + MinIO in one Compose file.
 
 ```yml
 services:
@@ -243,7 +243,7 @@ S3_FORCE_PATH_STYLE=true
 Before testing uploads:
 
 1. Create the `kaneo-uploads` bucket.
-2. Configure MinIO CORS for your Company OS origin.
+2. Configure MinIO CORS for your TeamOS origin.
 3. Make sure `files.cloud.kaneo.app` resolves publicly.
 
 ## Troubleshooting

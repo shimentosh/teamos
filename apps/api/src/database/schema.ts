@@ -750,6 +750,12 @@ export const userNotificationPreferenceTable = pgTable(
     )
       .default(1440)
       .notNull(),
+    // Per-event switches, keyed by event (see notification-preferences/events.ts):
+    // { task_assigned: { inApp: false, email: true } }. Anything missing is on.
+    eventSettings: jsonb("event_settings")
+      .$type<Record<string, { inApp?: boolean; email?: boolean }>>()
+      .default({})
+      .notNull(),
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "date" })
       .defaultNow()
@@ -1815,7 +1821,7 @@ export const storedFileTable = pgTable(
   ],
 );
 
-// Every email Company OS sends goes through here: it is sent right away, retried
+// Every email TeamOS sends goes through here: it is sent right away, retried
 // with backoff when the provider fails, and kept as a delivery log.
 export const emailOutboxTable = pgTable(
   "email_outbox",
@@ -2055,6 +2061,10 @@ export const expenseTable = pgTable(
     }),
     decidedAt: timestamp("decided_at", { mode: "date" }),
     paidAt: timestamp("paid_at", { mode: "date" }),
+    // How the money went back to the person (bank, bKash, USDT, ...), and the
+    // transfer's own id or hash, so anyone can trace it later.
+    paymentMethod: text("payment_method"),
+    paymentReference: text("payment_reference"),
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "date" })
       .defaultNow()

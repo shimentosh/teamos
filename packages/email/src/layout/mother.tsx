@@ -26,7 +26,7 @@ export type EmailBrand = {
   accent?: string | null;
 };
 
-export const DEFAULT_BRAND: EmailBrand = { name: "Company OS" };
+export const DEFAULT_BRAND: EmailBrand = { name: "TeamOS" };
 
 export type MotherLayoutProps = {
   brand?: EmailBrand;
@@ -43,7 +43,7 @@ export type MotherLayoutProps = {
   /** Where to change email settings. */
   manageUrl?: string | null;
   manageLabel?: string;
-  /** "Sent by Acme via Company OS". */
+  /** "Sent by Acme via TeamOS". */
   signature?: string | null;
 };
 
@@ -91,7 +91,7 @@ function BrandMark({ brand }: { brand: EmailBrand }) {
 }
 
 /**
- * The one layout every Company OS email sits in: brand header, a card with an
+ * The one layout every TeamOS email sits in: brand header, a card with an
  * accent bar, the content, and a footer that says why the email came.
  */
 export function MotherLayout({
@@ -162,9 +162,9 @@ export function MotherLayout({
             ) : null}
             <Text style={{ ...footerText, color: palette.faint }}>
               {signature ??
-                (brand.name === "Company OS"
-                  ? "Sent by Company OS"
-                  : `Sent by ${brand.name} via Company OS`)}
+                (brand.name === "TeamOS"
+                  ? "Sent by TeamOS"
+                  : `Sent by ${brand.name} via TeamOS`)}
             </Text>
           </Section>
         </Container>

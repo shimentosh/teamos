@@ -76,7 +76,7 @@ const verifyRoute = createRoute({
   tags: ["Gitea"],
   summary: "Verify Gitea access",
   description:
-    "Check that the base URL is a Gitea instance and that the token can reach the repository with the permissions Company OS needs. Always 200 -- problems are reported in the body.",
+    "Check that the base URL is a Gitea instance and that the token can reach the repository with the permissions TeamOS needs. Always 200 -- problems are reported in the body.",
   middleware: manageAccess,
   request: {
     body: {

@@ -152,7 +152,7 @@ function objectKey(
     .join("/");
 }
 
-/** Checks that Company OS can write and delete in the bucket before saving. */
+/** Checks that TeamOS can write and delete in the bucket before saving. */
 export async function testBucket(config: BucketConfig) {
   // The server connects to whatever endpoint an admin types, so it has to be
   // a public HTTPS host, never an address inside the server's own network.
@@ -275,7 +275,7 @@ export async function storeBlob(input: StoreInput) {
 
 // Only these are shown in the browser. Everything else (HTML, SVG, any +xml,
 // scripts, unknown types) is served as an opaque download, so an uploaded
-// file can never run as a page on Company OS's origin or the bucket's.
+// file can never run as a page on TeamOS's origin or the bucket's.
 const INLINE_TYPES = new Set([
   "image/png",
   "image/jpeg",

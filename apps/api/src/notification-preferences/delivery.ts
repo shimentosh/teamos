@@ -15,6 +15,7 @@ import {
 import { enqueueEmail } from "../email/outbox";
 import { assertPublicWebhookDestination } from "../plugins/generic-webhook/config";
 import { buildNotificationEmail, clientUrl } from "./email-content";
+import { eventEnabled, eventKeyOf } from "./events";
 import { decryptSecret } from "./secrets";
 
 const DEFAULT_OUTBOUND_FETCH_TIMEOUT_MS = 15_000;
@@ -130,7 +131,7 @@ function buildDeliveryContent(notification: {
         title: "New task created",
         body: taskTitle
           ? `A new task was created: ${taskTitle}`
-          : "A new task was created in Company OS.",
+          : "A new task was created in TeamOS.",
       };
     }
     case "workspace_created": {
@@ -142,7 +143,7 @@ function buildDeliveryContent(notification: {
         title: "Workspace created",
         body: workspaceName
           ? `Workspace created: ${workspaceName}`
-          : "A new workspace was created in Company OS.",
+          : "A new workspace was created in TeamOS.",
       };
     }
     case "task_status_changed": {
@@ -154,7 +155,7 @@ function buildDeliveryContent(notification: {
         body:
           taskTitle && oldStatus && newStatus
             ? `${taskTitle} moved from ${oldStatus} to ${newStatus}.`
-            : "A task status changed in Company OS.",
+            : "A task status changed in TeamOS.",
       };
     }
     case "task_assignee_changed": {
@@ -163,7 +164,7 @@ function buildDeliveryContent(notification: {
         title: "Task assigned to you",
         body: taskTitle
           ? `You were assigned to ${taskTitle}.`
-          : "A task was assigned to you in Company OS.",
+          : "A task was assigned to you in TeamOS.",
       };
     }
     case "time_entry_created": {
@@ -172,7 +173,7 @@ function buildDeliveryContent(notification: {
         title: "Time entry created",
         body: taskTitle
           ? `A time entry was created for ${taskTitle}.`
-          : "A time entry was created in Company OS.",
+          : "A time entry was created in TeamOS.",
       };
     }
     case "due_date_reminder": {
@@ -208,7 +209,7 @@ function buildDeliveryContent(notification: {
           : "You were mentioned",
         body: taskTitle
           ? `You were mentioned in ${taskTitle}.`
-          : "You were mentioned in a Company OS task.",
+          : "You were mentioned in a TeamOS task.",
       };
     }
     case "task_comment": {
@@ -223,13 +224,30 @@ function buildDeliveryContent(notification: {
           : "New task comment",
         body: taskTitle
           ? `A new comment was added to ${taskTitle}.`
-          : "A new comment was added to a Company OS task.",
+          : "A new comment was added to a TeamOS task.",
+      };
+    }
+    case "leave_withdrawn": {
+      const who =
+        getStringValue(notification.eventData, "userName") ?? "Someone";
+      return {
+        title: "Leave request withdrawn",
+        body: `${who} withdrew their leave request.`,
+      };
+    }
+    case "member_joined": {
+      const who =
+        getStringValue(notification.eventData, "userName") ?? "Someone";
+      return {
+        title: "New member",
+        body: `${who} joined the workspace.`,
       };
     }
     default:
       return {
-        title: notification.title ?? "New Company OS notification",
-        body: notification.content ?? "You have a new notification in Company OS.",
+        title: notification.title ?? "New TeamOS notification",
+        body:
+          notification.content ?? "You have a new notification in TeamOS.",
       };
   }
 }
@@ -636,7 +654,19 @@ export async function deliverNotification(
 
   const deliveries: Array<Promise<void>> = [];
 
-  if (decryptedPreference.emailEnabled && rule.emailEnabled && user.email) {
+  // Each event also has its own email switch (Settings → Account →
+  // Notifications); never set means on.
+  const eventKey = eventKeyOf(notification.type);
+  const eventEmail = eventKey
+    ? eventEnabled(eventKey, "email", preference)
+    : true;
+
+  if (
+    decryptedPreference.emailEnabled &&
+    rule.emailEnabled &&
+    eventEmail &&
+    user.email
+  ) {
     const to = user.email;
     deliveries.push(
       renderActivityEmail(email.props).then(({ html, text }) =>

@@ -1,6 +1,6 @@
 {
 	"common": {
-		"appName": "Company OS",
+		"appName": "TeamOS",
 		"actions": {
 			"cancel": "취소",
 			"close": "닫기",
@@ -228,7 +228,7 @@
 			"toggleMessage": "이미 계정이 있으신가요?",
 			"toggleLink": "로그인",
 			"instanceStatusError": "서버에 연결할 수 없습니다. 잠시 후 다시 시도하세요.",
-			"instanceAdminTitle": "Company OS 인스턴스 설정",
+			"instanceAdminTitle": "TeamOS 인스턴스 설정",
 			"instanceAdminSubtitle": "이 계정은 전체 권한을 가진 인스턴스 관리자가 됩니다."
 		},
 		"verifyOtp": {
@@ -286,7 +286,7 @@
 			"workspaceLabel": "워크스페이스: {{workspaceName}}",
 			"joinWorkspace": "{{workspaceName}} 참여",
 			"inviteBodySignedIn": "<inviter>{{inviterName}}</inviter>님이 워크스페이스에 초대했습니다.",
-			"inviteBodySignedOut": "<inviter>{{inviterName}}</inviter>님이 Company OS 워크스페이스에 초대했습니다.",
+			"inviteBodySignedOut": "<inviter>{{inviterName}}</inviter>님이 TeamOS 워크스페이스에 초대했습니다.",
 			"createAccountOrSignIn": "초대를 수락하려면 계정을 만들거나, 이미 계정이 있다면 로그인하세요.",
 			"createAccount": "계정 만들기",
 			"accepting": "수락 중...",
@@ -492,11 +492,88 @@
 			"reminderLeadTimeUnitDays": "일",
 			"reminderLeadTimeInvalid": "1에서 {{max}} 사이의 정수를 입력하세요.",
 			"saveEventPreferences": "알림 유형 저장",
-			"statusDefault": "Default: email, all projects"
+			"statusDefault": "Default: email, all projects",
+			"audience": {
+				"admins": "When you run a workspace",
+				"adminsHint": "Only arrives if your role can manage the workspace.",
+				"approvers": "When you approve requests",
+				"approversHint": "Only arrives if your role can approve leave and expenses.",
+				"everyone": "About your work",
+				"everyoneHint": "Tasks you work on, your own requests and your pay."
+			},
+			"emailChannelOff": "Email is turned off below, so no event emails are sent.",
+			"emailColumn": "Email",
+			"emailFor": "Email me about “{{event}}”",
+			"eventColumn": "Event",
+			"events": {
+				"expense_decided": {
+					"hint": "Your expense is approved, rejected or paid.",
+					"title": "Your expense decisions"
+				},
+				"expense_submitted": {
+					"hint": "Someone submits an expense for approval.",
+					"title": "New expenses"
+				},
+				"leave_decided": {
+					"hint": "Your leave is approved, rejected or called off.",
+					"title": "Your leave decisions"
+				},
+				"leave_requested": {
+					"hint": "Someone asks for time off and waits for a decision.",
+					"title": "New leave requests"
+				},
+				"leave_withdrawn": {
+					"hint": "Someone takes back a request before it’s decided.",
+					"title": "Withdrawn leave requests"
+				},
+				"member_joined": {
+					"hint": "Someone accepts an invitation and joins the workspace.",
+					"title": "New members"
+				},
+				"payslip": {
+					"hint": "A new payslip is ready.",
+					"title": "Payslips"
+				},
+				"task_assigned": {
+					"hint": "Someone gives you a task, or creates one for you.",
+					"title": "Assigned to a task"
+				},
+				"task_comment": {
+					"hint": "New comments on your tasks, and replies to your comments.",
+					"title": "Comments and replies"
+				},
+				"task_due": {
+					"hint": "A task you’re on is due soon.",
+					"title": "Due date reminders"
+				},
+				"task_mention": {
+					"hint": "Someone @mentions you in a comment or description.",
+					"title": "Mentions"
+				},
+				"task_overdue": {
+					"hint": "A task you’re on is past its due date.",
+					"title": "Overdue tasks"
+				},
+				"task_status": {
+					"hint": "A task you’re on moves to another column.",
+					"title": "Task status changes"
+				},
+				"time_entry": {
+					"hint": "Someone tracks time on a task you own.",
+					"title": "Time logged on your tasks"
+				},
+				"workspace": {
+					"hint": "A welcome when you create a new workspace.",
+					"title": "Workspace created"
+				}
+			},
+			"inAppColumn": "In app",
+			"inAppFor": "Show “{{event}}” in the app",
+			"saveReminderTiming": "Save reminder timing"
 		},
 		"preferencesPage": {
 			"title": "환경설정",
-			"subtitle": "Company OS 사용 환경을 맞춤 설정합니다.",
+			"subtitle": "TeamOS 사용 환경을 맞춤 설정합니다.",
 			"appearanceTitle": "모양",
 			"appearanceSubtitle": "시각적 설정 및 레이아웃 환경설정.",
 			"theme": "테마",
@@ -579,7 +656,7 @@
 			},
 			"createDialog": {
 				"title": "API 키 만들기",
-				"description": "Company OS API에 프로그래밍 방식으로 접근하기 위한 새 API 키를 만듭니다.",
+				"description": "TeamOS API에 프로그래밍 방식으로 접근하기 위한 새 API 키를 만듭니다.",
 				"nameLabel": "이름",
 				"namePlaceholder": "내 API 키",
 				"nameDescription": "이 API 키에 대한 설명적인 이름",
@@ -786,7 +863,7 @@
 			"badgeNotConnected": "연결 안 됨",
 			"repository": "저장소",
 			"repositoryHint": "연결된 GitHub 저장소",
-			"commentTaskLinkTitle": "새 이슈에 Company OS 링크 댓글 달기",
+			"commentTaskLinkTitle": "새 이슈에 TeamOS 링크 댓글 달기",
 			"commentTaskLinkHint": "활성화하면 Kaneo가 새 GitHub 이슈마다 작업 링크가 포함된 댓글을 게시합니다.",
 			"appStatusTitle": "GitHub 앱 상태",
 			"appStatusHint": "설치 및 권한 상태",
@@ -856,7 +933,7 @@
 			"badgeNotConnected": "연결 안 됨",
 			"repository": "저장소",
 			"repositoryHint": "연결된 Gitea 저장소",
-			"commentTaskLinkTitle": "새 이슈에 Company OS 링크 댓글 달기",
+			"commentTaskLinkTitle": "새 이슈에 TeamOS 링크 댓글 달기",
 			"commentTaskLinkHint": "활성화하면 Kaneo가 새 이슈마다 작업 링크가 포함된 댓글을 게시합니다.",
 			"webhookTitle": "웹훅",
 			"webhookHint": "Gitea 저장소에서 이 URL과 시크릿으로 웹훅을 추가합니다. push, pull request, issues, issue comments 및 create(라벨용)를 활성화하세요.",
@@ -1043,7 +1120,7 @@
 			"threadIdHint": "선택 사항. Telegram 그룹 내 포럼 토픽에 사용하세요.",
 			"chatLabelLabel": "채팅 라벨",
 			"chatLabelPlaceholder": "엔지니어링 업데이트",
-			"chatLabelHint": "Company OS 내부 참고용 선택 라벨입니다.",
+			"chatLabelHint": "TeamOS 내부 참고용 선택 라벨입니다.",
 			"eventsTitle": "이벤트 알림",
 			"eventsHint": "Telegram에 게시할 프로젝트 변경 사항을 선택합니다.",
 			"events": {
@@ -1636,6 +1713,13 @@
 			},
 			"payslip_ready": {
 				"title": "Your payslip is ready"
+			},
+			"leave_withdrawn": {
+				"title": "{{userName}} withdrew a {{leaveType}} request"
+			},
+			"member_joined": {
+				"content": "{{email}} accepted the invitation.",
+				"title": "{{userName}} joined the workspace"
 			}
 		},
 		"reminderLeadTime": {
@@ -2258,7 +2342,7 @@
 			"cta": "초대 수락",
 			"sameEmail": "이 메시지를 받은 이메일과 동일한 이메일로 수락할 수 있습니다.",
 			"ignore": "예상하지 못한 초대라면 이 이메일을 무시하셔도 됩니다.",
-			"footer": "Company OS 워크스페이스 초대"
+			"footer": "TeamOS 워크스페이스 초대"
 		},
 		"pageTitle": "초대",
 		"pendingInvitations": "대기 중인 초대",
@@ -2679,7 +2763,7 @@
 			"idleMinutesHint": "No keyboard or mouse activity for this long. The clock-out is set back to the last activity, so the wait isn’t counted.",
 			"offlineMinutes": "Clock out when offline for (minutes)",
 			"offlineMinutesHint": "None of the person’s computers has checked in for this long (asleep, shut down, no internet). Coming back sooner continues the same session.",
-			"subtitle": "Let the Company OS desktop app clock people in when they start working and out when they stop.",
+			"subtitle": "Let the TeamOS desktop app clock people in when they start working and out when they stop.",
 			"title": "Automatic clock in/out"
 		}
 	},
@@ -2758,6 +2842,13 @@
 			"ofTarget": "of {{target}}",
 			"onLeave": "{{type}} today, enjoy the day off",
 			"worked": "Worked today"
+		},
+		"clockOutNote": {
+			"title": "What did you work on?",
+			"hint": "Optional. Your manager sees it on the attendance page.",
+			"placeholder": "e.g. Finished the login page, reviewed two PRs",
+			"trackedToday": "Tracked today, click to add",
+			"shortcut": "Ctrl+Enter to clock out"
 		}
 	},
 	"devices": {
@@ -2765,7 +2856,7 @@
 			"button": "Create a code",
 			"expires": "Expires {{time}}",
 			"newCode": "Create a new code",
-			"step1": "Open the Company OS desktop app.",
+			"step1": "Open the TeamOS desktop app.",
 			"step2": "Enter this address: {{address}}",
 			"step3": "Enter the code above and press Connect.",
 			"subtitle": "Create a one-time code and enter it in the app. The code works once and for 10 minutes.",
@@ -2785,7 +2876,7 @@
 			"revoked": "Computer disconnected",
 			"title": "Connected computers"
 		},
-		"subtitle": "The Company OS desktop app records your active and idle time and which apps you use in {{workspace}}. You can pause it any time from its tray icon.",
+		"subtitle": "The TeamOS desktop app records your active and idle time and which apps you use in {{workspace}}. You can pause it any time from its tray icon.",
 		"title": "Devices"
 	},
 	"desktopActivity": {
@@ -3125,7 +3216,7 @@
 			"disconnect": "Disconnect",
 			"disconnected": "Storage disconnected",
 			"endpoint": "S3 endpoint",
-			"help": "In Cloudflare: R2 → Manage API tokens → create a token with Object Read & Write for this bucket. The endpoint is shown on the bucket's settings page. Company OS checks that it can write before saving; the secret is stored encrypted.",
+			"help": "In Cloudflare: R2 → Manage API tokens → create a token with Object Read & Write for this bucket. The endpoint is shown on the bucket's settings page. TeamOS checks that it can write before saving; the secret is stored encrypted.",
 			"prefix": "Folder in bucket (optional)",
 			"secretKept": "Saved (leave empty to keep)",
 			"secretKey": "Secret access key",
@@ -3283,14 +3374,15 @@
 			"email": "Email",
 			"status": "Status",
 			"to": "To",
-			"when": "When"
+			"when": "When",
+			"workspace": "Workspace"
 		},
 		"empty": "No emails yet.",
 		"error": "Something went wrong",
 		"provider": {
 			"hint": "Members get email for assignments, mentions, due dates, leave, expenses and payslips unless they turn it off in their notification settings.",
 			"none": "Email is not set up",
-			"noneHint": "Ask whoever runs this Company OS server to set RESEND_API_KEY and EMAIL_FROM (or SMTP). Notifications still show inside Company OS.",
+			"noneHint": "Ask whoever runs this TeamOS server to set RESEND_API_KEY and EMAIL_FROM (or SMTP). Notifications still show inside TeamOS.",
 			"resend": "Sending with Resend",
 			"smtp": "Sending with SMTP"
 		},
@@ -3302,9 +3394,16 @@
 			"sending": "Sending",
 			"sent": "Sent"
 		},
-		"subtitle": "Every email Company OS sent to people in this workspace, and whether it arrived at the mail provider. Failed emails are retried for about an hour.",
+		"subtitle": "Every email TeamOS sent to people in this workspace, and whether it arrived at the mail provider. Failed emails are retried for about an hour.",
 		"title": "Email",
-		"noAccess": "Only people who manage workspace settings can see the email log."
+		"noAccess": "Only people who manage workspace settings can see the email log.",
+		"chooseWhich": "Choose which emails you get in",
+		"mineSubtitle": "Every email TeamOS sent you, from all your workspaces, and whether it reached your mail provider.",
+		"notificationSettings": "notification settings",
+		"tabs": {
+			"mine": "Sent to me",
+			"workspace": "Everyone in {{workspace}}"
+		}
 	},
 	"expenses": {
 		"title": "Expenses",
@@ -3346,6 +3445,60 @@
 			"noRun": "No payroll for this month",
 			"pickMonth": "Pick a month",
 			"otherCurrency": "Other currency: {{count}}"
+		},
+		"categories": {
+			"placeholder": "Search or pick a category",
+			"create": "Create “{{name}}”",
+			"useTyped": "Use “{{name}}”",
+			"pickIcon": "Pick an icon for “{{name}}”",
+			"created": "Category “{{name}}” added",
+			"manage": "Categories",
+			"manageTitle": "Expense categories",
+			"manageHint": "What people choose from when they file an expense. Removing one keeps it on past expenses.",
+			"changeIcon": "Change the icon for {{name}}",
+			"remove": "Remove {{name}}",
+			"newIcon": "Icon for the new category",
+			"newName": "New category name",
+			"add": "Add",
+			"count_other": "{{count}} categories",
+			"search": "Search categories"
+		},
+		"task": "Task (optional)",
+		"noTask": "No task",
+		"payment": {
+			"approveTitle": "Approve · how will it be paid?",
+			"hint": "Pick how the money goes back. Optional, but it makes the record easy to trace.",
+			"method": "Payment method",
+			"methods": {
+				"bank": "Bank",
+				"bkash": "bKash",
+				"card": "Card",
+				"cash": "Cash",
+				"nagad": "Nagad",
+				"other": "Other",
+				"paypal": "PayPal",
+				"usdt": "USDT"
+			},
+			"paidTitle": "Mark paid · how was it paid?",
+			"reference": "Payment reference",
+			"referenceFor": {
+				"bank": "Transfer ID or last 4 digits (optional)",
+				"bkash": "bKash TrxID (optional)",
+				"card": "Card last 4 digits (optional)",
+				"cash": "Who handed it over (optional)",
+				"nagad": "Nagad TxnID (optional)",
+				"other": "How it was paid (optional)",
+				"paypal": "PayPal transaction ID (optional)",
+				"usdt": "Transaction hash (optional)"
+			}
+		},
+		"breakdown": {
+			"items_other": "{{count}} items",
+			"noMatch": "No categories match.",
+			"other_other": "{{count}} other categories",
+			"search": "Find a category",
+			"showAll": "Show all {{count}} categories",
+			"showTop": "Show top {{count}}"
 		}
 	},
 	"reports": {

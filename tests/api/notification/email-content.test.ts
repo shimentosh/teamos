@@ -99,6 +99,36 @@ describe("buildNotificationEmail", () => {
     });
   });
 
+  it("tells approvers a request was withdrawn, with nothing to decide", () => {
+    const email = build("leave_withdrawn", {
+      userName: "Alice",
+      type: "annual",
+      startDate: "2026-09-21",
+      endDate: "2026-09-22",
+    });
+    expect(email.category).toBe("leave_withdrawn");
+    expect(email.subject).toMatch(/^Alice withdrew their annual leave request/);
+    expect(email.props.card?.status).toEqual({
+      label: "Withdrawn",
+      tone: "neutral",
+    });
+  });
+
+  it("welcomes a new member to admins, with their role", () => {
+    const email = build("member_joined", {
+      userName: "Rafi",
+      email: "rafi@example.com",
+      role: "member",
+    });
+    expect(email.category).toBe("member_joined");
+    expect(email.subject).toBe("Rafi joined Demo Company");
+    expect(email.props.card?.subtitle).toBe("rafi@example.com");
+    expect(email.props.card?.details).toContainEqual({
+      label: "Role",
+      value: "Member",
+    });
+  });
+
   it("falls back to the stored wording for unknown types", () => {
     const email = build("something_new");
     expect(email.subject).toBe("Fallback title");

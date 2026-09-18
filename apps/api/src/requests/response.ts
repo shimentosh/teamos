@@ -68,6 +68,9 @@ export const expenseSchema = z
     spentOn: z.string(),
     projectId: z.string().nullable(),
     projectName: z.string().nullable(),
+    taskId: z.string().nullable(),
+    taskTitle: z.string().nullable(),
+    taskRef: z.string().nullable().openapi({ example: "MKT-4" }),
     receiptFileId: z.string().nullable(),
     receiptName: z.string().nullable(),
     status: z.string().openapi({
@@ -75,6 +78,10 @@ export const expenseSchema = z
     }),
     decidedAt: nullableResponseTimestamp,
     paidAt: nullableResponseTimestamp,
+    paymentMethod: z.string().nullable().openapi({
+      description: "bank, cash, bkash, nagad, paypal, usdt, card or other",
+    }),
+    paymentReference: z.string().nullable(),
     createdAt: responseTimestamp,
   })
   .openapi("Expense");

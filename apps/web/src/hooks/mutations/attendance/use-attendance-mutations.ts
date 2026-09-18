@@ -28,7 +28,7 @@ export function useClockIn(workspaceId: string) {
 export function useClockOut(workspaceId: string) {
   const invalidate = useInvalidateAttendance();
   return useMutation({
-    mutationFn: () => clockOut(workspaceId),
+    mutationFn: (note?: string) => clockOut(workspaceId, note),
     onSuccess: invalidate,
   });
 }

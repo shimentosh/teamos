@@ -39,10 +39,10 @@ beforeAll(async () => {
   spec = (await response.json()) as Spec;
 });
 
-describe("Company OS API OpenAPI spec", () => {
+describe("TeamOS API OpenAPI spec", () => {
   it("is a valid OpenAPI 3.1 document", () => {
     expect(spec.openapi).toBe("3.1.0");
-    expect(spec.info.title).toBe("Company OS API");
+    expect(spec.info.title).toBe("TeamOS API");
   });
 
   it("requires bearer auth globally", () => {

@@ -1,6 +1,6 @@
-# Company OS agent guide
+# TeamOS agent guide
 
-Company OS is a fast, deliberately simple, self-hosted project-management platform. The Hono API owns domain behavior and authorization, the React app consumes its typed client, PostgreSQL stores durable state, and events plus WebSockets keep clients current. Redis is optional and coordinates realtime delivery across multiple API instances.
+TeamOS is a fast, deliberately simple, self-hosted project-management platform. The Hono API owns domain behavior and authorization, the React app consumes its typed client, PostgreSQL stores durable state, and events plus WebSockets keep clients current. Redis is optional and coordinates realtime delivery across multiple API instances.
 
 This is an operating guide, not a README. These rules are good defaults; explicit developer and user instructions take precedence.
 
@@ -116,7 +116,7 @@ Version-carrying files are listed in `scripts/release/apply-version.mjs`. Add ne
 
 ## Glossary
 
-- **instance**: one deployed Company OS installation.
+- **instance**: one deployed TeamOS installation.
 - **workspace**: the top-level collaboration and authorization boundary.
 - **project**: a task container inside a workspace.
 - **role**: a workspace-scoped set of permission statements.

@@ -32,6 +32,7 @@ import { waitForDatabase } from "./database/wait-for-database";
 import discordIntegration from "./discord-integration";
 import emailLog from "./email";
 import { eventContext } from "./events";
+import expenseCategory from "./expense-category";
 import externalLink from "./external-link";
 import files from "./files";
 import genericWebhookIntegration from "./generic-webhook-integration";
@@ -419,17 +420,17 @@ export function createApp() {
     const document = api.getOpenAPI31Document({
       openapi: "3.1.0",
       info: {
-        title: "Company OS API",
+        title: "TeamOS API",
         version: "1.0.0",
         description:
-          "Company OS Project Management API - Manage projects, tasks, labels, and more",
+          "TeamOS Project Management API - Manage projects, tasks, labels, and more",
       },
       servers: [
         {
           url: normalizeApiServerUrl(
             process.env.KANEO_API_URL || "https://cloud.kaneo.app",
           ),
-          description: "Company OS API Server",
+          description: "TeamOS API Server",
         },
       ],
       security: [{ bearerAuth: [] }],
@@ -643,6 +644,7 @@ export function createApp() {
   const taskRelationApi = api.route("/task-relation", taskRelation);
   const externalLinkApi = api.route("/external-link", externalLink);
   const taskAttachmentApi = api.route("/task-attachment", taskAttachment);
+  const expenseCategoryApi = api.route("/expense-category", expenseCategory);
   const workflowRuleApi = api.route("/workflow-rule", workflowRule);
   const invitationApi = api.route("/invitation", invitation);
   const workspaceApi = api.route("/workspace", workspace);
@@ -795,6 +797,7 @@ export function createApp() {
     discordIntegrationApi,
     externalLinkApi,
     taskAttachmentApi,
+    expenseCategoryApi,
     genericWebhookIntegrationApi,
     githubIntegrationApi,
     giteaIntegrationApi,
@@ -929,6 +932,7 @@ const {
   discordIntegrationApi,
   externalLinkApi,
   taskAttachmentApi,
+  expenseCategoryApi,
   genericWebhookIntegrationApi,
   githubIntegrationApi,
   giteaIntegrationApi,
@@ -1012,6 +1016,7 @@ export type AppType =
   | typeof taskRelationApi
   | typeof externalLinkApi
   | typeof taskAttachmentApi
+  | typeof expenseCategoryApi
   | typeof workflowRuleApi
   | typeof invitationApi
   | typeof workspaceApi

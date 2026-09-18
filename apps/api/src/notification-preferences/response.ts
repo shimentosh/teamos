@@ -23,6 +23,18 @@ export const workspaceRuleSchema = z
   })
   .openapi("NotificationPreferenceWorkspaceRule");
 
+export const notificationEventSchema = z
+  .object({
+    key: z.string().openapi({ example: "leave_requested" }),
+    audience: z.enum(["everyone", "approvers", "admins"]).openapi({
+      description:
+        "Who receives it: anyone involved, people who approve requests, or workspace admins.",
+    }),
+    inApp: z.boolean(),
+    email: z.boolean(),
+  })
+  .openapi("NotificationEventSetting");
+
 export const notificationPreferenceSchema = z
   .object({
     emailAddress: z.string().nullable(),
@@ -49,6 +61,9 @@ export const notificationPreferenceSchema = z
     dueDateReminderEnabled: z.boolean(),
     dueDateReminderLeadTimeMinutes: z.number().openapi({
       description: "How long before a due date the reminder fires, in minutes.",
+    }),
+    events: z.array(notificationEventSchema).openapi({
+      description: "Every notification event with its in-app and email switch.",
     }),
     workspaces: z.array(workspaceRuleSchema).openapi({
       description:

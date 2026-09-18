@@ -80,6 +80,8 @@ const LEAVE_TITLES: Record<string, string> = {
   leave_approved: "notifications:events.leave_approved.title",
   leave_rejected: "notifications:events.leave_rejected.title",
   leave_cancelled: "notifications:events.leave_cancelled.title",
+  leave_withdrawn: "notifications:events.leave_withdrawn.title",
+  member_joined: "notifications:events.member_joined.title",
 };
 
 function leaveValues(
@@ -162,6 +164,8 @@ export function getNotificationTitle(
       case "leave_approved":
       case "leave_rejected":
       case "leave_cancelled":
+      case "leave_withdrawn":
+      case "member_joined":
       case "expense_submitted":
       case "expense_approved":
       case "expense_rejected":
@@ -239,10 +243,16 @@ export function getNotificationContent(
           ...eventData,
           defaultValue: notification.content ?? "",
         });
+      case "member_joined":
+        return t("notifications:events.member_joined.content", {
+          ...eventData,
+          defaultValue: notification.content ?? "",
+        });
       case "leave_requested":
       case "leave_approved":
       case "leave_rejected":
-      case "leave_cancelled": {
+      case "leave_cancelled":
+      case "leave_withdrawn": {
         const values = leaveValues(eventData, t);
         return eventData.note
           ? t("notifications:events.leave.contentWithNote", {

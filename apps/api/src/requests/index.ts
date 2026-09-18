@@ -59,6 +59,7 @@ import {
   expenseBody,
   idParam,
   leaveBody,
+  markPaidBody,
   personQuery,
   previewQuery,
   receiptBody,
@@ -72,6 +73,11 @@ const json = <T>(schema: T) => ({
   content: { "application/json": { schema } },
 });
 const approver = requireWorkspacePermission({ request: ["approve"] });
+
+// Approvers can't wave through their own requests, except those who run pay
+// (owner and admin by default): nobody above them could decide instead.
+const canDecideOwn = (c: Parameters<typeof hasWorkspacePermission>[0]) =>
+  hasWorkspacePermission(c, { payroll: ["manage"] });
 
 const listLeaveRoute = createRoute({
   method: "get",
@@ -273,7 +279,7 @@ const paidExpenseRoute = createRoute({
     workspaceAccess.fromBody(),
     requireWorkspacePermission({ payroll: ["manage"] }),
   ] as const,
-  request: { params: idParam, body: json(workspaceBody) },
+  request: { params: idParam, body: json(markPaidBody) },
   responses: {
     200: jsonResponse("The expense", expenseSchema),
     403: errorResponse("Missing payroll:manage"),
@@ -404,6 +410,7 @@ const requests = apiRouter()
         c.req.valid("param").id,
         decision,
         note,
+        await canDecideOwn(c),
       ),
       200,
     );
@@ -431,27 +438,36 @@ const requests = apiRouter()
     ),
   )
   .openapi(decideExpenseRoute, async (c) => {
-    const { workspaceId, decision } = c.req.valid("json");
+    const { workspaceId, decision, paymentMethod, paymentReference } =
+      c.req.valid("json");
     return c.json(
       await decideExpense(
         workspaceId,
         c.get("userId"),
         c.req.valid("param").id,
         decision,
+        await canDecideOwn(c),
+        { paymentMethod, paymentReference },
       ),
       200,
     );
   })
-  .openapi(paidExpenseRoute, async (c) =>
-    c.json(
+  .openapi(paidExpenseRoute, async (c) => {
+    const { workspaceId, paymentMethod, paymentReference } =
+      c.req.valid("json");
+    return c.json(
       await markExpensePaid(
-        c.req.valid("json").workspaceId,
+        workspaceId,
         c.get("userId"),
         c.req.valid("param").id,
+        {
+          paymentMethod,
+          paymentReference,
+        },
       ),
       200,
-    ),
-  )
+    );
+  })
   .openapi(openRoute, async (c) =>
     c.json(await openRequests(c.req.valid("query").workspaceId), 200),
   )

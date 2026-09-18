@@ -12,42 +12,42 @@ export type MagicLinkEmailProps = {
 
 const messages = {
   en: {
-    preview: "Sign in to Company OS",
+    preview: "Sign in to TeamOS",
     title: "Your secure sign-in link",
-    subtitle: "Use this link to continue to your Company OS workspace.",
-    cta: "Sign in to Company OS",
+    subtitle: "Use this link to continue to your TeamOS workspace.",
+    cta: "Sign in to TeamOS",
     expiry: "This link expires in 5 minutes for your security.",
     ignore: "If you didn't request this, you can ignore this email.",
-    footer: "Company OS security email",
+    footer: "TeamOS security email",
   },
   de: {
-    preview: "Bei Company OS anmelden",
+    preview: "Bei TeamOS anmelden",
     title: "Dein sicherer Anmeldelink",
     subtitle:
       "Verwende diesen Link, um mit deinem Kaneo-Workspace fortzufahren.",
-    cta: "Bei Company OS anmelden",
+    cta: "Bei TeamOS anmelden",
     expiry: "Dieser Link laeuft aus Sicherheitsgruenden in 5 Minuten ab.",
     ignore:
       "Wenn du das nicht angefordert hast, kannst du diese E-Mail ignorieren.",
-    footer: "Company OS Sicherheits-E-Mail",
+    footer: "TeamOS Sicherheits-E-Mail",
   },
   vi: {
-    preview: "Đăng nhập vào Company OS",
+    preview: "Đăng nhập vào TeamOS",
     title: "Liên kết đăng nhập an toàn của bạn",
-    subtitle: "Dùng liên kết này để tiếp tục vào không gian làm việc Company OS.",
-    cta: "Đăng nhập vào Company OS",
+    subtitle: "Dùng liên kết này để tiếp tục vào không gian làm việc TeamOS.",
+    cta: "Đăng nhập vào TeamOS",
     expiry: "Vì lý do bảo mật, liên kết này sẽ hết hạn sau 5 phút.",
     ignore: "Nếu bạn không yêu cầu điều này, bạn có thể bỏ qua email này.",
-    footer: "Email bảo mật Company OS",
+    footer: "Email bảo mật TeamOS",
   },
   ja: {
-    preview: "Company OS にサインイン",
+    preview: "TeamOS にサインイン",
     title: "安全なサインインリンク",
-    subtitle: "このリンクから Company OS ワークスペースにアクセスできます。",
-    cta: "Company OS にサインイン",
+    subtitle: "このリンクから TeamOS ワークスペースにアクセスできます。",
+    cta: "TeamOS にサインイン",
     expiry: "セキュリティのため、このリンクは5分で有効期限が切れます。",
     ignore: "心当たりがない場合は、このメールを無視してかまいません。",
-    footer: "Company OS セキュリティメール",
+    footer: "TeamOS セキュリティメール",
   },
 } as const;
 

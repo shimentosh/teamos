@@ -1,17 +1,17 @@
 ---
-description: Development conventions, code style, and best practices for the Company OS project
+description: Development conventions, code style, and best practices for the TeamOS project
 globs: 
 alwaysApply: true
 ---
 # Development Conventions
 
-This document outlines coding standards, conventions, and best practices for the Company OS project.
+This document outlines coding standards, conventions, and best practices for the TeamOS project.
 
 ## Code Style
 
 ### Biome Configuration
 
-Company OS uses **Biome** for linting and formatting. Configuration is in `biome.json`.
+TeamOS uses **Biome** for linting and formatting. Configuration is in `biome.json`.
 
 #### Formatting Rules
 

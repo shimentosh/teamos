@@ -2,11 +2,9 @@ import { Link } from "@tanstack/react-router";
 import { Pause, Play, Square, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ClockOutButton } from "@/components/attendance/clock-out-button";
 import { Button } from "@/components/ui/button";
-import {
-  useClockIn,
-  useClockOut,
-} from "@/hooks/mutations/attendance/use-attendance-mutations";
+import { useClockIn } from "@/hooks/mutations/attendance/use-attendance-mutations";
 import useCreateTimeEntry from "@/hooks/mutations/time-entry/use-create-time-entry";
 import useStopTimeEntry from "@/hooks/mutations/time-entry/use-stop-time-entry";
 import { useAttendanceStatus } from "@/hooks/queries/attendance/use-attendance";
@@ -57,7 +55,6 @@ export function WorkStatusCard() {
   const timeZone = company?.timezone ?? "UTC";
   const [paused, setPaused] = usePausedTimer(workspaceId);
   const clockIn = useClockIn(workspaceId ?? "");
-  const clockOut = useClockOut(workspaceId ?? "");
   const stopEntry = useStopTimeEntry();
   const startEntry = useCreateTimeEntry();
   const now = useNow(Boolean(status?.clockedIn || running));
@@ -153,18 +150,9 @@ export function WorkStatusCard() {
         </span>
         {status.today.status === "leave" &&
         !status.clockedIn ? null : status.clockedIn ? (
-          <Button
-            variant="outline"
-            size="xs"
-            disabled={clockOut.isPending}
-            onClick={() =>
-              clockOut
-                .mutateAsync()
-                .catch((e) => fail(e, t("attendance:card.error")))
-            }
-          >
+          <ClockOutButton workspaceId={workspaceId}>
             {t("attendance:card.clockOut")}
-          </Button>
+          </ClockOutButton>
         ) : (
           <Button
             size="xs"

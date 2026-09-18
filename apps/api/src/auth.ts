@@ -133,28 +133,28 @@ function getAuthEmailCopy(locale?: string | null) {
 
   if (localeKey === "de") {
     return {
-      magicLinkSubject: "Anmeldelink fuer Company OS",
-      otpSubject: "Bestaetigungscode fuer Company OS",
+      magicLinkSubject: "Anmeldelink fuer TeamOS",
+      otpSubject: "Bestaetigungscode fuer TeamOS",
     };
   }
 
   if (localeKey === "vi") {
     return {
-      magicLinkSubject: "Liên kết đăng nhập Company OS",
-      otpSubject: "Mã xác minh Company OS",
+      magicLinkSubject: "Liên kết đăng nhập TeamOS",
+      otpSubject: "Mã xác minh TeamOS",
     };
   }
 
   if (localeKey === "ja") {
     return {
-      magicLinkSubject: "Company OS ログインリンク",
-      otpSubject: "Company OS 認証コード",
+      magicLinkSubject: "TeamOS ログインリンク",
+      otpSubject: "TeamOS 認証コード",
     };
   }
 
   return {
-    magicLinkSubject: "Login for Company OS",
-    otpSubject: "Authentication code for Company OS",
+    magicLinkSubject: "Login for TeamOS",
+    otpSubject: "Authentication code for TeamOS",
   };
 }
 
@@ -401,7 +401,7 @@ export const auth = betterAuth({
           }
         : true,
       // Better Auth defaults this to `true`, which blocks any user whose email
-      // is not verified from accepting/rejecting an invitation. Company OS does not
+      // is not verified from accepting/rejecting an invitation. TeamOS does not
       // verify emails on signup (and guest/anonymous users are unverified by
       // design), so leaving the default on breaks invitation acceptance for
       // everyone. The invitation link id is the actual secret here, so gate on
@@ -466,6 +466,15 @@ export const auth = betterAuth({
               ),
             });
           }
+        },
+        afterAcceptInvitation: async ({ member, user, organization }) => {
+          await publishEvent("member.joined", {
+            workspaceId: organization.id,
+            userId: user.id,
+            userName: user.name,
+            email: user.email,
+            role: member.role,
+          });
         },
         afterAddMember: async ({ member }) => {
           if (member?.organizationId) {

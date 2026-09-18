@@ -4,7 +4,7 @@ import { FALLBACK_LABEL_COLOR, resolveLabelColor } from "./label-color";
 afterEach(() => vi.unstubAllGlobals());
 
 describe("resolveLabelColor", () => {
-  it("maps Company OS's named label colors to their CSS variables", () => {
+  it("maps TeamOS's named label colors to their CSS variables", () => {
     expect(resolveLabelColor("red")).toBe("var(--color-red-600)");
   });
 

@@ -93,16 +93,25 @@ export async function clockIn(
   return getStatus(workspaceId, userId);
 }
 
-export async function clockOut(workspaceId: string, userId: string) {
+export async function clockOut(
+  workspaceId: string,
+  userId: string,
+  note?: string,
+) {
   const open = await openSession(workspaceId, userId);
   if (!open) {
     throw new HTTPException(409, { message: "You are not clocked in" });
   }
   const now = new Date();
+  const summary = note?.trim();
   await db
     .update(attendanceSessionTable)
     .set({
       clockOut: now > open.clockIn ? now : open.clockIn,
+      // What they worked on, added after any note from clocking in.
+      ...(summary && {
+        note: (open.note ? `${open.note}\n${summary}` : summary).slice(0, 2000),
+      }),
       // Keeps the desktop app from clocking them straight back in today.
       clockOutSource: "web",
     })

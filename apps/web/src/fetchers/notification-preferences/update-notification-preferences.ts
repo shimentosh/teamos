@@ -18,6 +18,8 @@ export type UpdateNotificationPreferencesRequest = {
   taskStatusChangeEnabled?: boolean;
   dueDateReminderEnabled?: boolean;
   dueDateReminderLeadTimeMinutes?: number;
+  /** Per-event switches to change; events left out keep their setting. */
+  events?: Record<string, { inApp?: boolean; email?: boolean }>;
 };
 
 async function updateNotificationPreferences(

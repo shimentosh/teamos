@@ -15,29 +15,29 @@ export type NotificationEmailProps = {
 
 const messages = {
   en: {
-    preview: "You have a new Company OS notification",
+    preview: "You have a new TeamOS notification",
     subtitle: "A notification matched your delivery preferences.",
-    footer: "Company OS notification",
-    actionLabel: "Open in Company OS",
+    footer: "TeamOS notification",
+    actionLabel: "Open in TeamOS",
   },
   de: {
     preview: "Du hast eine neue Kaneo-Benachrichtigung",
     subtitle:
       "Eine Benachrichtigung entspricht deinen Zustellungs-Einstellungen.",
     footer: "Kaneo-Benachrichtigung",
-    actionLabel: "In Company OS oeffnen",
+    actionLabel: "In TeamOS oeffnen",
   },
   vi: {
-    preview: "Bạn có thông báo mới từ Company OS",
+    preview: "Bạn có thông báo mới từ TeamOS",
     subtitle: "Một thông báo khớp với tùy chọn nhận thông báo của bạn.",
-    footer: "Thông báo Company OS",
-    actionLabel: "Mở trong Company OS",
+    footer: "Thông báo TeamOS",
+    actionLabel: "Mở trong TeamOS",
   },
   ja: {
-    preview: "Company OS の新しい通知",
+    preview: "TeamOS の新しい通知",
     subtitle: "配信設定に一致する通知がありました。",
-    footer: "Company OS 通知",
-    actionLabel: "Company OS で開く",
+    footer: "TeamOS 通知",
+    actionLabel: "TeamOS で開く",
   },
 } as const;
 

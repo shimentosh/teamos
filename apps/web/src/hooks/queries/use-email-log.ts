@@ -20,6 +20,24 @@ export function useEmailLog(
   });
 }
 
+export function useMyEmailLog(status: EmailStatus | undefined) {
+  return useQuery({
+    queryKey: ["email-log", "mine", status ?? "all"],
+    queryFn: () => emailLogApi.mine(status),
+    placeholderData: keepPreviousData,
+    refetchInterval: 30_000,
+  });
+}
+
+export function useRetryMyEmail() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => emailLogApi.retryMine(id),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["email-log", "mine"] }),
+  });
+}
+
 export function useRetryEmail(workspaceId: string | undefined) {
   const queryClient = useQueryClient();
   return useMutation({

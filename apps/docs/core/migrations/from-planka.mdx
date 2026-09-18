@@ -1,11 +1,11 @@
 ---
 title: Migrating from PLANKA
-description: Move your PLANKA boards into Company OS with the @kaneo/planka-import CLI, including lists, cards, labels, assignees, checklists and comments
+description: Move your PLANKA boards into TeamOS with the @kaneo/planka-import CLI, including lists, cards, labels, assignees, checklists and comments
 ---
 
 PLANKA has no export feature, so there is no file to hand over. Instead,
 `@kaneo/planka-import` reads your boards directly from PLANKA's REST API and
-recreates them in Company OS through Company OS's public API.
+recreates them in TeamOS through TeamOS's public API.
 
 Nothing is written back to PLANKA, and your PLANKA credentials stay on your
 machine: the CLI talks to both servers itself, so no third party sees them.
@@ -17,16 +17,16 @@ You need:
 - A PLANKA account that can see the boards you want to move. If you sign in
   through SSO and have no password, create a PLANKA API key and use
   `--planka-api-key`.
-- A Company OS workspace, and an API key from **Settings → API keys**.
+- A TeamOS workspace, and an API key from **Settings → API keys**.
 - Node.js 20 or newer.
 
-Invite your team to the Company OS workspace **before** importing. Assignees are
+Invite your team to the TeamOS workspace **before** importing. Assignees are
 matched by email address, so anyone who isn't a member yet will have their cards
 imported unassigned.
 
 ## Start with a dry run
 
-A dry run reads PLANKA only and writes nothing. It needs no Company OS API key, so
+A dry run reads PLANKA only and writes nothing. It needs no TeamOS API key, so
 it's a safe first step:
 
 ```bash
@@ -39,14 +39,14 @@ tells you exactly what would be created:
 ```
 Planned import:
   • Marketing Site  3 columns  24 tasks  5 labels  12 comments
-      ! List "Planned" was imported as column "Planned list" to avoid a naming conflict in Company OS.
+      ! List "Planned" was imported as column "Planned list" to avoid a naming conflict in TeamOS.
       - skipping Archive (archive/trash lists are not migrated)
       - 3 attachment(s) will not be migrated
 ```
 
 ## Run the import
 
-When the plan looks right, add your Company OS credentials and drop `--dry-run`:
+When the plan looks right, add your TeamOS credentials and drop `--dry-run`:
 
 ```bash
 npx @kaneo/planka-import \
@@ -56,7 +56,7 @@ npx @kaneo/planka-import \
   --workspace ws_123
 ```
 
-Self-hosting Company OS? Point `--kaneo-url` at your own instance. If you leave
+Self-hosting TeamOS? Point `--kaneo-url` at your own instance. If you leave
 `--workspace` off, you'll be asked to pick one.
 
 To skip the prompts entirely, for example in a script:
@@ -75,7 +75,7 @@ passing secrets on the command line, where they end up in your shell history.
 
 ## What carries over
 
-| PLANKA | Company OS |
+| PLANKA | TeamOS |
 | --- | --- |
 | Board | Project |
 | List | Column (a `Closed` list becomes the final column) |
@@ -88,9 +88,9 @@ passing secrets on the command line, where they end up in your shell history.
 | Due date | Due date |
 | Comments | Comments, prefixed with the original author and date |
 
-One Company OS project is created per PLANKA **board**, because the board is what
+One TeamOS project is created per PLANKA **board**, because the board is what
 holds the lists and cards. When a PLANKA project has more than one board, each
-resulting Company OS project is named `Project - Board`.
+resulting TeamOS project is named `Project - Board`.
 
 ## What doesn't
 
@@ -99,12 +99,12 @@ resulting Company OS project is named `Project - Board`.
 - **Archive and trash lists.** Skipped deliberately; only active and closed
   lists are migrated.
 - **Comment authorship.** The comment is created by the API key's owner, but the
-  original PLANKA author is recorded on it and shown in Company OS, the same way
-  imported GitHub comments are. This needs Company OS 2.17.6 or newer; against older
+  original PLANKA author is recorded on it and shown in TeamOS, the same way
+  imported GitHub comments are. This needs TeamOS 2.17.6 or newer; against older
   instances the comment still imports, just without the original author.
 - **Priorities.** PLANKA has no priority field, so every task starts at
   `no-priority`.
-- **Custom fields, stopwatches, and card subscriptions.** No Company OS equivalent.
+- **Custom fields, stopwatches, and card subscriptions.** No TeamOS equivalent.
 
 ## Troubleshooting
 
@@ -117,7 +117,7 @@ PLANKA API key for the account and pass `--planka-api-key` instead. This is the
 recommended credential: it doesn't expire the way a copied session token does.
 
 **A board failed partway**: failures are isolated per board, so the rest still
-import and the summary names the one that failed. Delete the half-created Company OS
+import and the summary names the one that failed. Delete the half-created TeamOS
 project and re-run with `--project` to retry just that one.
 
 ## Re-running
@@ -135,8 +135,8 @@ before retrying.
 | `--planka-password <pass>` | Password, or set `PLANKA_PASSWORD` |
 | `--planka-token <token>` | Use an existing access token instead of logging in |
 | `--planka-api-key <key>` | Use a PLANKA API key, or set `PLANKA_API_KEY`. Works for SSO-only accounts |
-| `--kaneo-url <url>` | Company OS instance URL (default `https://cloud.kaneo.app`) |
-| `--kaneo-api-key <key>` | Company OS API key, or set `KANEO_API_KEY` |
+| `--kaneo-url <url>` | TeamOS instance URL (default `https://cloud.kaneo.app`) |
+| `--kaneo-api-key <key>` | TeamOS API key, or set `KANEO_API_KEY` |
 | `--workspace <id>` | Target workspace |
 | `--project <name\|id>` | Migrate only this PLANKA project (repeatable) |
 | `--all` | Migrate every board without prompting |

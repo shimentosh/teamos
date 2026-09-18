@@ -1,6 +1,6 @@
 {
 	"common": {
-		"appName": "Company OS",
+		"appName": "TeamOS",
 		"actions": {
 			"cancel": "Откажи",
 			"close": "Затвори",
@@ -228,7 +228,7 @@
 			"toggleMessage": "Веќе имаш сметка?",
 			"toggleLink": "Најави се",
 			"instanceStatusError": "Не можеше да се воспостави врска со серверот. Обиди се повторно за момент.",
-			"instanceAdminTitle": "Постави ја твојата Company OS инстанца",
+			"instanceAdminTitle": "Постави ја твојата TeamOS инстанца",
 			"instanceAdminSubtitle": "Оваа сметка станува администратор на инстанцата со целосен пристап."
 		},
 		"verifyOtp": {
@@ -286,7 +286,7 @@
 			"workspaceLabel": "Работен простор: {{workspaceName}}",
 			"joinWorkspace": "Приклучи се на {{workspaceName}}",
 			"inviteBodySignedIn": "<inviter>{{inviterName}}</inviter> те покани да се приклучиш на нивниот работен простор.",
-			"inviteBodySignedOut": "<inviter>{{inviterName}}</inviter> те покани да се приклучиш на нивниот работен простор на Company OS.",
+			"inviteBodySignedOut": "<inviter>{{inviterName}}</inviter> те покани да се приклучиш на нивниот работен простор на TeamOS.",
 			"createAccountOrSignIn": "Креирај сметка за да ја прифатиш оваа покана, или најави се ако веќе имаш.",
 			"createAccount": "Креирај сметка",
 			"accepting": "Се прифаќа...",
@@ -302,7 +302,7 @@
 			}
 		},
 		"onboarding": {
-			"pageTitle": "Добредојде на Company OS",
+			"pageTitle": "Добредојде на TeamOS",
 			"workspacePageTitle": "Креирај работен простор",
 			"createWorkspaceTitle": "Креирај работен простор",
 			"createWorkspaceSubtitle": "Постави го твојот работен простор за да почнеш со управување на проекти",
@@ -394,7 +394,7 @@
 		"notificationsPage": {
 			"pageTitle": "Известувања",
 			"title": "Известувања",
-			"subtitle": "Избери како Company OS ги доставува известувањата за твојата сметка и кои канали да се користат.",
+			"subtitle": "Избери како TeamOS ги доставува известувањата за твојата сметка и кои канали да се користат.",
 			"statusConnected": "Connected",
 			"statusPaused": "Paused",
 			"emailTitle": "Email",
@@ -430,7 +430,7 @@
 			"webhookUrlPlaceholder": "https://example.com/webhooks/kaneo",
 			"webhookSecretPlaceholder": "Опционална заедничка тајна",
 			"webhookSecretHintConfigured": "Тајна за потпис веќе е конфигурирана ({{masked}}). Внеси нова за да ја замениш.",
-			"webhookSecretHintOptional": "Опционално. Company OS го потпишува телото на барањето кога е поставена тајна.",
+			"webhookSecretHintOptional": "Опционално. TeamOS го потпишува телото на барањето кога е поставена тајна.",
 			"connectWebhook": "Поврзи webhook",
 			"workspaceRulesTitle": "Правила за достава по работен простор",
 			"workspaceRulesDescription": "Искористи ги твоите глобални канали, па одлучи кои работни простори и проекти смеат да испраќаат известувања за сметката.",
@@ -492,11 +492,88 @@
 			"reminderLeadTimeUnitDays": "Денови",
 			"reminderLeadTimeInvalid": "Внеси цел број помеѓу 1 и {{max}}.",
 			"saveEventPreferences": "Зачувај типови на известувања",
-			"statusDefault": "Default: email, all projects"
+			"statusDefault": "Default: email, all projects",
+			"audience": {
+				"admins": "When you run a workspace",
+				"adminsHint": "Only arrives if your role can manage the workspace.",
+				"approvers": "When you approve requests",
+				"approversHint": "Only arrives if your role can approve leave and expenses.",
+				"everyone": "About your work",
+				"everyoneHint": "Tasks you work on, your own requests and your pay."
+			},
+			"emailChannelOff": "Email is turned off below, so no event emails are sent.",
+			"emailColumn": "Email",
+			"emailFor": "Email me about “{{event}}”",
+			"eventColumn": "Event",
+			"events": {
+				"expense_decided": {
+					"hint": "Your expense is approved, rejected or paid.",
+					"title": "Your expense decisions"
+				},
+				"expense_submitted": {
+					"hint": "Someone submits an expense for approval.",
+					"title": "New expenses"
+				},
+				"leave_decided": {
+					"hint": "Your leave is approved, rejected or called off.",
+					"title": "Your leave decisions"
+				},
+				"leave_requested": {
+					"hint": "Someone asks for time off and waits for a decision.",
+					"title": "New leave requests"
+				},
+				"leave_withdrawn": {
+					"hint": "Someone takes back a request before it’s decided.",
+					"title": "Withdrawn leave requests"
+				},
+				"member_joined": {
+					"hint": "Someone accepts an invitation and joins the workspace.",
+					"title": "New members"
+				},
+				"payslip": {
+					"hint": "A new payslip is ready.",
+					"title": "Payslips"
+				},
+				"task_assigned": {
+					"hint": "Someone gives you a task, or creates one for you.",
+					"title": "Assigned to a task"
+				},
+				"task_comment": {
+					"hint": "New comments on your tasks, and replies to your comments.",
+					"title": "Comments and replies"
+				},
+				"task_due": {
+					"hint": "A task you’re on is due soon.",
+					"title": "Due date reminders"
+				},
+				"task_mention": {
+					"hint": "Someone @mentions you in a comment or description.",
+					"title": "Mentions"
+				},
+				"task_overdue": {
+					"hint": "A task you’re on is past its due date.",
+					"title": "Overdue tasks"
+				},
+				"task_status": {
+					"hint": "A task you’re on moves to another column.",
+					"title": "Task status changes"
+				},
+				"time_entry": {
+					"hint": "Someone tracks time on a task you own.",
+					"title": "Time logged on your tasks"
+				},
+				"workspace": {
+					"hint": "A welcome when you create a new workspace.",
+					"title": "Workspace created"
+				}
+			},
+			"inAppColumn": "In app",
+			"inAppFor": "Show “{{event}}” in the app",
+			"saveReminderTiming": "Save reminder timing"
 		},
 		"preferencesPage": {
 			"title": "Преференции",
-			"subtitle": "Прилагоди го твоето Company OS искуство.",
+			"subtitle": "Прилагоди го твоето TeamOS искуство.",
 			"appearanceTitle": "Изглед",
 			"appearanceSubtitle": "Визуелни поставки и преференции за распоред.",
 			"theme": "Тема",
@@ -540,7 +617,7 @@
 			"title": "Програмерски поставки",
 			"subtitle": "Управувај со твоите API клучеви и програмерски ресурси.",
 			"apiKeysCardTitle": "API клучеви",
-			"apiKeysCardDescription": "Креирај и управувај со API клучеви за програмски пристап до Company OS.",
+			"apiKeysCardDescription": "Креирај и управувај со API клучеви за програмски пристап до TeamOS.",
 			"createApiKey": "Креирај API клуч",
 			"unnamedKey": "Неименуван клуч"
 		},
@@ -579,7 +656,7 @@
 			},
 			"createDialog": {
 				"title": "Креирај API клуч",
-				"description": "Креирај нов API клуч за програмски пристап до Company OS API.",
+				"description": "Креирај нов API клуч за програмски пристап до TeamOS API.",
 				"nameLabel": "Име",
 				"namePlaceholder": "Мојот API клуч",
 				"nameDescription": "Описно име за овој API клуч",
@@ -775,7 +852,7 @@
 				"removeError": "Неуспешно отстранување на GitHub интеграцијата",
 				"issuesImported": "Issues се успешно увезени",
 				"importError": "Неуспешен увоз на issues",
-				"commentOnEnabled": "Company OS ќе коментира со линк до задачата на новите issues",
+				"commentOnEnabled": "TeamOS ќе коментира со линк до задачата на новите issues",
 				"commentOnDisabled": "Коментарите со линк до задачата на новите issues се исклучени",
 				"settingsUpdateError": "Неуспешно ажурирање на GitHub интеграцијата"
 			},
@@ -786,8 +863,8 @@
 			"badgeNotConnected": "Неповрзан",
 			"repository": "Репозиториум",
 			"repositoryHint": "Поврзан GitHub репозиториум",
-			"commentTaskLinkTitle": "Коментирај Company OS линк на нови issues",
-			"commentTaskLinkHint": "Кога е вклучено, Company OS објавува коментар на секој нов GitHub issue со линк до задачата.",
+			"commentTaskLinkTitle": "Коментирај TeamOS линк на нови issues",
+			"commentTaskLinkHint": "Кога е вклучено, TeamOS објавува коментар на секој нов GitHub issue со линк до задачата.",
 			"appStatusTitle": "Статус на GitHub апликација",
 			"appStatusHint": "Статус на инсталација и дозволи",
 			"statusProperlyConfigured": "Правилно конфигуриран",
@@ -838,7 +915,7 @@
 				"removeError": "Неуспешно отстранување на Gitea интеграцијата",
 				"issuesImported": "Issues се успешно увезени",
 				"importError": "Неуспешен увоз на issues",
-				"commentOnEnabled": "Company OS ќе коментира со линк до задачата на новите issues",
+				"commentOnEnabled": "TeamOS ќе коментира со линк до задачата на новите issues",
 				"commentOnDisabled": "Коментарите со линк до задачата на новите issues се исклучени",
 				"settingsUpdateError": "Неуспешно ажурирање на Gitea интеграцијата",
 				"secretCopied": "Copied",
@@ -856,8 +933,8 @@
 			"badgeNotConnected": "Неповрзан",
 			"repository": "Repository",
 			"repositoryHint": "Поврзан Gitea репозиториум",
-			"commentTaskLinkTitle": "Коментирај Company OS линк на новите issues",
-			"commentTaskLinkHint": "Кога е вклучено, Company OS објавува коментар на секој нов issue со линк до задачата.",
+			"commentTaskLinkTitle": "Коментирај TeamOS линк на новите issues",
+			"commentTaskLinkHint": "Кога е вклучено, TeamOS објавува коментар на секој нов issue со линк до задачата.",
 			"webhookTitle": "Webhook",
 			"webhookHint": "Во твојот Gitea репозиториум, додади webhook со оваа URL и тајна. Овозможи push, pull request, issues, коментари на issues и create (за ознаки).",
 			"webhookSecretLabel": "Тајна (мора да се совпаѓа со webhook тајната во Gitea)",
@@ -986,10 +1063,10 @@
 			"paused": "Паузирано",
 			"webhookLabel": "URL на endpoint",
 			"webhookPlaceholder": "https://example.com/webhooks/kaneo",
-			"webhookHint": "Company OS испраќа POST барања со JSON за секој овозможен настан.",
+			"webhookHint": "TeamOS испраќа POST барања со JSON за секој овозможен настан.",
 			"secretLabel": "Тајна за потпис",
 			"secretPlaceholder": "Опционална заедничка тајна",
-			"secretHint": "Опционално. Ако е поставена, Company OS го потпишува телото на барањето и го испраќа hex-от во X-Kaneo-Signature.",
+			"secretHint": "Опционално. Ако е поставена, TeamOS го потпишува телото на барањето и го испраќа hex-от во X-Kaneo-Signature.",
 			"secretHintConfigured": "Тајна за потпис веќе е конфигурирана ({{secret}}). Внеси нова за да ја замениш.",
 			"eventsTitle": "Известувања за настани",
 			"eventsHint": "Избери кои промени на проектот да го активираат излезниот webhook.",
@@ -1043,7 +1120,7 @@
 			"threadIdHint": "Опционално. Користи го ова за forum теми во Telegram групи.",
 			"chatLabelLabel": "Ознака за разговор",
 			"chatLabelPlaceholder": "Тимски ажурирања",
-			"chatLabelHint": "Опционална ознака за твоја референца во Company OS.",
+			"chatLabelHint": "Опционална ознака за твоја референца во TeamOS.",
 			"eventsTitle": "Известувања за настани",
 			"eventsHint": "Избери кои промени во проектот треба да се објавуваат во Telegram.",
 			"events": {
@@ -1638,6 +1715,13 @@
 			},
 			"payslip_ready": {
 				"title": "Your payslip is ready"
+			},
+			"leave_withdrawn": {
+				"title": "{{userName}} withdrew a {{leaveType}} request"
+			},
+			"member_joined": {
+				"content": "{{email}} accepted the invitation.",
+				"title": "{{userName}} joined the workspace"
 			}
 		},
 		"reminderLeadTime": {
@@ -2258,14 +2342,14 @@
 	},
 	"invitations": {
 		"email": {
-			"subject": "{{inviterName}} те покани да се приклучиш на {{workspaceName}} на Company OS",
-			"preview": "Поканет си во {{workspaceName}} на Company OS",
+			"subject": "{{inviterName}} те покани да се приклучиш на {{workspaceName}} на TeamOS",
+			"preview": "Поканет си во {{workspaceName}} на TeamOS",
 			"title": "Приклучи се на {{workspaceName}}",
-			"subtitle": "{{inviterName}} ({{inviterEmail}}) те покани да соработувате во Company OS.",
+			"subtitle": "{{inviterName}} ({{inviterEmail}}) те покани да соработувате во TeamOS.",
 			"cta": "Прифати ја поканата",
 			"sameEmail": "Можеш да прифатиш со истата е-пошта на која е примена оваа порака.",
 			"ignore": "Ако не го очекуваше ова, слободно игнорирај ја оваа е-порака.",
-			"footer": "Покана за Company OS работен простор"
+			"footer": "Покана за TeamOS работен простор"
 		},
 		"pageTitle": "Покани",
 		"pendingInvitations": "Покани на чекање",
@@ -2693,7 +2777,7 @@
 			"idleMinutesHint": "No keyboard or mouse activity for this long. The clock-out is set back to the last activity, so the wait isn’t counted.",
 			"offlineMinutes": "Clock out when offline for (minutes)",
 			"offlineMinutesHint": "None of the person’s computers has checked in for this long (asleep, shut down, no internet). Coming back sooner continues the same session.",
-			"subtitle": "Let the Company OS desktop app clock people in when they start working and out when they stop.",
+			"subtitle": "Let the TeamOS desktop app clock people in when they start working and out when they stop.",
 			"title": "Automatic clock in/out"
 		}
 	},
@@ -2773,6 +2857,13 @@
 			"ofTarget": "of {{target}}",
 			"onLeave": "{{type}} today, enjoy the day off",
 			"worked": "Worked today"
+		},
+		"clockOutNote": {
+			"title": "What did you work on?",
+			"hint": "Optional. Your manager sees it on the attendance page.",
+			"placeholder": "e.g. Finished the login page, reviewed two PRs",
+			"trackedToday": "Tracked today, click to add",
+			"shortcut": "Ctrl+Enter to clock out"
 		}
 	},
 	"devices": {
@@ -2780,7 +2871,7 @@
 			"button": "Create a code",
 			"expires": "Expires {{time}}",
 			"newCode": "Create a new code",
-			"step1": "Open the Company OS desktop app.",
+			"step1": "Open the TeamOS desktop app.",
 			"step2": "Enter this address: {{address}}",
 			"step3": "Enter the code above and press Connect.",
 			"subtitle": "Create a one-time code and enter it in the app. The code works once and for 10 minutes.",
@@ -2800,7 +2891,7 @@
 			"revoked": "Computer disconnected",
 			"title": "Connected computers"
 		},
-		"subtitle": "The Company OS desktop app records your active and idle time and which apps you use in {{workspace}}. You can pause it any time from its tray icon.",
+		"subtitle": "The TeamOS desktop app records your active and idle time and which apps you use in {{workspace}}. You can pause it any time from its tray icon.",
 		"title": "Devices"
 	},
 	"desktopActivity": {
@@ -3145,7 +3236,7 @@
 			"disconnect": "Disconnect",
 			"disconnected": "Storage disconnected",
 			"endpoint": "S3 endpoint",
-			"help": "In Cloudflare: R2 → Manage API tokens → create a token with Object Read & Write for this bucket. The endpoint is shown on the bucket's settings page. Company OS checks that it can write before saving; the secret is stored encrypted.",
+			"help": "In Cloudflare: R2 → Manage API tokens → create a token with Object Read & Write for this bucket. The endpoint is shown on the bucket's settings page. TeamOS checks that it can write before saving; the secret is stored encrypted.",
 			"prefix": "Folder in bucket (optional)",
 			"secretKept": "Saved (leave empty to keep)",
 			"secretKey": "Secret access key",
@@ -3314,14 +3405,15 @@
 			"email": "Email",
 			"status": "Status",
 			"to": "To",
-			"when": "When"
+			"when": "When",
+			"workspace": "Workspace"
 		},
 		"empty": "No emails yet.",
 		"error": "Something went wrong",
 		"provider": {
 			"hint": "Members get email for assignments, mentions, due dates, leave, expenses and payslips unless they turn it off in their notification settings.",
 			"none": "Email is not set up",
-			"noneHint": "Ask whoever runs this Company OS server to set RESEND_API_KEY and EMAIL_FROM (or SMTP). Notifications still show inside Company OS.",
+			"noneHint": "Ask whoever runs this TeamOS server to set RESEND_API_KEY and EMAIL_FROM (or SMTP). Notifications still show inside TeamOS.",
 			"resend": "Sending with Resend",
 			"smtp": "Sending with SMTP"
 		},
@@ -3333,9 +3425,16 @@
 			"sending": "Sending",
 			"sent": "Sent"
 		},
-		"subtitle": "Every email Company OS sent to people in this workspace, and whether it arrived at the mail provider. Failed emails are retried for about an hour.",
+		"subtitle": "Every email TeamOS sent to people in this workspace, and whether it arrived at the mail provider. Failed emails are retried for about an hour.",
 		"title": "Email",
-		"noAccess": "Only people who manage workspace settings can see the email log."
+		"noAccess": "Only people who manage workspace settings can see the email log.",
+		"chooseWhich": "Choose which emails you get in",
+		"mineSubtitle": "Every email TeamOS sent you, from all your workspaces, and whether it reached your mail provider.",
+		"notificationSettings": "notification settings",
+		"tabs": {
+			"mine": "Sent to me",
+			"workspace": "Everyone in {{workspace}}"
+		}
 	},
 	"expenses": {
 		"title": "Expenses",
@@ -3377,6 +3476,63 @@
 			"noRun": "No payroll for this month",
 			"pickMonth": "Pick a month",
 			"otherCurrency": "Other currency: {{count}}"
+		},
+		"categories": {
+			"placeholder": "Search or pick a category",
+			"create": "Create “{{name}}”",
+			"useTyped": "Use “{{name}}”",
+			"pickIcon": "Pick an icon for “{{name}}”",
+			"created": "Category “{{name}}” added",
+			"manage": "Categories",
+			"manageTitle": "Expense categories",
+			"manageHint": "What people choose from when they file an expense. Removing one keeps it on past expenses.",
+			"changeIcon": "Change the icon for {{name}}",
+			"remove": "Remove {{name}}",
+			"newIcon": "Icon for the new category",
+			"newName": "New category name",
+			"add": "Add",
+			"count_one": "{{count}} category",
+			"count_other": "{{count}} categories",
+			"search": "Search categories"
+		},
+		"task": "Task (optional)",
+		"noTask": "No task",
+		"payment": {
+			"approveTitle": "Approve · how will it be paid?",
+			"hint": "Pick how the money goes back. Optional, but it makes the record easy to trace.",
+			"method": "Payment method",
+			"methods": {
+				"bank": "Bank",
+				"bkash": "bKash",
+				"card": "Card",
+				"cash": "Cash",
+				"nagad": "Nagad",
+				"other": "Other",
+				"paypal": "PayPal",
+				"usdt": "USDT"
+			},
+			"paidTitle": "Mark paid · how was it paid?",
+			"reference": "Payment reference",
+			"referenceFor": {
+				"bank": "Transfer ID or last 4 digits (optional)",
+				"bkash": "bKash TrxID (optional)",
+				"card": "Card last 4 digits (optional)",
+				"cash": "Who handed it over (optional)",
+				"nagad": "Nagad TxnID (optional)",
+				"other": "How it was paid (optional)",
+				"paypal": "PayPal transaction ID (optional)",
+				"usdt": "Transaction hash (optional)"
+			}
+		},
+		"breakdown": {
+			"items_one": "{{count}} item",
+			"items_other": "{{count}} items",
+			"noMatch": "No categories match.",
+			"other_one": "{{count}} other category",
+			"other_other": "{{count}} other categories",
+			"search": "Find a category",
+			"showAll": "Show all {{count}} categories",
+			"showTop": "Show top {{count}}"
 		}
 	},
 	"reports": {

@@ -6,7 +6,7 @@ import {
 } from "node:crypto";
 import { HTTPException } from "hono/http-exception";
 
-// AES-256-GCM for credentials Company OS has to store and read back (storage
+// AES-256-GCM for credentials TeamOS has to store and read back (storage
 // keys). The key comes from KANEO_SECRET_ENCRYPTION_KEY, falling back to the
 // keys an instance already has so existing deployments need no new setting.
 const PREFIX = "enc:v1:";

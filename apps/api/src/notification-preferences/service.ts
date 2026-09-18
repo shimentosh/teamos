@@ -9,6 +9,12 @@ import {
   workspaceUserTable,
 } from "../database/schema";
 import { assertPublicWebhookDestination } from "../plugins/generic-webhook/config";
+import {
+  type EventSettings,
+  eventEnabled,
+  NOTIFICATION_EVENTS,
+  type NotificationAudience,
+} from "./events";
 import { decryptSecret, encryptSecret } from "./secrets";
 
 export type NotificationPreferenceProjectMode = "all" | "selected";
@@ -37,6 +43,12 @@ export type NotificationPreferenceResponse = {
   taskStatusChangeEnabled: boolean;
   dueDateReminderEnabled: boolean;
   dueDateReminderLeadTimeMinutes: number;
+  events: Array<{
+    key: string;
+    audience: NotificationAudience;
+    inApp: boolean;
+    email: boolean;
+  }>;
   workspaces: Array<{
     id: string;
     workspaceId: string;
@@ -72,6 +84,7 @@ export type UpdateNotificationPreferenceInput = {
   taskStatusChangeEnabled?: boolean;
   dueDateReminderEnabled?: boolean;
   dueDateReminderLeadTimeMinutes?: number;
+  events?: EventSettings;
 };
 
 export type UpsertWorkspaceRuleInput = {
@@ -218,6 +231,12 @@ export async function getNotificationPreferences(
     dueDateReminderEnabled: preference?.dueDateReminderEnabled ?? true,
     dueDateReminderLeadTimeMinutes:
       preference?.dueDateReminderLeadTimeMinutes ?? 1440,
+    events: NOTIFICATION_EVENTS.map((event) => ({
+      key: event.key,
+      audience: event.audience,
+      inApp: eventEnabled(event.key, "inApp", preference),
+      email: eventEnabled(event.key, "email", preference),
+    })),
     workspaces: rules.map((rule) => ({
       id: rule.id,
       workspaceId: rule.workspaceId,
@@ -374,6 +393,38 @@ export async function updateNotificationPreferences(
     }
   }
 
+  // Per-event switches merge into what's saved. The four older task
+  // switches mirror them both ways: an old client's toggle becomes the
+  // event setting, and the due-date scheduler keeps reading its column.
+  const eventSettings: EventSettings = {
+    ...(existing?.eventSettings ?? {}),
+  };
+  const legacyToEvents: Array<[boolean | undefined, string[]]> = [
+    [input.taskAssignmentEnabled, ["task_assigned"]],
+    [input.taskCommentEnabled, ["task_comment", "task_mention"]],
+    [input.taskStatusChangeEnabled, ["task_status"]],
+    [input.dueDateReminderEnabled, ["task_due", "task_overdue"]],
+  ];
+  for (const [value, keys] of legacyToEvents) {
+    if (value === undefined) continue;
+    for (const key of keys) {
+      eventSettings[key] = { ...eventSettings[key], inApp: value };
+    }
+  }
+  for (const [key, change] of Object.entries(input.events ?? {})) {
+    eventSettings[key] = { ...eventSettings[key], ...change };
+  }
+  const saved = { ...existing, eventSettings };
+  const legacySwitches = {
+    taskAssignmentEnabled: eventEnabled("task_assigned", "inApp", saved),
+    taskCommentEnabled: eventEnabled("task_comment", "inApp", saved),
+    taskStatusChangeEnabled: eventEnabled("task_status", "inApp", saved),
+    // The scheduler sends both reminders; each is then checked on its own.
+    dueDateReminderEnabled:
+      eventEnabled("task_due", "inApp", saved) ||
+      eventEnabled("task_overdue", "inApp", saved),
+  };
+
   const data = {
     userId,
     emailEnabled,
@@ -396,16 +447,8 @@ export async function updateNotificationPreferences(
       input.webhookSecret === undefined
         ? (existing?.webhookSecret ?? null)
         : (encryptSecret(webhookSecret) ?? null),
-    taskAssignmentEnabled:
-      input.taskAssignmentEnabled ?? existing?.taskAssignmentEnabled ?? true,
-    taskCommentEnabled:
-      input.taskCommentEnabled ?? existing?.taskCommentEnabled ?? true,
-    taskStatusChangeEnabled:
-      input.taskStatusChangeEnabled ??
-      existing?.taskStatusChangeEnabled ??
-      true,
-    dueDateReminderEnabled:
-      input.dueDateReminderEnabled ?? existing?.dueDateReminderEnabled ?? true,
+    ...legacySwitches,
+    eventSettings,
     dueDateReminderLeadTimeMinutes:
       input.dueDateReminderLeadTimeMinutes ??
       existing?.dueDateReminderLeadTimeMinutes ??

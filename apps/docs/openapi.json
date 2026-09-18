@@ -1,14 +1,14 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Company OS API",
+    "title": "TeamOS API",
     "version": "1.0.0",
-    "description": "Company OS Project Management API - Manage projects, tasks, labels, and more"
+    "description": "TeamOS Project Management API - Manage projects, tasks, labels, and more"
   },
   "servers": [
     {
       "url": "https://cloud.kaneo.app/api",
-      "description": "Company OS API Server"
+      "description": "TeamOS API Server"
     }
   ],
   "security": [
@@ -2186,6 +2186,13 @@
               "null"
             ],
             "format": "date-time"
+          },
+          "workspaceName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Only in your own log, which spans workspaces."
           }
         },
         "required": [
@@ -2197,7 +2204,8 @@
           "attempts",
           "lastError",
           "createdAt",
-          "sentAt"
+          "sentAt",
+          "workspaceName"
         ]
       },
       "ReportSummary": {
@@ -3041,6 +3049,25 @@
               "null"
             ]
           },
+          "taskId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "taskTitle": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "taskRef": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "MKT-4"
+          },
           "receiptFileId": {
             "type": [
               "string",
@@ -3071,6 +3098,19 @@
             ],
             "format": "date-time"
           },
+          "paymentMethod": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "bank, cash, bkash, nagad, paypal, usdt, card or other"
+          },
+          "paymentReference": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -3087,11 +3127,16 @@
           "spentOn",
           "projectId",
           "projectName",
+          "taskId",
+          "taskTitle",
+          "taskRef",
           "receiptFileId",
           "receiptName",
           "status",
           "decidedAt",
           "paidAt",
+          "paymentMethod",
+          "paymentReference",
           "createdAt"
         ]
       },
@@ -4810,6 +4855,13 @@
             "type": "number",
             "description": "How long before a due date the reminder fires, in minutes."
           },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationEventSetting"
+            },
+            "description": "Every notification event with its in-app and email switch."
+          },
           "workspaces": {
             "type": "array",
             "items": {
@@ -4856,9 +4908,40 @@
           "taskStatusChangeEnabled",
           "dueDateReminderEnabled",
           "dueDateReminderLeadTimeMinutes",
+          "events",
           "workspaces",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "NotificationEventSetting": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "leave_requested"
+          },
+          "audience": {
+            "type": "string",
+            "enum": [
+              "everyone",
+              "approvers",
+              "admins"
+            ],
+            "description": "Who receives it: anyone involved, people who approve requests, or workspace admins."
+          },
+          "inApp": {
+            "type": "boolean"
+          },
+          "email": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "audience",
+          "inApp",
+          "email"
         ]
       },
       "NotificationPreferenceWorkspaceRule": {
@@ -5294,7 +5377,7 @@
           },
           "commentTaskLinkOnGitHubIssue": {
             "type": "boolean",
-            "description": "When on, Company OS comments a link back to the task on the linked GitHub issue."
+            "description": "When on, TeamOS comments a link back to the task on the linked GitHub issue."
           },
           "isActive": {
             "type": [
@@ -5350,7 +5433,7 @@
           },
           "commentTaskLinkOnGitHubIssue": {
             "type": "boolean",
-            "description": "When on, Company OS comments a link back to the task on the linked GitHub issue."
+            "description": "When on, TeamOS comments a link back to the task on the linked GitHub issue."
           },
           "isActive": {
             "type": [
@@ -5567,7 +5650,7 @@
           },
           "commentTaskLinkOnGiteaIssue": {
             "type": "boolean",
-            "description": "When on, Company OS comments a link back to the task on the linked Gitea issue."
+            "description": "When on, TeamOS comments a link back to the task on the linked Gitea issue."
           },
           "isActive": {
             "type": [
@@ -6287,6 +6370,30 @@
           "uploadedBy",
           "createdBy",
           "createdByName",
+          "createdAt"
+        ]
+      },
+      "ExpenseCategory": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "icon",
           "createdAt"
         ]
       },
@@ -8872,7 +8979,7 @@
           "MCP"
         ],
         "summary": "Start MCP authorization",
-        "description": "Begin an MCP OAuth authorization. Redirects the browser to the Company OS consent page, which then approves or denies the request.",
+        "description": "Begin an MCP OAuth authorization. Redirects the browser to the TeamOS consent page, which then approves or denies the request.",
         "security": [],
         "parameters": [
           {
@@ -8936,7 +9043,7 @@
         ],
         "responses": {
           "302": {
-            "description": "Redirect to the Company OS consent page"
+            "description": "Redirect to the TeamOS consent page"
           },
           "400": {
             "description": "Invalid authorization request",
@@ -13109,7 +13216,7 @@
           "Files"
         ],
         "summary": "Connect my bucket",
-        "description": "Save R2 credentials after checking Company OS can write to the bucket. Leave the secret empty to keep the saved one. Switching buckets is refused while files live in the current one. Audit logged in each workspace you own.",
+        "description": "Save R2 credentials after checking TeamOS can write to the bucket. Leave the secret empty to keep the saved one. Switching buckets is refused while files live in the current one. Audit logged in each workspace you own.",
         "requestBody": {
           "required": true,
           "content": {
@@ -14049,7 +14156,7 @@
           "Chat"
         ],
         "summary": "Who is online",
-        "description": "Ids of workspace members online now: Company OS open in a browser, or the desktop app reporting in.",
+        "description": "Ids of workspace members online now: TeamOS open in a browser, or the desktop app reporting in.",
         "parameters": [
           {
             "schema": {
@@ -15119,6 +15226,99 @@
           },
           "403": {
             "description": "No access to the workspace",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/email-log/mine": {
+      "get": {
+        "operationId": "listMyEmails",
+        "tags": [
+          "Email"
+        ],
+        "summary": "Emails sent to me",
+        "description": "The latest emails TeamOS sent to the caller, from every workspace, with their delivery status. Bodies are never returned.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "queued",
+                "sending",
+                "sent",
+                "failed"
+              ]
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Your emails",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailLog"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          }
+        }
+      }
+    },
+    "/email-log/mine/{id}/retry": {
+      "post": {
+        "operationId": "retryMyEmail",
+        "tags": [
+          "Email"
+        ],
+        "summary": "Send one of my failed emails again",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Queued again",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "404": {
+            "description": "No failed email with that id was sent to you",
             "content": {
               "text/plain": {
                 "schema": {
@@ -16533,6 +16733,25 @@
                   "note": {
                     "type": "string",
                     "maxLength": 500
+                  },
+                  "paymentMethod": {
+                    "type": "string",
+                    "enum": [
+                      "bank",
+                      "cash",
+                      "bkash",
+                      "nagad",
+                      "paypal",
+                      "usdt",
+                      "card",
+                      "other"
+                    ],
+                    "description": "How the money is paid back."
+                  },
+                  "paymentReference": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "description": "Transfer id, wallet hash or similar, for tracing."
                   }
                 },
                 "required": [
@@ -16676,6 +16895,10 @@
                   },
                   "projectId": {
                     "type": "string"
+                  },
+                  "taskId": {
+                    "type": "string",
+                    "description": "A task inside `projectId` the money went to."
                   },
                   "receiptFileId": {
                     "type": "string"
@@ -16827,6 +17050,25 @@
                   "note": {
                     "type": "string",
                     "maxLength": 500
+                  },
+                  "paymentMethod": {
+                    "type": "string",
+                    "enum": [
+                      "bank",
+                      "cash",
+                      "bkash",
+                      "nagad",
+                      "paypal",
+                      "usdt",
+                      "card",
+                      "other"
+                    ],
+                    "description": "How the money is paid back."
+                  },
+                  "paymentReference": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "description": "Transfer id, wallet hash or similar, for tracing."
                   }
                 },
                 "required": [
@@ -16901,6 +17143,25 @@
                 "properties": {
                   "workspaceId": {
                     "type": "string"
+                  },
+                  "paymentMethod": {
+                    "type": "string",
+                    "enum": [
+                      "bank",
+                      "cash",
+                      "bkash",
+                      "nagad",
+                      "paypal",
+                      "usdt",
+                      "card",
+                      "other"
+                    ],
+                    "description": "How the money is paid back."
+                  },
+                  "paymentReference": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "description": "Transfer id, wallet hash or similar, for tracing."
                   }
                 },
                 "required": [
@@ -17962,7 +18223,7 @@
           "Desktop agent"
         ],
         "summary": "Pair a desktop app",
-        "description": "Exchange a one-time pairing code (created in Company OS by the employee) for a device token. The token only works for the desktop agent endpoints.",
+        "description": "Exchange a one-time pairing code (created in TeamOS by the employee) for a device token. The token only works for the desktop agent endpoints.",
         "requestBody": {
           "required": true,
           "content": {
@@ -18646,7 +18907,7 @@
           "Attendance"
         ],
         "summary": "Clock out",
-        "description": "End the open attendance session now.",
+        "description": "End the open attendance session now. An optional `note` (what you worked on) is saved on the session, after any note from clocking in.",
         "requestBody": {
           "required": true,
           "content": {
@@ -20741,6 +21002,21 @@
                   "dueDateReminderEnabled": {
                     "type": "boolean"
                   },
+                  "events": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "inApp": {
+                          "type": "boolean"
+                        },
+                        "email": {
+                          "type": "boolean"
+                        }
+                      }
+                    },
+                    "description": "Per-event switches to change, e.g. { leave_requested: { email: false } }. Events left out keep their setting."
+                  },
                   "dueDateReminderLeadTimeMinutes": {
                     "type": "integer",
                     "minimum": 5,
@@ -21131,7 +21407,7 @@
           "GitHub"
         ],
         "summary": "Verify GitHub installation",
-        "description": "Check that the GitHub App is installed on a repository and holds the permissions Company OS needs. Always 200 -- problems are reported in the body so the client can guide the user.",
+        "description": "Check that the GitHub App is installed on a repository and holds the permissions TeamOS needs. Always 200 -- problems are reported in the body so the client can guide the user.",
         "requestBody": {
           "required": true,
           "content": {
@@ -21628,7 +21904,7 @@
           "Gitea"
         ],
         "summary": "Verify Gitea access",
-        "description": "Check that the base URL is a Gitea instance and that the token can reach the repository with the permissions Company OS needs. Always 200 -- problems are reported in the body.",
+        "description": "Check that the base URL is a Gitea instance and that the token can reach the repository with the permissions TeamOS needs. Always 200 -- problems are reported in the body.",
         "requestBody": {
           "required": true,
           "content": {
@@ -22123,7 +22399,7 @@
           "Generic Webhook"
         ],
         "summary": "Create webhook integration",
-        "description": "Create or replace the outgoing webhook for a project. Company OS POSTs the selected task events to this URL, signed with the secret when one is set.",
+        "description": "Create or replace the outgoing webhook for a project. TeamOS POSTs the selected task events to this URL, signed with the secret when one is set.",
         "parameters": [
           {
             "schema": {
@@ -24332,6 +24608,263 @@
           },
           "404": {
             "description": "Not found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/expense-category": {
+      "get": {
+        "operationId": "listExpenseCategories",
+        "tags": [
+          "Expense categories"
+        ],
+        "summary": "Expense categories",
+        "description": "The categories people pick when filing an expense, by name. A workspace starts with Travel, Meals, Equipment, Software and Other.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Categories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExpenseCategory"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createExpenseCategory",
+        "tags": [
+          "Expense categories"
+        ],
+        "summary": "Add a category",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "workspaceId": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60
+                  },
+                  "icon": {
+                    "type": "string",
+                    "pattern": "^[A-Z][A-Za-z0-9]{1,39}$",
+                    "example": "Plane"
+                  }
+                },
+                "required": [
+                  "workspaceId",
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The category",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseCategory"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "Missing workspace:manage_settings",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A category with that name exists",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/expense-category/{id}": {
+      "patch": {
+        "operationId": "updateExpenseCategory",
+        "tags": [
+          "Expense categories"
+        ],
+        "summary": "Change a category's icon",
+        "description": "Names are not renamed here: expenses keep the name they were filed with.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "workspaceId": {
+                    "type": "string"
+                  },
+                  "icon": {
+                    "type": "string",
+                    "pattern": "^[A-Z][A-Za-z0-9]{1,39}$",
+                    "example": "Plane"
+                  }
+                },
+                "required": [
+                  "workspaceId",
+                  "icon"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The category",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseCategory"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "Missing workspace:manage_settings",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteExpenseCategory",
+        "tags": [
+          "Expense categories"
+        ],
+        "summary": "Remove a category",
+        "description": "It stops being offered; expenses already filed under it keep the name.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Removed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "Missing workspace:manage_settings",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "It is the last category",
             "content": {
               "text/plain": {
                 "schema": {

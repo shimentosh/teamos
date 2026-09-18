@@ -1,6 +1,16 @@
 import { client } from "@kaneo/libs";
 import type { InferRequestType, InferResponseType } from "hono/client";
 
+export type PaymentMethod = NonNullable<
+  InferRequestType<
+    (typeof client)["requests"]["expenses"][":id"]["decide"]["$post"]
+  >["json"]["paymentMethod"]
+>;
+export type PaymentDetails = {
+  paymentMethod?: PaymentMethod;
+  paymentReference?: string;
+};
+
 export type LeaveRequest = InferResponseType<
   (typeof client)["requests"]["leave"]["$get"],
   200
@@ -127,18 +137,23 @@ export const requestsApi = {
     workspaceId: string,
     id: string,
     decision: "approved" | "rejected",
+    payment: PaymentDetails = {},
   ) =>
     unwrap(
       await client.requests.expenses[":id"].decide.$post({
         param: { id },
-        json: { workspaceId, decision },
+        json: { workspaceId, decision, ...payment },
       }),
     ),
-  markExpensePaid: async (workspaceId: string, id: string) =>
+  markExpensePaid: async (
+    workspaceId: string,
+    id: string,
+    payment: PaymentDetails = {},
+  ) =>
     unwrap(
       await client.requests.expenses[":id"].paid.$post({
         param: { id },
-        json: { workspaceId },
+        json: { workspaceId, ...payment },
       }),
     ),
   open: async (workspaceId: string) =>

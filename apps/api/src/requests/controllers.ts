@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, inArray, lte, or } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lte, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { HTTPException } from "hono/http-exception";
 import { recordAudit } from "../audit/record-audit";
@@ -12,6 +12,7 @@ import {
   leaveRequestTable,
   projectTable,
   storedFileTable,
+  taskTable,
   userTable,
 } from "../database/schema";
 import { publishEvent } from "../events";
@@ -320,6 +321,17 @@ export async function cancelLeave(
       });
     }
   }
+  if (from === "pending") {
+    // Approvers were told about the request; tell them it's gone.
+    await publishEvent("leave.withdrawn", {
+      workspaceId,
+      requestId: id,
+      userId: row.userId,
+      type: row.type,
+      startDate: row.startDate,
+      endDate: row.endDate,
+    });
+  }
   return { ...row, status: "cancelled" };
 }
 
@@ -329,9 +341,11 @@ export async function decideLeave(
   id: string,
   decision: "approved" | "rejected",
   note?: string,
+  canDecideOwn = false,
 ) {
   const row = await findLeave(workspaceId, id);
-  if (row.userId === actorId) {
+  const own = row.userId === actorId;
+  if (own && !canDecideOwn) {
     throw new HTTPException(403, {
       message: "Someone else has to decide your own request",
     });
@@ -368,6 +382,7 @@ export async function decideLeave(
     targetType: "user",
     targetId: row.userId,
     data: {
+      ...(own && { selfDecided: true }),
       requestId: id,
       type: row.type,
       startDate: row.startDate,
@@ -402,11 +417,18 @@ const expenseColumns = {
   spentOn: expenseTable.spentOn,
   projectId: expenseTable.projectId,
   projectName: projectTable.name,
+  taskId: expenseTable.taskId,
+  taskTitle: taskTable.title,
+  taskRef: sql<
+    string | null
+  >`case when ${taskTable.id} is null then null else ${projectTable.slug} || '-' || ${taskTable.number} end`,
   receiptFileId: expenseTable.receiptFileId,
   receiptName: storedFileTable.filename,
   status: expenseTable.status,
   decidedAt: expenseTable.decidedAt,
   paidAt: expenseTable.paidAt,
+  paymentMethod: expenseTable.paymentMethod,
+  paymentReference: expenseTable.paymentReference,
   createdAt: expenseTable.createdAt,
 };
 
@@ -416,6 +438,7 @@ function selectExpenses() {
     .from(expenseTable)
     .innerJoin(userTable, eq(userTable.id, expenseTable.userId))
     .leftJoin(projectTable, eq(projectTable.id, expenseTable.projectId))
+    .leftJoin(taskTable, eq(taskTable.id, expenseTable.taskId))
     .leftJoin(
       storedFileTable,
       eq(storedFileTable.id, expenseTable.receiptFileId),
@@ -459,10 +482,26 @@ export async function submitExpense(
     description?: string;
     spentOn: string;
     projectId?: string;
+    taskId?: string;
     receiptFileId?: string;
   },
 ) {
   const company = await getCompanySettings(workspaceId);
+  if (input.taskId) {
+    // A task only makes sense inside the chosen project.
+    const [task] = input.projectId
+      ? await db
+          .select({ id: taskTable.id })
+          .from(taskTable)
+          .where(
+            and(
+              eq(taskTable.id, input.taskId),
+              eq(taskTable.projectId, input.projectId),
+            ),
+          )
+      : [];
+    if (!task) throw new HTTPException(400, { message: "Unknown task" });
+  }
 
   if (input.projectId) {
     const [project] = await db
@@ -502,6 +541,7 @@ export async function submitExpense(
       description: input.description ?? null,
       spentOn: input.spentOn,
       projectId: input.projectId ?? null,
+      taskId: input.taskId ?? null,
       receiptFileId: input.receiptFileId ?? null,
     })
     .returning({ id: expenseTable.id });
@@ -567,14 +607,30 @@ export async function cancelExpense(
   return { id };
 }
 
+type PaymentDetails = { paymentMethod?: string; paymentReference?: string };
+
+// Only what was given: marking paid later keeps the method set at approval
+// unless it's changed.
+function paymentFields(payment: PaymentDetails) {
+  return {
+    ...(payment.paymentMethod && { paymentMethod: payment.paymentMethod }),
+    ...(payment.paymentReference && {
+      paymentReference: payment.paymentReference,
+    }),
+  };
+}
+
 export async function decideExpense(
   workspaceId: string,
   actorId: string,
   id: string,
   decision: "approved" | "rejected",
+  canDecideOwn = false,
+  payment: PaymentDetails = {},
 ) {
   const row = await findExpense(workspaceId, id);
-  if (row.userId === actorId) {
+  const own = row.userId === actorId;
+  if (own && !canDecideOwn) {
     throw new HTTPException(403, {
       message: "Someone else has to decide your own expense",
     });
@@ -586,7 +642,12 @@ export async function decideExpense(
   }
   const [changed] = await db
     .update(expenseTable)
-    .set({ status: decision, decidedBy: actorId, decidedAt: new Date() })
+    .set({
+      status: decision,
+      decidedBy: actorId,
+      decidedAt: new Date(),
+      ...(decision === "approved" && paymentFields(payment)),
+    })
     .where(and(eq(expenseTable.id, id), eq(expenseTable.status, "pending")))
     .returning({ id: expenseTable.id });
   if (!changed) {
@@ -600,7 +661,13 @@ export async function decideExpense(
     action: `expense.${decision}`,
     targetType: "user",
     targetId: row.userId,
-    data: { expenseId: id, amount: row.amount, currency: row.currency },
+    data: {
+      expenseId: id,
+      amount: row.amount,
+      currency: row.currency,
+      ...(own && { selfDecided: true }),
+      ...(decision === "approved" && paymentFields(payment)),
+    },
   });
   await publishEvent("expense.decided", {
     workspaceId,
@@ -620,6 +687,7 @@ export async function markExpensePaid(
   workspaceId: string,
   actorId: string,
   id: string,
+  payment: PaymentDetails = {},
 ) {
   const row = await findExpense(workspaceId, id);
   if (row.status !== "approved") {
@@ -629,7 +697,7 @@ export async function markExpensePaid(
   }
   const [changed] = await db
     .update(expenseTable)
-    .set({ status: "paid", paidAt: new Date() })
+    .set({ status: "paid", paidAt: new Date(), ...paymentFields(payment) })
     .where(and(eq(expenseTable.id, id), eq(expenseTable.status, "approved")))
     .returning({ id: expenseTable.id });
   if (!changed) {
@@ -643,7 +711,12 @@ export async function markExpensePaid(
     action: "expense.paid",
     targetType: "user",
     targetId: row.userId,
-    data: { expenseId: id, amount: row.amount, currency: row.currency },
+    data: {
+      expenseId: id,
+      amount: row.amount,
+      currency: row.currency,
+      ...paymentFields(payment),
+    },
   });
   await publishEvent("expense.decided", {
     workspaceId,

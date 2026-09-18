@@ -1,14 +1,14 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Company OS Documentation
+  - name: TeamOS Documentation
     url: https://kaneo.app/docs/core
     about: Check our documentation for answers to common questions
-  - name: Company OS Discord Community
+  - name: TeamOS Discord Community
     url: https://discord.gg/rU4tSyhXXU
     about: Join our Discord server to chat with the community and get help
   - name: GitHub Discussions
     url: https://github.com/orgs/usekaneo/discussions
-    about: For general questions and discussions about Company OS
-  - name: Support Company OS
+    about: For general questions and discussions about TeamOS
+  - name: Support TeamOS
     url: https://github.com/sponsors/andrejsshell
-    about: Help keep Company OS maintained and evolving
+    about: Help keep TeamOS maintained and evolving

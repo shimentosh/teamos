@@ -108,7 +108,24 @@ export async function resetTestDatabase() {
 
   const formattedTableNames = tableNames.map(quoteIdentifier).join(", ");
 
-  await db.execute(
-    sql.raw(`TRUNCATE TABLE ${formattedTableNames} RESTART IDENTITY CASCADE`),
-  );
+  // Work a previous test started in the background (a notification being
+  // delivered, an email being queued) can still be writing when the next
+  // test resets. Postgres then picks one side as a deadlock victim; waiting
+  // a moment and truncating again lets that work finish first.
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await db.execute(
+        sql.raw(
+          `TRUNCATE TABLE ${formattedTableNames} RESTART IDENTITY CASCADE`,
+        ),
+      );
+      return;
+    } catch (error) {
+      const code =
+        (error as { code?: string; cause?: { code?: string } }).code ??
+        (error as { cause?: { code?: string } }).cause?.code;
+      if (code !== "40P01" || attempt >= 5) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 100 * attempt));
+    }
+  }
 }

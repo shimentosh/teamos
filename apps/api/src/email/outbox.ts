@@ -156,15 +156,23 @@ export async function processEmailOutbox() {
   return { degraded: outcomes.includes("failed") };
 }
 
-/** Send a failed email again from the start (admin action). */
-export async function retryEmail(workspaceId: string, id: string) {
+/**
+ * Send a failed email again from the start: an admin for their workspace
+ * (`workspaceId`), or anyone for an email sent to them (`userId`).
+ */
+export async function retryEmail(
+  owner: { workspaceId: string } | { userId: string },
+  id: string,
+) {
   const [row] = await db
     .update(emailOutboxTable)
     .set({ status: "queued", attempts: 0, nextAttemptAt: new Date() })
     .where(
       and(
         eq(emailOutboxTable.id, id),
-        eq(emailOutboxTable.workspaceId, workspaceId),
+        "workspaceId" in owner
+          ? eq(emailOutboxTable.workspaceId, owner.workspaceId)
+          : eq(emailOutboxTable.userId, owner.userId),
         eq(emailOutboxTable.status, "failed"),
       ),
     )

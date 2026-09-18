@@ -262,3 +262,91 @@ describe("desktop agent activity", () => {
     expect(daily?.activeSeconds).toBe(600);
   });
 });
+
+describe("deciding your own expense", () => {
+  it("lets the owner approve their own, but not a manager", async () => {
+    const { owner, manager, workspace } = await company();
+    const submit = (user: typeof owner) =>
+      requestAs(user)("/requests/expenses", {
+        method: "POST",
+        body: {
+          workspaceId: workspace.id,
+          amount: 120_000,
+          category: "Travel",
+          spentOn: "2026-09-16",
+        },
+      });
+    const decide = (user: typeof owner, id: string) =>
+      requestAs(user)(`/requests/expenses/${id}/decide`, {
+        method: "POST",
+        body: { workspaceId: workspace.id, decision: "approved" },
+      });
+
+    const mine = await submit(owner);
+    expect((await decide(owner, mine.json.id)).status).toBe(200);
+    const [audit] = await db
+      .select()
+      .from(schema.auditLogTable)
+      .where(eq(schema.auditLogTable.action, "expense.approved"));
+    expect(audit?.data).toMatchObject({ selfDecided: true });
+
+    const managers = await submit(manager);
+    expect((await decide(manager, managers.json.id)).status).toBe(403);
+  });
+});
+
+describe("how an expense is paid", () => {
+  it("records the method at approval and keeps it when marked paid", async () => {
+    const { owner, alice, workspace } = await company();
+    const expense = await requestAs(alice)("/requests/expenses", {
+      method: "POST",
+      body: {
+        workspaceId: workspace.id,
+        amount: 80_000,
+        category: "Software",
+        spentOn: "2026-09-16",
+      },
+    });
+    const url = `/requests/expenses/${expense.json.id}`;
+
+    const wrong = await requestAs(owner)(`${url}/decide`, {
+      method: "POST",
+      body: {
+        workspaceId: workspace.id,
+        decision: "approved",
+        paymentMethod: "gold-bars",
+      },
+    });
+    expect(wrong.status).toBe(400);
+
+    const approved = await requestAs(owner)(`${url}/decide`, {
+      method: "POST",
+      body: {
+        workspaceId: workspace.id,
+        decision: "approved",
+        paymentMethod: "usdt",
+        paymentReference: " 0xabc123 ",
+      },
+    });
+    expect(approved.json).toMatchObject({
+      status: "approved",
+      paymentMethod: "usdt",
+      paymentReference: "0xabc123",
+    });
+
+    const paid = await requestAs(owner)(`${url}/paid`, {
+      method: "POST",
+      body: { workspaceId: workspace.id },
+    });
+    expect(paid.json).toMatchObject({
+      status: "paid",
+      paymentMethod: "usdt",
+      paymentReference: "0xabc123",
+    });
+    const [audit] = await db
+      .select()
+      .from(schema.auditLogTable)
+      .where(eq(schema.auditLogTable.action, "expense.approved"));
+    expect(audit?.data).toMatchObject({ paymentMethod: "usdt" });
+  });
+});

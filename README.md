@@ -1,4 +1,4 @@
-<h1 align="center">Company OS</h1>
+<h1 align="center">TeamOS</h1>
 
 <p align="center">
   Projects, people and work time in one self-hosted place.
@@ -10,7 +10,7 @@
 
 </div>
 
-Company OS runs a team's day-to-day work in one app: the projects and tasks
+TeamOS runs a team's day-to-day work in one app: the projects and tasks
 you plan, the people who do them, and the time they spend. It is built on
 [Kaneo](https://github.com/usekaneo/kaneo), the open source project
 management platform, and keeps its simple, fast core.
@@ -54,7 +54,7 @@ http://localhost:1337. Database migrations run when the API starts.
 
 To self-host, build the bundled image from this repository with
 `Dockerfile.kaneo` (the images published as `ghcr.io/usekaneo/*` are upstream
-Kaneo and don't include the Company OS additions). A Helm chart is in
+Kaneo and don't include the TeamOS additions). A Helm chart is in
 [`charts/kaneo`](./charts/kaneo/README.md).
 
 Environment variables and internal package names keep their `KANEO_*` and
@@ -68,7 +68,7 @@ Environment variables and internal package names keep their `KANEO_*` and
 
 ## Credits
 
-Company OS is a fork of **[Kaneo](https://github.com/usekaneo/kaneo)**,
+TeamOS is a fork of **[Kaneo](https://github.com/usekaneo/kaneo)**,
 created by [Andrej Acevski](https://github.com/andrejsshell) and
 [its contributors](https://github.com/usekaneo/kaneo/graphs/contributors),
 and released under the MIT License. The project and task management core,

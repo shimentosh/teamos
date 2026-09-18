@@ -31,6 +31,17 @@ export const emailLogApi = {
         query: { workspaceId, ...(status ? { status } : {}) },
       }),
     ),
+  /** Emails sent to the signed-in person, from every workspace. */
+  mine: async (status?: EmailStatus) =>
+    unwrap(
+      await client["email-log"].mine.$get({
+        query: status ? { status } : {},
+      }),
+    ),
+  retryMine: async (id: string) =>
+    unwrap(
+      await client["email-log"].mine[":id"].retry.$post({ param: { id } }),
+    ),
   retry: async (workspaceId: string, id: string) =>
     unwrap(
       await client["email-log"][":id"].retry.$post({

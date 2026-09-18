@@ -1,4 +1,4 @@
-# Company OS on Coolify
+# TeamOS on Coolify
 #
 # Deploy this stack from a Git source with Coolify's "Docker Compose" build pack:
 #   Public Repository -> https://github.com/usekaneo/kaneo
@@ -10,7 +10,7 @@
 # The only required environment variable is KANEO_CLIENT_URL (your public URL, without :5173).
 # AUTH_SECRET and the PostgreSQL password are auto-generated via Coolify magic variables.
 # Do NOT set KANEO_API_URL — the entrypoint derives it from KANEO_CLIENT_URL (public URL + /api).
-# The Company OS image tracks the latest release by default. Set KANEO_IMAGE_TAG to a
+# The TeamOS image tracks the latest release by default. Set KANEO_IMAGE_TAG to a
 # release tag to hold a deployment on a known version.
 
 services:

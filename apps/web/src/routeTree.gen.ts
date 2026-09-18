@@ -38,6 +38,7 @@ import { Route as LayoutAuthenticatedDashboardWorkspaceWorkspaceIdRouteImport } 
 import { Route as LayoutAuthenticatedDashboardWorkspaceCreateRouteImport } from './routes/_layout/_authenticated/dashboard/workspace/create'
 import { Route as LayoutAuthenticatedDashboardSettingsAccountDeveloperRouteImport } from './routes/_layout/_authenticated/dashboard/settings/account/developer'
 import { Route as LayoutAuthenticatedDashboardSettingsAccountDevicesRouteImport } from './routes/_layout/_authenticated/dashboard/settings/account/devices'
+import { Route as LayoutAuthenticatedDashboardSettingsAccountEmailRouteImport } from './routes/_layout/_authenticated/dashboard/settings/account/email'
 import { Route as LayoutAuthenticatedDashboardSettingsAccountInformationRouteImport } from './routes/_layout/_authenticated/dashboard/settings/account/information'
 import { Route as LayoutAuthenticatedDashboardSettingsAccountNotificationsRouteImport } from './routes/_layout/_authenticated/dashboard/settings/account/notifications'
 import { Route as LayoutAuthenticatedDashboardSettingsAccountPreferencesRouteImport } from './routes/_layout/_authenticated/dashboard/settings/account/preferences'
@@ -230,6 +231,12 @@ const LayoutAuthenticatedDashboardSettingsAccountDevicesRoute =
   LayoutAuthenticatedDashboardSettingsAccountDevicesRouteImport.update({
     id: '/devices',
     path: '/devices',
+    getParentRoute: () => LayoutAuthenticatedDashboardSettingsAccountRoute,
+  } as any)
+const LayoutAuthenticatedDashboardSettingsAccountEmailRoute =
+  LayoutAuthenticatedDashboardSettingsAccountEmailRouteImport.update({
+    id: '/email',
+    path: '/email',
     getParentRoute: () => LayoutAuthenticatedDashboardSettingsAccountRoute,
   } as any)
 const LayoutAuthenticatedDashboardSettingsAccountInformationRoute =
@@ -512,6 +519,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/workspace/create': typeof LayoutAuthenticatedDashboardWorkspaceCreateRoute
   '/dashboard/settings/account/developer': typeof LayoutAuthenticatedDashboardSettingsAccountDeveloperRoute
   '/dashboard/settings/account/devices': typeof LayoutAuthenticatedDashboardSettingsAccountDevicesRoute
+  '/dashboard/settings/account/email': typeof LayoutAuthenticatedDashboardSettingsAccountEmailRoute
   '/dashboard/settings/account/information': typeof LayoutAuthenticatedDashboardSettingsAccountInformationRoute
   '/dashboard/settings/account/notifications': typeof LayoutAuthenticatedDashboardSettingsAccountNotificationsRoute
   '/dashboard/settings/account/preferences': typeof LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute
@@ -573,6 +581,7 @@ export interface FileRoutesByTo {
   '/dashboard/workspace/create': typeof LayoutAuthenticatedDashboardWorkspaceCreateRoute
   '/dashboard/settings/account/developer': typeof LayoutAuthenticatedDashboardSettingsAccountDeveloperRoute
   '/dashboard/settings/account/devices': typeof LayoutAuthenticatedDashboardSettingsAccountDevicesRoute
+  '/dashboard/settings/account/email': typeof LayoutAuthenticatedDashboardSettingsAccountEmailRoute
   '/dashboard/settings/account/information': typeof LayoutAuthenticatedDashboardSettingsAccountInformationRoute
   '/dashboard/settings/account/notifications': typeof LayoutAuthenticatedDashboardSettingsAccountNotificationsRoute
   '/dashboard/settings/account/preferences': typeof LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute
@@ -640,6 +649,7 @@ export interface FileRoutesById {
   '/_layout/_authenticated/dashboard/workspace/create': typeof LayoutAuthenticatedDashboardWorkspaceCreateRoute
   '/_layout/_authenticated/dashboard/settings/account/developer': typeof LayoutAuthenticatedDashboardSettingsAccountDeveloperRoute
   '/_layout/_authenticated/dashboard/settings/account/devices': typeof LayoutAuthenticatedDashboardSettingsAccountDevicesRoute
+  '/_layout/_authenticated/dashboard/settings/account/email': typeof LayoutAuthenticatedDashboardSettingsAccountEmailRoute
   '/_layout/_authenticated/dashboard/settings/account/information': typeof LayoutAuthenticatedDashboardSettingsAccountInformationRoute
   '/_layout/_authenticated/dashboard/settings/account/notifications': typeof LayoutAuthenticatedDashboardSettingsAccountNotificationsRoute
   '/_layout/_authenticated/dashboard/settings/account/preferences': typeof LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute
@@ -706,6 +716,7 @@ export interface FileRouteTypes {
     | '/dashboard/workspace/create'
     | '/dashboard/settings/account/developer'
     | '/dashboard/settings/account/devices'
+    | '/dashboard/settings/account/email'
     | '/dashboard/settings/account/information'
     | '/dashboard/settings/account/notifications'
     | '/dashboard/settings/account/preferences'
@@ -767,6 +778,7 @@ export interface FileRouteTypes {
     | '/dashboard/workspace/create'
     | '/dashboard/settings/account/developer'
     | '/dashboard/settings/account/devices'
+    | '/dashboard/settings/account/email'
     | '/dashboard/settings/account/information'
     | '/dashboard/settings/account/notifications'
     | '/dashboard/settings/account/preferences'
@@ -833,6 +845,7 @@ export interface FileRouteTypes {
     | '/_layout/_authenticated/dashboard/workspace/create'
     | '/_layout/_authenticated/dashboard/settings/account/developer'
     | '/_layout/_authenticated/dashboard/settings/account/devices'
+    | '/_layout/_authenticated/dashboard/settings/account/email'
     | '/_layout/_authenticated/dashboard/settings/account/information'
     | '/_layout/_authenticated/dashboard/settings/account/notifications'
     | '/_layout/_authenticated/dashboard/settings/account/preferences'
@@ -1086,6 +1099,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAuthenticatedDashboardSettingsAccountDevicesRouteImport
       parentRoute: typeof LayoutAuthenticatedDashboardSettingsAccountRoute
     }
+    '/_layout/_authenticated/dashboard/settings/account/email': {
+      id: '/_layout/_authenticated/dashboard/settings/account/email'
+      path: '/email'
+      fullPath: '/dashboard/settings/account/email'
+      preLoaderRoute: typeof LayoutAuthenticatedDashboardSettingsAccountEmailRouteImport
+      parentRoute: typeof LayoutAuthenticatedDashboardSettingsAccountRoute
+    }
     '/_layout/_authenticated/dashboard/settings/account/information': {
       id: '/_layout/_authenticated/dashboard/settings/account/information'
       path: '/information'
@@ -1337,6 +1357,7 @@ declare module '@tanstack/react-router' {
 interface LayoutAuthenticatedDashboardSettingsAccountRouteChildren {
   LayoutAuthenticatedDashboardSettingsAccountDeveloperRoute: typeof LayoutAuthenticatedDashboardSettingsAccountDeveloperRoute
   LayoutAuthenticatedDashboardSettingsAccountDevicesRoute: typeof LayoutAuthenticatedDashboardSettingsAccountDevicesRoute
+  LayoutAuthenticatedDashboardSettingsAccountEmailRoute: typeof LayoutAuthenticatedDashboardSettingsAccountEmailRoute
   LayoutAuthenticatedDashboardSettingsAccountInformationRoute: typeof LayoutAuthenticatedDashboardSettingsAccountInformationRoute
   LayoutAuthenticatedDashboardSettingsAccountNotificationsRoute: typeof LayoutAuthenticatedDashboardSettingsAccountNotificationsRoute
   LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute: typeof LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute
@@ -1349,6 +1370,8 @@ const LayoutAuthenticatedDashboardSettingsAccountRouteChildren: LayoutAuthentica
       LayoutAuthenticatedDashboardSettingsAccountDeveloperRoute,
     LayoutAuthenticatedDashboardSettingsAccountDevicesRoute:
       LayoutAuthenticatedDashboardSettingsAccountDevicesRoute,
+    LayoutAuthenticatedDashboardSettingsAccountEmailRoute:
+      LayoutAuthenticatedDashboardSettingsAccountEmailRoute,
     LayoutAuthenticatedDashboardSettingsAccountInformationRoute:
       LayoutAuthenticatedDashboardSettingsAccountInformationRoute,
     LayoutAuthenticatedDashboardSettingsAccountNotificationsRoute:

@@ -5,7 +5,7 @@ alwaysApply: false
 ---
 # Backend API Guidelines
 
-The Company OS API is built with Hono, Drizzle ORM, PostgreSQL, and Better Auth. This document outlines conventions and patterns for backend development.
+The TeamOS API is built with Hono, Drizzle ORM, PostgreSQL, and Better Auth. This document outlines conventions and patterns for backend development.
 
 ## Framework: Hono
 

@@ -1,9 +1,9 @@
 ---
 title: Account Notifications
-description: Deliver your personal Company OS notifications by email, ntfy, Gotify, or a custom webhook with workspace and project scoping
+description: Deliver your personal TeamOS notifications by email, ntfy, Gotify, or a custom webhook with workspace and project scoping
 ---
 
-Company OS can keep the normal in-app notification inbox and also forward matching notifications to external channels for the signed-in user.
+TeamOS can keep the normal in-app notification inbox and also forward matching notifications to external channels for the signed-in user.
 
 You can configure this under:
 
@@ -24,7 +24,7 @@ These settings are personal to the signed-in account. They do not change notific
 
 ## How it works
 
-Company OS already stores in-app notifications in the notification inbox. Account notification delivery adds a separate preference layer on top of that behavior.
+TeamOS already stores in-app notifications in the notification inbox. Account notification delivery adds a separate preference layer on top of that behavior.
 
 Important rules:
 
@@ -71,9 +71,9 @@ Gotify requires:
 
 Setup notes:
 
-- create an application in your Gotify server before connecting Company OS
+- create an application in your Gotify server before connecting TeamOS
 - paste the base server URL, for example `https://gotify.example.com`
-- no extra topic or path is required because Company OS sends directly to the Gotify message API using the application token
+- no extra topic or path is required because TeamOS sends directly to the Gotify message API using the application token
 - if your Gotify server uses a custom port or TLS, include that in the server URL
 
 ### Custom webhook
@@ -83,11 +83,11 @@ Custom webhook requires:
 - a destination URL
 - optionally, a signing secret
 
-When a signing secret is configured, Company OS sends an `X-Kaneo-Signature` header containing the `HMAC-SHA256` hex digest of the raw JSON body.
+When a signing secret is configured, TeamOS sends an `X-Kaneo-Signature` header containing the `HMAC-SHA256` hex digest of the raw JSON body.
 
 ## Workspace delivery rules
 
-Below the global channel cards, Company OS shows workspace delivery rules.
+Below the global channel cards, TeamOS shows workspace delivery rules.
 
 Each workspace rule can:
 
@@ -100,7 +100,7 @@ This lets a user receive notifications from one workspace in ntfy, another by em
 
 ## Supported notification sources
 
-V1 forwards the same notification types that currently create inbox notifications in Company OS.
+V1 forwards the same notification types that currently create inbox notifications in TeamOS.
 
 That includes:
 
@@ -110,11 +110,11 @@ That includes:
 - `task_assignee_changed`
 - `time_entry_created`
 
-If Company OS cannot resolve a notification to a workspace or project context, that notification stays inbox-only.
+If TeamOS cannot resolve a notification to a workspace or project context, that notification stays inbox-only.
 
 ## Reachability and security
 
-For security, Company OS validates outbound HTTP destinations before saving or sending.
+For security, TeamOS validates outbound HTTP destinations before saving or sending.
 
 Private or non-routable destinations are rejected, including examples like:
 
@@ -136,7 +136,7 @@ If your receiver only exists on a private network, set `KANEO_ALLOW_PRIVATE_WEBH
 
 ## Troubleshooting
 
-### Notifications show in Company OS but are not delivered
+### Notifications show in TeamOS but are not delivered
 
 Check that:
 

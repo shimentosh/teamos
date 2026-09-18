@@ -3,6 +3,7 @@ import { type AddSalaryRequest, payApi } from "@/fetchers/pay";
 import {
   type ExpenseBody,
   type LeaveRequestBody,
+  type PaymentDetails,
   requestsApi,
 } from "@/fetchers/requests";
 
@@ -101,14 +102,19 @@ export function useRequestActions(workspaceId: string) {
       mutationFn: ({
         id,
         decision,
+        ...payment
       }: {
         id: string;
         decision: "approved" | "rejected";
-      }) => requestsApi.decideExpense(workspaceId, id, decision),
+      } & PaymentDetails) =>
+        requestsApi.decideExpense(workspaceId, id, decision, payment),
       onSuccess,
     }),
     markExpensePaid: useMutation({
-      mutationFn: (id: string) => requestsApi.markExpensePaid(workspaceId, id),
+      mutationFn: (input: string | ({ id: string } & PaymentDetails)) =>
+        typeof input === "string"
+          ? requestsApi.markExpensePaid(workspaceId, input)
+          : requestsApi.markExpensePaid(workspaceId, input.id, input),
       onSuccess,
     }),
     uploadReceipt: useMutation({

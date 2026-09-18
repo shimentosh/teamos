@@ -8,7 +8,6 @@ import {
 import {
   Building2,
   CreditCard,
-  Mail,
   ScrollText,
   Settings,
   Shield,
@@ -74,8 +73,7 @@ export const Route = createFileRoute(
 
 function RouteComponent() {
   const { t } = useTranslation();
-  const { workspace, role, canReadAudit, canManageWorkspace } =
-    useWorkspacePermission();
+  const { workspace, role, canReadAudit } = useWorkspacePermission();
   const { data: config } = useGetConfig();
   const location = useLocation();
   const menuItems = [
@@ -99,15 +97,6 @@ function RouteComponent() {
       url: "/dashboard/settings/workspace/labels",
       icon: Tag,
     },
-    ...(canManageWorkspace()
-      ? [
-          {
-            title: t("emailLog:title"),
-            url: "/dashboard/settings/workspace/email",
-            icon: Mail,
-          },
-        ]
-      : []),
     ...(canReadAudit()
       ? [
           {

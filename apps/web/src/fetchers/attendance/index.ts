@@ -49,9 +49,11 @@ export async function clockIn(workspaceId: string) {
   );
 }
 
-export async function clockOut(workspaceId: string) {
+export async function clockOut(workspaceId: string, note?: string) {
   return unwrap(
-    await client.attendance["clock-out"].$post({ json: { workspaceId } }),
+    await client.attendance["clock-out"].$post({
+      json: { workspaceId, ...(note?.trim() ? { note: note.trim() } : {}) },
+    }),
   );
 }
 

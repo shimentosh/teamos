@@ -14,7 +14,7 @@ import {
 } from "./index";
 
 describe("@kaneo/permissions statement surface", () => {
-  it("exposes Company OS's resource statements alongside better-auth defaults", () => {
+  it("exposes TeamOS's resource statements alongside better-auth defaults", () => {
     expect(statement.project).toEqual([
       "create",
       "read",
@@ -75,7 +75,7 @@ describe("built-in role privileges", () => {
     expect(admin.statements.workspace).not.toContain("delete");
   });
 
-  it("owner has every Company OS resource action including workspace:delete", () => {
+  it("owner has every TeamOS resource action including workspace:delete", () => {
     expect(owner.statements.task).toEqual(
       expect.arrayContaining(["create", "read", "update", "delete", "assign"]),
     );
