@@ -47,7 +47,7 @@ volumes:
 
 ## The services and volumes
 
-Kaneo uses the following services:
+Company OS uses the following services:
 
 - `postgres`: The PostgreSQL database.
 - `kaneo`: The combined API and web container.
@@ -72,17 +72,17 @@ AUTH_SECRET=                             # generate: openssl rand -hex 32
 
 This keeps the browser on one origin while the container proxies `/api` requests to the internal API process.
 
-For this Compose setup, the bundled Kaneo container reaches PostgreSQL at the service hostname `postgres`.
+For this Compose setup, the bundled Company OS container reaches PostgreSQL at the service hostname `postgres`.
 If you run the API directly on your host instead, use `localhost` or set `DATABASE_URL` explicitly.
 
 ## Notes on object storage
 
-Kaneo uses S3-compatible object storage for private uploads in task descriptions and comments.
+Company OS uses S3-compatible object storage for private uploads in task descriptions and comments.
 
-- Object storage is optional. Kaneo runs without it, but uploads in task descriptions and comments will be unavailable.
+- Object storage is optional. Company OS runs without it, but uploads in task descriptions and comments will be unavailable.
 - For local/self-hosted setups, MinIO is the recommended option when you want uploads.
-- The Kaneo API creates presigned upload URLs and the browser uploads files directly to the configured storage backend.
-- Kaneo serves uploaded assets back through its own API, so the bucket does not need to be public.
+- The Company OS API creates presigned upload URLs and the browser uploads files directly to the configured storage backend.
+- Company OS serves uploaded assets back through its own API, so the bucket does not need to be public.
 - If you do not configure object storage, leave the `S3_*` variables unset.
 - For a complete MinIO example and backend-specific setup notes, see the [storage backends guide](/core/installation/storage-backends).
 
@@ -128,7 +128,7 @@ Create the bucket before testing uploads. With MinIO, you can do that from the M
 
 ### Using `fs` instead of MinIO
 
-If you want to use [`fs`](https://github.com/ferdzo/fs), you can point the same `S3_*` variables at its endpoint instead of MinIO. Kaneo only needs an S3-compatible API endpoint, credentials, and a bucket.
+If you want to use [`fs`](https://github.com/ferdzo/fs), you can point the same `S3_*` variables at its endpoint instead of MinIO. Company OS only needs an S3-compatible API endpoint, credentials, and a bucket.
 
 When using `fs`, keep these differences in mind:
 

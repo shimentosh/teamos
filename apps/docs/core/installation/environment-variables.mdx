@@ -54,7 +54,7 @@ This section will cover all the variables related to the authentication.
 Name | Description |
 --- | --- |
 | `AUTH_SECRET` | The secret key for the JWT token. **Must be at least 32 characters long**, use a long, random value in production. Example: use `openssl rand -base64 32` to generate a secure key in Linux/macOS.
-| `DEVICE_AUTH_CLIENT_IDS` | **Optional.** Comma-separated list of allowed device authorization client IDs. When unset, Kaneo implicitly allows `kaneo-cli` and `kaneo-mcp` by default, so no extra configuration is required for the CLI or MCP. Override only when you need additional trusted clients, for example `kaneo-cli,kaneo-mcp,my-desktop-app`. |
+| `DEVICE_AUTH_CLIENT_IDS` | **Optional.** Comma-separated list of allowed device authorization client IDs. When unset, Company OS implicitly allows `kaneo-cli` and `kaneo-mcp` by default, so no extra configuration is required for the CLI or MCP. Override only when you need additional trusted clients, for example `kaneo-cli,kaneo-mcp,my-desktop-app`. |
 
 
 ## Optional variables
@@ -67,18 +67,18 @@ Name | Description | Default |
 
 ### Object Storage
 
-Kaneo uses S3-compatible object storage for private uploads in task descriptions and task comments.
+Company OS uses S3-compatible object storage for private uploads in task descriptions and task comments.
 
 MinIO is the easiest local option and the primary tested target. You can also use other S3-compatible storage backends such as AWS S3, Cloudflare R2, or [`fs`](https://github.com/ferdzo/fs).
 
 Name | Description | Default |
 --- | --- | --- |
-| `S3_ENDPOINT` | The S3-compatible API endpoint used by the Kaneo API for presigned uploads. Example: `http://minio:9000`. |  |
-| `S3_BUCKET` | The bucket Kaneo will use for uploaded files. |  |
-| `S3_ACCESS_KEY_ID` | Access key used by the Kaneo API to create presigned upload URLs. Optional: leave unset (together with `S3_SECRET_ACCESS_KEY`) to use the default AWS credential provider chain (IAM role / IRSA / instance profile). |  |
-| `S3_SECRET_ACCESS_KEY` | Secret key used by the Kaneo API to create presigned upload URLs. Must be set together with `S3_ACCESS_KEY_ID`, or left unset for IAM-role-based access. |  |
+| `S3_ENDPOINT` | The S3-compatible API endpoint used by the Company OS API for presigned uploads. Example: `http://minio:9000`. |  |
+| `S3_BUCKET` | The bucket Company OS will use for uploaded files. |  |
+| `S3_ACCESS_KEY_ID` | Access key used by the Company OS API to create presigned upload URLs. Optional: leave unset (together with `S3_SECRET_ACCESS_KEY`) to use the default AWS credential provider chain (IAM role / IRSA / instance profile). |  |
+| `S3_SECRET_ACCESS_KEY` | Secret key used by the Company OS API to create presigned upload URLs. Must be set together with `S3_ACCESS_KEY_ID`, or left unset for IAM-role-based access. |  |
 | `S3_REGION` | The storage region used for request signing. | `us-east-1` |
-| `S3_PUBLIC_BASE_URL` | Optional public base URL for uploaded assets. Kaneo does not require this for the current private asset flow. |  |
+| `S3_PUBLIC_BASE_URL` | Optional public base URL for uploaded assets. Company OS does not require this for the current private asset flow. |  |
 | `S3_FORCE_PATH_STYLE` | Use path-style S3 URLs. This should usually be `true` for MinIO and `fs`. | `true` |
 | `S3_MAX_IMAGE_UPLOAD_BYTES` | Maximum allowed upload size in bytes for images and other uploaded files. | `10485760` |
 | `S3_KEY_PREFIX` | Optional prefix prepended to all S3 object keys. Useful for sharing a single bucket across multiple environments (e.g. `staging/`, `prod/kaneo/`). Trailing slashes are trimmed automatically. |  |
@@ -96,17 +96,17 @@ Name | Description | Default |
 | `CUSTOM_OAUTH_AUTO_LOGIN` | Automatically redirect to the custom OAuth/OIDC provider instead of showing the sign-in page. When set to `true`, users are immediately redirected to your identity provider without seeing the login page. Requires a custom OAuth provider to be configured. | `false` |
 
 <Warning>
-  Before enabling SSO-only access with `DISABLE_LOGIN_FORM=true` or `CUSTOM_OAUTH_AUTO_LOGIN=true` on an existing installation, make sure existing local accounts have verified email addresses. OAuth/OIDC identities cannot be linked to an unverified local account, and affected users will receive `error=account_not_linked`. Keep the login form available until those users have signed in with an email OTP or magic link. If SSO-only access is already enabled, temporarily set both options to `false`, restart Kaneo, and let affected users complete an email sign-in before restoring the SSO-only settings.
+  Before enabling SSO-only access with `DISABLE_LOGIN_FORM=true` or `CUSTOM_OAUTH_AUTO_LOGIN=true` on an existing installation, make sure existing local accounts have verified email addresses. OAuth/OIDC identities cannot be linked to an unverified local account, and affected users will receive `error=account_not_linked`. Keep the login form available until those users have signed in with an email OTP or magic link. If SSO-only access is already enabled, temporarily set both options to `false`, restart Company OS, and let affected users complete an email sign-in before restoring the SSO-only settings.
 </Warning>
 
 ### Proxies
 
 Name | Description | Default |
 --- | --- | --- |
-| `TRUSTED_PROXIES` | Comma-separated IPs or CIDR ranges of the reverse proxies in front of Kaneo. The forwarded header chain is walked right to left, trusted hops are skipped, and the first untrusted address is taken as the client IP. Only set this if your proxies sit outside the default ranges; the default covers loopback and private networks, which is correct for the standard Docker Compose setup. | `127.0.0.0/8, ::1/128, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16` |
+| `TRUSTED_PROXIES` | Comma-separated IPs or CIDR ranges of the reverse proxies in front of Company OS. The forwarded header chain is walked right to left, trusted hops are skipped, and the first untrusted address is taken as the client IP. Only set this if your proxies sit outside the default ranges; the default covers loopback and private networks, which is correct for the standard Docker Compose setup. | `127.0.0.0/8, ::1/128, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16` |
 
 <Warning>
-  Only list addresses you control. Any host in this range can set `X-Forwarded-For` and have it believed, so do not include a range that clients can reach Kaneo from directly. The client IP is used for rate limiting and session records.
+  Only list addresses you control. Any host in this range can set `X-Forwarded-For` and have it believed, so do not include a range that clients can reach Company OS from directly. The client IP is used for rate limiting and session records.
 </Warning>
 
 ### Notifications
@@ -169,7 +169,7 @@ Name | Description |
 
 ### Redis
 
-Kaneo supports Redis for horizontal scaling of WebSocket broadcasts. When any Redis mode is configured, multiple API instances can relay real-time updates via Redis Pub/Sub. When none are set, an in-memory adapter is used (single-instance only).
+Company OS supports Redis for horizontal scaling of WebSocket broadcasts. When any Redis mode is configured, multiple API instances can relay real-time updates via Redis Pub/Sub. When none are set, an in-memory adapter is used (single-instance only).
 
 Three deployment modes are supported: **Standalone**, **Sentinel**, and **Cluster**. Only one mode should be configured at a time. If multiple are set, the priority is: Cluster > Sentinel > Standalone.
 
@@ -202,7 +202,7 @@ Name | Description |
 
 ### Email with Resend
 
-Kaneo sends email through [Resend](https://resend.com) when `RESEND_API_KEY` is set, and falls back to SMTP otherwise. You only need one of the two.
+Company OS sends email through [Resend](https://resend.com) when `RESEND_API_KEY` is set, and falls back to SMTP otherwise. You only need one of the two.
 
 Name | Description |
 --- | --- |

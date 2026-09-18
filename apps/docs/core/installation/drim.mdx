@@ -1,11 +1,11 @@
 ---
 title: Deploy with drim CLI
-description: Deploy and manage a self-hosted Kaneo instance with the drim CLI
+description: Deploy and manage a self-hosted Company OS instance with the drim CLI
 ---
 
 ## What is drim?
 
-[drim](https://github.com/usekaneo/drim) is a CLI tool for deploying Kaneo. It generates your `docker-compose.yml`, `Caddyfile` and `.env`, installs Docker if it is missing, and brings the stack up, so a fresh server goes from nothing to a running instance in one command.
+[drim](https://github.com/usekaneo/drim) is a CLI tool for deploying Company OS. It generates your `docker-compose.yml`, `Caddyfile` and `.env`, installs Docker if it is missing, and brings the stack up, so a fresh server goes from nothing to a running instance in one command.
 
 It suits straightforward deployments. If you need a custom topology, extra services, or your own reverse proxy, [Docker Compose](/core/installation/docker-compose) gives you more control.
 
@@ -58,14 +58,14 @@ Point your domain's DNS A record at the server before running setup. Caddy reque
 ## Commands
 
 ```bash
-drim setup       # Deploy Kaneo
+drim setup       # Deploy Company OS
 drim start       # Start services
 drim stop        # Stop services
 drim restart     # Restart services
-drim upgrade     # Pull the latest Kaneo images and restart
+drim upgrade     # Pull the latest Company OS images and restart
 drim update      # Update the drim CLI itself
 drim configure   # Edit .env, then apply the changes
-drim uninstall   # Remove Kaneo
+drim uninstall   # Remove Company OS
 ```
 
 Run these from the directory holding your `docker-compose.yml`. drim tells you when it cannot find a deployment there.
@@ -75,7 +75,7 @@ Run these from the directory holding your `docker-compose.yml`. drim tells you w
 ## What gets installed
 
 - **PostgreSQL 16**, the database
-- **Kaneo**, the API and web app in a single container
+- **Company OS**, the API and web app in a single container
 - **Caddy**, the reverse proxy with automatic HTTPS, unless you pass `--no-reverse-proxy`
 
 Services run with health checks and restart automatically unless explicitly stopped. PostgreSQL is only reachable on the internal Docker network, never published to the host.
@@ -88,7 +88,7 @@ drim configure
 
 This opens `.env` in `$EDITOR` (or nano). After saving, drim offers to apply the changes, which recreates the containers so the new values take effect.
 
-`drim setup` writes the variables Kaneo requires. Optional features are enabled by adding their variables, for example:
+`drim setup` writes the variables Company OS requires. Optional features are enabled by adding their variables, for example:
 
 ```env
 # GitHub sign-in
@@ -137,7 +137,7 @@ drim update
 ```
 
 <Warning>
-Deployments created before Kaneo moved to a single container still run the older two-image layout, and `drim upgrade` does not rewrite an existing `docker-compose.yml`. See [migrating to drim](/core/installation/drim-migration) to move to the current layout.
+Deployments created before Company OS moved to a single container still run the older two-image layout, and `drim upgrade` does not rewrite an existing `docker-compose.yml`. See [migrating to drim](/core/installation/drim-migration) to move to the current layout.
 </Warning>
 
 ## Building from source

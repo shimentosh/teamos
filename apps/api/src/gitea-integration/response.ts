@@ -22,7 +22,7 @@ export const giteaIntegrationSchema = z
     branchPattern: z.string().optional(),
     commentTaskLinkOnGiteaIssue: z.boolean().optional().openapi({
       description:
-        "When on, Kaneo comments a link back to the task on the linked Gitea issue.",
+        "When on, Company OS comments a link back to the task on the linked Gitea issue.",
     }),
     isActive: z.boolean().nullable(),
     createdAt: responseTimestamp,

@@ -41,6 +41,7 @@ import { Route as LayoutAuthenticatedDashboardSettingsAccountDevicesRouteImport 
 import { Route as LayoutAuthenticatedDashboardSettingsAccountInformationRouteImport } from './routes/_layout/_authenticated/dashboard/settings/account/information'
 import { Route as LayoutAuthenticatedDashboardSettingsAccountNotificationsRouteImport } from './routes/_layout/_authenticated/dashboard/settings/account/notifications'
 import { Route as LayoutAuthenticatedDashboardSettingsAccountPreferencesRouteImport } from './routes/_layout/_authenticated/dashboard/settings/account/preferences'
+import { Route as LayoutAuthenticatedDashboardSettingsAccountStorageRouteImport } from './routes/_layout/_authenticated/dashboard/settings/account/storage'
 import { Route as LayoutAuthenticatedDashboardSettingsWorkspaceAuditRouteImport } from './routes/_layout/_authenticated/dashboard/settings/workspace/audit'
 import { Route as LayoutAuthenticatedDashboardSettingsWorkspaceBillingRouteImport } from './routes/_layout/_authenticated/dashboard/settings/workspace/billing'
 import { Route as LayoutAuthenticatedDashboardSettingsWorkspaceCompanyRouteImport } from './routes/_layout/_authenticated/dashboard/settings/workspace/company'
@@ -247,6 +248,12 @@ const LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute =
   LayoutAuthenticatedDashboardSettingsAccountPreferencesRouteImport.update({
     id: '/preferences',
     path: '/preferences',
+    getParentRoute: () => LayoutAuthenticatedDashboardSettingsAccountRoute,
+  } as any)
+const LayoutAuthenticatedDashboardSettingsAccountStorageRoute =
+  LayoutAuthenticatedDashboardSettingsAccountStorageRouteImport.update({
+    id: '/storage',
+    path: '/storage',
     getParentRoute: () => LayoutAuthenticatedDashboardSettingsAccountRoute,
   } as any)
 const LayoutAuthenticatedDashboardSettingsWorkspaceAuditRoute =
@@ -508,6 +515,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings/account/information': typeof LayoutAuthenticatedDashboardSettingsAccountInformationRoute
   '/dashboard/settings/account/notifications': typeof LayoutAuthenticatedDashboardSettingsAccountNotificationsRoute
   '/dashboard/settings/account/preferences': typeof LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute
+  '/dashboard/settings/account/storage': typeof LayoutAuthenticatedDashboardSettingsAccountStorageRoute
   '/dashboard/settings/workspace/audit': typeof LayoutAuthenticatedDashboardSettingsWorkspaceAuditRoute
   '/dashboard/settings/workspace/billing': typeof LayoutAuthenticatedDashboardSettingsWorkspaceBillingRoute
   '/dashboard/settings/workspace/company': typeof LayoutAuthenticatedDashboardSettingsWorkspaceCompanyRoute
@@ -568,6 +576,7 @@ export interface FileRoutesByTo {
   '/dashboard/settings/account/information': typeof LayoutAuthenticatedDashboardSettingsAccountInformationRoute
   '/dashboard/settings/account/notifications': typeof LayoutAuthenticatedDashboardSettingsAccountNotificationsRoute
   '/dashboard/settings/account/preferences': typeof LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute
+  '/dashboard/settings/account/storage': typeof LayoutAuthenticatedDashboardSettingsAccountStorageRoute
   '/dashboard/settings/workspace/audit': typeof LayoutAuthenticatedDashboardSettingsWorkspaceAuditRoute
   '/dashboard/settings/workspace/billing': typeof LayoutAuthenticatedDashboardSettingsWorkspaceBillingRoute
   '/dashboard/settings/workspace/company': typeof LayoutAuthenticatedDashboardSettingsWorkspaceCompanyRoute
@@ -634,6 +643,7 @@ export interface FileRoutesById {
   '/_layout/_authenticated/dashboard/settings/account/information': typeof LayoutAuthenticatedDashboardSettingsAccountInformationRoute
   '/_layout/_authenticated/dashboard/settings/account/notifications': typeof LayoutAuthenticatedDashboardSettingsAccountNotificationsRoute
   '/_layout/_authenticated/dashboard/settings/account/preferences': typeof LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute
+  '/_layout/_authenticated/dashboard/settings/account/storage': typeof LayoutAuthenticatedDashboardSettingsAccountStorageRoute
   '/_layout/_authenticated/dashboard/settings/workspace/audit': typeof LayoutAuthenticatedDashboardSettingsWorkspaceAuditRoute
   '/_layout/_authenticated/dashboard/settings/workspace/billing': typeof LayoutAuthenticatedDashboardSettingsWorkspaceBillingRoute
   '/_layout/_authenticated/dashboard/settings/workspace/company': typeof LayoutAuthenticatedDashboardSettingsWorkspaceCompanyRoute
@@ -699,6 +709,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/account/information'
     | '/dashboard/settings/account/notifications'
     | '/dashboard/settings/account/preferences'
+    | '/dashboard/settings/account/storage'
     | '/dashboard/settings/workspace/audit'
     | '/dashboard/settings/workspace/billing'
     | '/dashboard/settings/workspace/company'
@@ -759,6 +770,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/account/information'
     | '/dashboard/settings/account/notifications'
     | '/dashboard/settings/account/preferences'
+    | '/dashboard/settings/account/storage'
     | '/dashboard/settings/workspace/audit'
     | '/dashboard/settings/workspace/billing'
     | '/dashboard/settings/workspace/company'
@@ -824,6 +836,7 @@ export interface FileRouteTypes {
     | '/_layout/_authenticated/dashboard/settings/account/information'
     | '/_layout/_authenticated/dashboard/settings/account/notifications'
     | '/_layout/_authenticated/dashboard/settings/account/preferences'
+    | '/_layout/_authenticated/dashboard/settings/account/storage'
     | '/_layout/_authenticated/dashboard/settings/workspace/audit'
     | '/_layout/_authenticated/dashboard/settings/workspace/billing'
     | '/_layout/_authenticated/dashboard/settings/workspace/company'
@@ -1094,6 +1107,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAuthenticatedDashboardSettingsAccountPreferencesRouteImport
       parentRoute: typeof LayoutAuthenticatedDashboardSettingsAccountRoute
     }
+    '/_layout/_authenticated/dashboard/settings/account/storage': {
+      id: '/_layout/_authenticated/dashboard/settings/account/storage'
+      path: '/storage'
+      fullPath: '/dashboard/settings/account/storage'
+      preLoaderRoute: typeof LayoutAuthenticatedDashboardSettingsAccountStorageRouteImport
+      parentRoute: typeof LayoutAuthenticatedDashboardSettingsAccountRoute
+    }
     '/_layout/_authenticated/dashboard/settings/workspace/audit': {
       id: '/_layout/_authenticated/dashboard/settings/workspace/audit'
       path: '/audit'
@@ -1320,6 +1340,7 @@ interface LayoutAuthenticatedDashboardSettingsAccountRouteChildren {
   LayoutAuthenticatedDashboardSettingsAccountInformationRoute: typeof LayoutAuthenticatedDashboardSettingsAccountInformationRoute
   LayoutAuthenticatedDashboardSettingsAccountNotificationsRoute: typeof LayoutAuthenticatedDashboardSettingsAccountNotificationsRoute
   LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute: typeof LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute
+  LayoutAuthenticatedDashboardSettingsAccountStorageRoute: typeof LayoutAuthenticatedDashboardSettingsAccountStorageRoute
 }
 
 const LayoutAuthenticatedDashboardSettingsAccountRouteChildren: LayoutAuthenticatedDashboardSettingsAccountRouteChildren =
@@ -1334,6 +1355,8 @@ const LayoutAuthenticatedDashboardSettingsAccountRouteChildren: LayoutAuthentica
       LayoutAuthenticatedDashboardSettingsAccountNotificationsRoute,
     LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute:
       LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute,
+    LayoutAuthenticatedDashboardSettingsAccountStorageRoute:
+      LayoutAuthenticatedDashboardSettingsAccountStorageRoute,
   }
 
 const LayoutAuthenticatedDashboardSettingsAccountRouteWithChildren =

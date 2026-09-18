@@ -1,7 +1,7 @@
-# Kaneo Helm Chart
-This Helm chart deploys [Kaneo](https://kaneo.app) - open source project management that works for you, not against you.
+# Company OS Helm Chart
+This Helm chart deploys [Company OS](https://kaneo.app) - open source project management that works for you, not against you.
 ## Introduction
-This chart bootstraps a Kaneo deployment on a Kubernetes cluster using the Helm package manager. It deploys both the API backend and Web frontend components, along with a PostgreSQL database, with optional ingress or Gateway API resources.
+This chart bootstraps a Company OS deployment on a Kubernetes cluster using the Helm package manager. It deploys both the API backend and Web frontend components, along with a PostgreSQL database, with optional ingress or Gateway API resources.
 ## Prerequisites
 - Kubernetes 1.23+
 - Helm 3.2.0+
@@ -28,7 +28,7 @@ helm install kaneo oci://ghcr.io/usekaneo/charts/kaneo \
   --set "ingress.hosts[0].host=pm.yourcompany.com"
 ```
 ### Production Setup with Gateway API
-If your cluster already has Gateway API CRDs and a `Gateway` configured, you can expose Kaneo with an `HTTPRoute`:
+If your cluster already has Gateway API CRDs and a `Gateway` configured, you can expose Company OS with an `HTTPRoute`:
 ```bash
 helm install kaneo oci://ghcr.io/usekaneo/charts/kaneo \
   --namespace kaneo \
@@ -48,7 +48,7 @@ To install from a local checkout instead:
 ```bash
 helm install my-kaneo ./charts/kaneo
 ```
-The command deploys Kaneo on the Kubernetes cluster with default configuration. The [Parameters](#parameters) section lists the parameters that can be configured during installation.
+The command deploys Company OS on the Kubernetes cluster with default configuration. The [Parameters](#parameters) section lists the parameters that can be configured during installation.
 ## Uninstalling the Chart
 To uninstall/delete the `my-kaneo` deployment:
 ```bash
@@ -89,17 +89,17 @@ When CPU autoscaling is enabled, set `kaneo.resources.requests.cpu`; Kubernetes 
 | `postgresql.service.type`           | PostgreSQL service type                                                                                            | `ClusterIP`                     |
 | `postgresql.service.port`           | PostgreSQL service port                                                                                            | `5432`                          |
 | `postgresql.resources`              | Resource requests and limits for PostgreSQL container                                                              | `{}`                            |
-### Kaneo application parameters
+### Company OS application parameters
 | Name                                | Description                                                                                                        | Value                           |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------- |
-| `kaneo.image.repository`            | Kaneo image repository                                                                                             | `ghcr.io/usekaneo/kaneo`        |
-| `kaneo.image.tag`                   | Kaneo image tag. Defaults to `Chart.appVersion` when empty                                                         | `""`                            |
-| `kaneo.image.pullPolicy`            | Kaneo image pull policy                                                                                            | `IfNotPresent`                  |
-| `kaneo.service.type`                | Kaneo service type                                                                                                 | `ClusterIP`                     |
-| `kaneo.service.port`                | Kaneo service port                                                                                                 | `5173`                          |
-| `kaneo.service.targetPort`          | Kaneo container port                                                                                               | `5173`                          |
-| `kaneo.env`                         | Environment variables for the Kaneo container                                                                      | See `values.yaml`               |
-| `kaneo.env.clientUrl`               | Public URL of the Kaneo instance. **Required for any non-localhost deployment**; sets `KANEO_CLIENT_URL`. Omitting this causes "invalid origin" errors on login. Note: this key is case-sensitive (`clientUrl`, not `clientURL`). | `""` |
+| `kaneo.image.repository`            | Company OS image repository                                                                                             | `ghcr.io/usekaneo/kaneo`        |
+| `kaneo.image.tag`                   | Company OS image tag. Defaults to `Chart.appVersion` when empty                                                         | `""`                            |
+| `kaneo.image.pullPolicy`            | Company OS image pull policy                                                                                            | `IfNotPresent`                  |
+| `kaneo.service.type`                | Company OS service type                                                                                                 | `ClusterIP`                     |
+| `kaneo.service.port`                | Company OS service port                                                                                                 | `5173`                          |
+| `kaneo.service.targetPort`          | Company OS container port                                                                                               | `5173`                          |
+| `kaneo.env`                         | Environment variables for the Company OS container                                                                      | See `values.yaml`               |
+| `kaneo.env.clientUrl`               | Public URL of the Company OS instance. **Required for any non-localhost deployment**; sets `KANEO_CLIENT_URL`. Omitting this causes "invalid origin" errors on login. Note: this key is case-sensitive (`clientUrl`, not `clientURL`). | `""` |
 | `kaneo.env.corsOrigins`             | Allowed CORS origins as a comma-separated string or YAML list                                                      | `[]`                            |
 | `kaneo.env.authSecret`              | Required Better Auth secret (minimum 32 characters), ignored if existingSecret is enabled                           | `""` |
 | `kaneo.env.existingSecret.enabled`  | Whether to use an existing secret for `AUTH_SECRET`                                                                | `false`                         |
@@ -117,9 +117,9 @@ When CPU autoscaling is enabled, set `kaneo.resources.requests.cpu`; Kubernetes 
 | `kaneo.env.database.external.existingSecret.enabled` | Use an existing secret for the external database connection URI                             | `false`                         |
 | `kaneo.env.database.external.existingSecret.name` | Name of the secret containing the database connection URI                                    | `""`                            |
 | `kaneo.env.database.external.existingSecret.passwordKey` | Key in the secret whose value is a full PostgreSQL connection URI                       | `postgres_uri`                  |
-| `kaneo.extraEnv`                    | Additional Kubernetes EnvVar entries appended to the Kaneo container                                               | `[]`                            |
-| `kaneo.extraEnvFrom`                | Additional Kubernetes EnvFromSource entries appended to the Kaneo container                                        | `[]`                            |
-| `kaneo.resources`                   | Resource requests and limits for the Kaneo container (optional, disabled by default)                               | `{}`                            |
+| `kaneo.extraEnv`                    | Additional Kubernetes EnvVar entries appended to the Company OS container                                               | `[]`                            |
+| `kaneo.extraEnvFrom`                | Additional Kubernetes EnvFromSource entries appended to the Company OS container                                        | `[]`                            |
+| `kaneo.resources`                   | Resource requests and limits for the Company OS container (optional, disabled by default)                               | `{}`                            |
 | `podSecurityContext`                | Security context applied at the Pod level                                                                          | `{}`                            |
 | `securityContext`                   | Security context applied at the container level                                                                    | `{}`                            |
 ### Ingress parameters
@@ -177,7 +177,7 @@ postgresql:
     requests:
       cpu: 100m
       memory: 128Mi
-# Kaneo configuration
+# Company OS configuration
 kaneo:
   resources:
     limits:
@@ -346,12 +346,12 @@ If you're migrating from a previous SQLite-based installation, you'll need to:
 1. Export your data from SQLite
 2. Deploy the new PostgreSQL-based chart
 3. Import your data into PostgreSQL
-Contact the Kaneo community on [Discord](https://discord.gg/rU4tSyhXXU) for migration assistance.
+Contact the Company OS community on [Discord](https://discord.gg/rU4tSyhXXU) for migration assistance.
 ## Troubleshooting
 ### "invalid origin" error on login
-Kaneo's API validates the `Origin` header on every request against `KANEO_CLIENT_URL`. If `clientUrl` is not set (or is set incorrectly), every login attempt fails with this error.
+Company OS's API validates the `Origin` header on every request against `KANEO_CLIENT_URL`. If `clientUrl` is not set (or is set incorrectly), every login attempt fails with this error.
 
-Set `clientUrl` to the URL users access Kaneo from:
+Set `clientUrl` to the URL users access Company OS from:
 ```yaml
 kaneo:
   env:
@@ -375,9 +375,9 @@ Common causes:
 On clusters with Pod Security Admission enabled, you may see warnings like `would violate PodSecurity "restricted:latest"`. The chart exposes `podSecurityContext` and `securityContext` to address these. See the [Security](#security) section for recommended values.
 ## Architecture
 This chart deploys the following components:
-1. **Kaneo application**: Serves the web UI and API from the combined Kaneo image
+1. **Company OS application**: Serves the web UI and API from the combined Company OS image
 2. **PostgreSQL Database**: Stores all application data with proper relational integrity
-The Kaneo application and PostgreSQL run in separate pods for resource isolation and simpler database lifecycle management.
+The Company OS application and PostgreSQL run in separate pods for resource isolation and simpler database lifecycle management.
 ## Production Environment
 For production deployments, you should:
 1. Set secure values for `AUTH_SECRET` and PostgreSQL passwords
@@ -419,7 +419,7 @@ gateway:
     - kaneo.example.com
 ```
 By default the chart creates one Gateway API rule:
-1. `/` goes to the Kaneo service
+1. `/` goes to the Company OS service
 If you need custom matching or multiple backend references, override `gateway.rules` directly. Each `backendRefs` entry follows the same pattern as ingress and uses the chart-specific `service` field (`kaneo`), which is expanded to the release-specific Service name.
 ## Security
 For production deployments, consider the following security recommendations:

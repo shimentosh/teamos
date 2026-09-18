@@ -133,28 +133,28 @@ function getAuthEmailCopy(locale?: string | null) {
 
   if (localeKey === "de") {
     return {
-      magicLinkSubject: "Anmeldelink fuer Kaneo",
-      otpSubject: "Bestaetigungscode fuer Kaneo",
+      magicLinkSubject: "Anmeldelink fuer Company OS",
+      otpSubject: "Bestaetigungscode fuer Company OS",
     };
   }
 
   if (localeKey === "vi") {
     return {
-      magicLinkSubject: "Liên kết đăng nhập Kaneo",
-      otpSubject: "Mã xác minh Kaneo",
+      magicLinkSubject: "Liên kết đăng nhập Company OS",
+      otpSubject: "Mã xác minh Company OS",
     };
   }
 
   if (localeKey === "ja") {
     return {
-      magicLinkSubject: "Kaneo ログインリンク",
-      otpSubject: "Kaneo 認証コード",
+      magicLinkSubject: "Company OS ログインリンク",
+      otpSubject: "Company OS 認証コード",
     };
   }
 
   return {
-    magicLinkSubject: "Login for Kaneo",
-    otpSubject: "Authentication code for Kaneo",
+    magicLinkSubject: "Login for Company OS",
+    otpSubject: "Authentication code for Company OS",
   };
 }
 
@@ -401,7 +401,7 @@ export const auth = betterAuth({
           }
         : true,
       // Better Auth defaults this to `true`, which blocks any user whose email
-      // is not verified from accepting/rejecting an invitation. Kaneo does not
+      // is not verified from accepting/rejecting an invitation. Company OS does not
       // verify emails on signup (and guest/anonymous users are unverified by
       // design), so leaving the default on breaks invitation acceptance for
       // everyone. The invitation link id is the actual secret here, so gate on

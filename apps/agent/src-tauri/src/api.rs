@@ -1,4 +1,4 @@
-//! Client for the Kaneo device endpoints (`/api/agent/device/*`).
+//! Client for the Company OS device endpoints (`/api/agent/device/*`).
 
 use std::time::Duration;
 
@@ -86,7 +86,7 @@ pub struct UploadReply {
 
 #[derive(Debug)]
 pub enum ApiError {
-    /// 401: the device was revoked in Kaneo.
+    /// 401: the device was revoked in Company OS.
     Unauthorized,
     /// The server answered with a non-2xx status; the body is its plain-text message.
     Status(u16, String),
@@ -97,12 +97,12 @@ pub enum ApiError {
 impl std::fmt::Display for ApiError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ApiError::Unauthorized => write!(f, "This computer was disconnected in Kaneo."),
+            ApiError::Unauthorized => write!(f, "This computer was disconnected in Company OS."),
             ApiError::Status(code, body) if body.trim().is_empty() => {
-                write!(f, "Kaneo answered with status {code}.")
+                write!(f, "Company OS answered with status {code}.")
             }
             ApiError::Status(_, body) => write!(f, "{}", body.trim()),
-            ApiError::Network(e) => write!(f, "Could not reach Kaneo: {e}"),
+            ApiError::Network(e) => write!(f, "Could not reach Company OS: {e}"),
         }
     }
 }
@@ -114,7 +114,7 @@ impl std::error::Error for ApiError {}
 pub fn api_base(input: &str) -> Result<String, String> {
     let trimmed = input.trim().trim_end_matches('/');
     if trimmed.is_empty() {
-        return Err("Enter your Kaneo address.".into());
+        return Err("Enter your Company OS address.".into());
     }
     let with_scheme = if trimmed.contains("://") {
         trimmed.to_string()

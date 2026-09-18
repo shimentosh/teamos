@@ -12,42 +12,42 @@ export type OtpEmailProps = {
 
 const messages = {
   en: {
-    preview: "Your Kaneo verification code",
+    preview: "Your Company OS verification code",
     title: "Your verification code",
     subtitle: "Enter this one-time code to finish signing in.",
-    code: "is your Kaneo verification code.",
+    code: "is your Company OS verification code.",
     expiry: "This code expires in 15 minutes.",
     ignore: "If you didn't request this, you can ignore this email.",
-    footer: "Kaneo security email",
+    footer: "Company OS security email",
   },
   de: {
-    preview: "Dein Kaneo Bestaetigungscode",
+    preview: "Dein Company OS Bestaetigungscode",
     title: "Dein Bestaetigungscode",
     subtitle: "Gib diesen Einmalcode ein, um die Anmeldung abzuschliessen.",
-    code: "ist dein Kaneo Bestaetigungscode.",
+    code: "ist dein Company OS Bestaetigungscode.",
     expiry: "Dieser Code laeuft in 15 Minuten ab.",
     ignore:
       "Wenn du das nicht angefordert hast, kannst du diese E-Mail ignorieren.",
-    footer: "Kaneo Sicherheits-E-Mail",
+    footer: "Company OS Sicherheits-E-Mail",
   },
   vi: {
-    preview: "Mã xác minh Kaneo của bạn",
+    preview: "Mã xác minh Company OS của bạn",
     title: "Mã xác minh của bạn",
     subtitle: "Nhập mã dùng một lần này để hoàn tất đăng nhập.",
-    code: "là mã xác minh Kaneo của bạn.",
+    code: "là mã xác minh Company OS của bạn.",
     expiry: "Mã này sẽ hết hạn sau 15 phút.",
     ignore: "Nếu bạn không yêu cầu điều này, bạn có thể bỏ qua email này.",
-    footer: "Email bảo mật Kaneo",
+    footer: "Email bảo mật Company OS",
   },
   ja: {
-    preview: "Kaneo の確認コード",
+    preview: "Company OS の確認コード",
     title: "確認コード",
     subtitle:
       "サインインを完了するには、このワンタイムコードを入力してください。",
-    code: "はあなたの Kaneo 確認コードです。",
+    code: "はあなたの Company OS 確認コードです。",
     expiry: "このコードの有効期限は15分です。",
     ignore: "心当たりがない場合は、このメールを無視してかまいません。",
-    footer: "Kaneo セキュリティメール",
+    footer: "Company OS セキュリティメール",
   },
 } as const;
 

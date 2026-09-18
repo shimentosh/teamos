@@ -1,15 +1,15 @@
 ---
 title: Mattermost
-description: Send task notifications from Kaneo to a Mattermost channel using incoming webhooks.
+description: Send task notifications from Company OS to a Mattermost channel using incoming webhooks.
 ---
 
-Kaneo can post task activity to a Mattermost channel whenever events occur in a project. This uses Mattermost's incoming webhook feature — no bot account or OAuth flow required.
+Company OS can post task activity to a Mattermost channel whenever events occur in a project. This uses Mattermost's incoming webhook feature — no bot account or OAuth flow required.
 
 ## Create a Mattermost webhook
 
 1. In Mattermost, go to **Main Menu → Integrations → Incoming Webhooks**.
 2. Click **Add Incoming Webhook**.
-3. Give it a title (e.g. "Kaneo") and select the default channel where notifications should be posted.
+3. Give it a title (e.g. "Company OS") and select the default channel where notifications should be posted.
 4. Click **Save**, then copy the webhook URL. It will look like:
 
 ```
@@ -20,7 +20,7 @@ https://your-mattermost-server.com/hooks/xxxxxxxxxxxxxxxxxxxxxxxxxxxx
 If the Integrations menu is not visible, your Mattermost admin may need to enable incoming webhooks under **System Console → Integrations → Integration Management**.
 </Warning>
 
-## Connect Mattermost in Kaneo
+## Connect Mattermost in Company OS
 
 1. Open **Settings** in the sidebar.
 2. Under **Projects**, select the project you want to connect.
@@ -48,14 +48,14 @@ You can toggle any combination of these events in the integration settings at an
 
 ## Message format
 
-Kaneo sends messages using Mattermost's legacy attachment format with:
+Company OS sends messages using Mattermost's legacy attachment format with:
 
-- A clickable title linking to the task in Kaneo
+- A clickable title linking to the task in Company OS
 - A description of the event (e.g. "Task moved from In Progress to Done")
 - Fields for project, status, priority, and the user who triggered the event
 - An indigo sidebar colour for easy visual identification
 
-Make sure [`KANEO_CLIENT_URL`](/core/installation/environment-variables) is set to your public Kaneo URL so task links work correctly.
+Make sure [`KANEO_CLIENT_URL`](/core/installation/environment-variables) is set to your public Company OS URL so task links work correctly.
 
 ## Updating the webhook
 

@@ -1,5 +1,6 @@
 import {
   ArrowDown,
+  AtSign,
   Check,
   CheckCheck,
   EllipsisIcon,
@@ -29,6 +30,14 @@ import {
 } from "@/fetchers/chat";
 import { useChatActions, useChatMessages } from "@/hooks/chat";
 import { useWorkspacePermission } from "@/hooks/use-workspace-permission";
+import {
+  activeMentionQuery,
+  chatPlainText,
+  fromComposerText,
+  type Mention,
+  mentionDisplay,
+  toComposerText,
+} from "@/lib/chat-mentions";
 import { cn } from "@/lib/cn";
 import { formatDate, formatDateMedium } from "@/lib/format";
 import { toast } from "@/lib/toast";
@@ -38,6 +47,7 @@ import {
   conversationTitle,
   PersonAvatar,
 } from "./chat-shared";
+import { MentionPicker, useMentionOptions } from "./mention-picker";
 import { MessageItem } from "./message-item";
 
 type Props = {
@@ -87,9 +97,22 @@ export function ConversationView({
   const lastTypingPing = useRef(0);
   const [draft, setDraft] = useState("");
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
-  const [editing, setEditing] = useState<{ id: string; body: string } | null>(
-    null,
+  // Mentions show as "@label" while typing and become tokens when sent.
+  const [mentions, setMentions] = useState<Mention[]>([]);
+  const [mentionAt, setMentionAt] = useState<{
+    query: string;
+    start: number;
+  } | null>(null);
+  const [mentionIndex, setMentionIndex] = useState(0);
+  const mentionOptions = useMentionOptions(
+    workspaceId,
+    mentionAt ? mentionAt.query : null,
   );
+  const [editing, setEditing] = useState<{
+    id: string;
+    body: string;
+    mentions?: Mention[];
+  } | null>(null);
   const [highlighted, setHighlighted] = useState<string | null>(null);
   const [awayFromBottom, setAwayFromBottom] = useState(false);
 
@@ -126,9 +149,54 @@ export function ConversationView({
   useEffect(() => {
     stickToBottom.current = true;
     setDraft("");
+    setMentions([]);
+    setMentionAt(null);
     setEditing(null);
     setReplyTo(null);
   }, [conversation.id]);
+
+  const trackMention = (text: string, caret: number) => {
+    setMentionAt(activeMentionQuery(text, caret));
+    setMentionIndex(0);
+  };
+
+  const pickMention = (mention: Mention) => {
+    const el = inputRef.current;
+    if (!mentionAt || !el) return;
+    const caret = el.selectionStart ?? draft.length;
+    const inserted = `${mentionDisplay(mention)} `;
+    const next =
+      draft.slice(0, mentionAt.start) + inserted + draft.slice(caret);
+    setDraft(next);
+    setMentions((prev) => [...prev, mention]);
+    setMentionAt(null);
+    const at = mentionAt.start + inserted.length;
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(at, at);
+    });
+  };
+
+  const insertAt = () => {
+    const el = inputRef.current;
+    if (!el) return;
+    const caret = el.selectionStart ?? draft.length;
+    const needsSpace = caret > 0 && !/\s/.test(draft[caret - 1] ?? "");
+    const inserted = needsSpace ? " @" : "@";
+    const next = draft.slice(0, caret) + inserted + draft.slice(caret);
+    setDraft(next);
+    const at = caret + inserted.length;
+    trackMention(next, at);
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(at, at);
+    });
+  };
+
+  const startEdit = (message: ChatMessage) => {
+    const { text, mentions: existing } = toComposerText(message.body);
+    setEditing({ id: message.id, body: text, mentions: existing });
+  };
 
   // Keep the view pinned to the newest message, or hold the reading position
   // steady when older messages are prepended above it.
@@ -201,7 +269,7 @@ export function ConversationView({
   };
 
   const send = () => {
-    const body = draft.trim();
+    const body = fromComposerText(draft.trim(), mentions);
     if (!body || actions.send.isPending) return;
     stickToBottom.current = true;
     lastTypingPing.current = 0;
@@ -210,6 +278,8 @@ export function ConversationView({
       {
         onSuccess: () => {
           setDraft("");
+          setMentions([]);
+          setMentionAt(null);
           setReplyTo(null);
         },
         onError: (error) => toast.error(error.message || t("chat:error")),
@@ -219,7 +289,7 @@ export function ConversationView({
 
   const saveEdit = () => {
     if (!editing) return;
-    const body = editing.body.trim();
+    const body = fromComposerText(editing.body.trim(), editing.mentions ?? []);
     if (!body) return;
     actions.edit.mutate(
       { messageId: editing.id, body },
@@ -414,13 +484,15 @@ export function ConversationView({
                     highlighted={highlighted === message.id}
                     editing={editing?.id === message.id ? editing.body : null}
                     onEditChange={(body) =>
-                      setEditing({ id: message.id, body })
+                      setEditing((prev) => ({
+                        id: message.id,
+                        body,
+                        mentions: prev?.mentions,
+                      }))
                     }
                     onEditSave={saveEdit}
                     onEditCancel={() => setEditing(null)}
-                    onStartEdit={() =>
-                      setEditing({ id: message.id, body: message.body })
-                    }
+                    onStartEdit={() => startEdit(message)}
                     onDelete={() => {
                       if (window.confirm(t("chat:deleteMessageConfirm"))) {
                         run(() => actions.remove.mutateAsync(message));
@@ -523,7 +595,7 @@ export function ConversationView({
                     })}
                   </p>
                   <p className="truncate text-muted-foreground">
-                    {replyTo.body}
+                    {chatPlainText(replyTo.body)}
                   </p>
                 </div>
                 <Button
@@ -536,7 +608,19 @@ export function ConversationView({
                 </Button>
               </div>
             )}
-            <div className="flex items-end gap-2 p-2">
+            <div className="relative flex items-end gap-2 p-2">
+              {mentionAt && (
+                <MentionPicker
+                  options={mentionOptions}
+                  activeIndex={Math.min(
+                    mentionIndex,
+                    Math.max(mentionOptions.length - 1, 0),
+                  )}
+                  query={mentionAt.query}
+                  onHover={setMentionIndex}
+                  onPick={pickMention}
+                />
+              )}
               <textarea
                 ref={inputRef}
                 rows={1}
@@ -546,10 +630,49 @@ export function ConversationView({
                 placeholder={t("chat:messagePlaceholder", { name: title })}
                 onChange={(e) => {
                   setDraft(e.target.value);
+                  trackMention(
+                    e.target.value,
+                    e.target.selectionStart ?? e.target.value.length,
+                  );
                   if (e.target.value.trim()) pingTyping();
                 }}
+                onClick={(e) =>
+                  trackMention(
+                    e.currentTarget.value,
+                    e.currentTarget.selectionStart ?? 0,
+                  )
+                }
+                onBlur={() => setMentionAt(null)}
                 onKeyDown={(e) => {
                   if (e.nativeEvent.isComposing) return;
+                  if (mentionAt) {
+                    const count = mentionOptions.length;
+                    if (e.key === "Escape") {
+                      e.preventDefault();
+                      setMentionAt(null);
+                      return;
+                    }
+                    if (count > 0 && e.key === "ArrowDown") {
+                      e.preventDefault();
+                      setMentionIndex((i) => (i + 1) % count);
+                      return;
+                    }
+                    if (count > 0 && e.key === "ArrowUp") {
+                      e.preventDefault();
+                      setMentionIndex((i) => (i - 1 + count) % count);
+                      return;
+                    }
+                    if (
+                      count > 0 &&
+                      (e.key === "Tab" || (e.key === "Enter" && !e.shiftKey))
+                    ) {
+                      e.preventDefault();
+                      const option =
+                        mentionOptions[Math.min(mentionIndex, count - 1)];
+                      if (option) pickMention(option);
+                      return;
+                    }
+                  }
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     send();
@@ -558,11 +681,22 @@ export function ConversationView({
                   } else if (e.key === "ArrowUp" && !draft && lastMine) {
                     // Slack-style: edit your last message.
                     e.preventDefault();
-                    setEditing({ id: lastMine.id, body: lastMine.body });
+                    startEdit(lastMine);
                   }
                 }}
                 className="field-sizing-content max-h-48 min-h-9 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none placeholder:text-muted-foreground"
               />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-lg text-muted-foreground"
+                aria-label={t("chat:mentions.button")}
+                title={t("chat:mentions.button")}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={insertAt}
+              >
+                <AtSign className="size-4" />
+              </Button>
               <Button
                 size="icon"
                 className="rounded-lg"

@@ -5,7 +5,7 @@ alwaysApply: false
 ---
 # Database Schema Guidelines
 
-Kaneo uses Drizzle ORM with PostgreSQL. This document outlines schema conventions and best practices.
+Company OS uses Drizzle ORM with PostgreSQL. This document outlines schema conventions and best practices.
 
 ## Schema Definition
 

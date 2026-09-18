@@ -1,13 +1,13 @@
 ---
 title: Migrating to drim
-description: Move an existing Kaneo deployment onto the drim CLI, or update an older drim deployment to the current single-container layout
+description: Move an existing Company OS deployment onto the drim CLI, or update an older drim deployment to the current single-container layout
 ---
 
 Two migrations are covered here. Both reuse your existing Docker volumes, so your database and uploads stay where they are and no data is copied.
 
 ## Updating an older drim deployment
 
-Kaneo used to ship as two images, `api` and `web`, behind a reverse proxy that split traffic between them. It now ships as one container that serves the web app and the API together.
+Company OS used to ship as two images, `api` and `web`, behind a reverse proxy that split traffic between them. It now ships as one container that serves the web app and the API together.
 
 `drim upgrade` pulls new images but does not rewrite an existing `docker-compose.yml`, so a deployment created before that change keeps running the old layout indefinitely. Check which one you have:
 
@@ -83,7 +83,7 @@ docker compose ps
 curl -s https://your-domain.com/api/health
 ```
 
-You want every service up, the Kaneo container reporting healthy once its start period elapses, and `{"status":"ok"}` from the health endpoint.
+You want every service up, the Company OS container reporting healthy once its start period elapses, and `{"status":"ok"}` from the health endpoint.
 
 ### Rollback
 
@@ -95,9 +95,9 @@ cp Caddyfile.bak-$STAMP Caddyfile
 docker compose up -d --force-recreate
 ```
 
-## Moving an existing Kaneo onto drim
+## Moving an existing Company OS onto drim
 
-If you deployed Kaneo by hand and want drim to manage it, the goal is to have drim generate its files and then point them at the volumes you already have.
+If you deployed Company OS by hand and want drim to manage it, the goal is to have drim generate its files and then point them at the volumes you already have.
 
 Record the names of your existing volumes and your current environment values:
 
@@ -134,7 +134,7 @@ Then start and verify as above.
 
 ### Using your own reverse proxy
 
-If you already run nginx, Traefik or similar, choose `--no-reverse-proxy` at setup so drim does not start Caddy on ports 80 and 443, and point your proxy at Kaneo on port 5173.
+If you already run nginx, Traefik or similar, choose `--no-reverse-proxy` at setup so drim does not start Caddy on ports 80 and 443, and point your proxy at Company OS on port 5173.
 
 ## Common issues
 

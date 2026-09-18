@@ -197,7 +197,7 @@ describe("email log and default delivery", () => {
       .select()
       .from(schema.notificationTable)
       .where(eq(schema.notificationTable.userId, owner.id));
-    // Still shown inside Kaneo.
+    // Still shown inside Company OS.
     expect(notification?.type).toBe("expense_submitted");
   });
 });

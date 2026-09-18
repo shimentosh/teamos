@@ -421,7 +421,7 @@ export function buildNotificationEmail(input: {
           heading: `Your payslip${forPeriod} is ready`,
           // Pay is private: the email only says where to look.
           intro:
-            "For your privacy the amounts are not in this email. Open Kaneo to see them.",
+            "For your privacy the amounts are not in this email. Open Company OS to see them.",
           card: period
             ? {
                 title: period,
@@ -457,7 +457,7 @@ export function buildNotificationEmail(input: {
           preview: fallback.body,
           heading: fallback.title,
           intro: fallback.body,
-          primary: open ? { label: "Open in Kaneo", url: open } : null,
+          primary: open ? { label: "Open in Company OS", url: open } : null,
           reason: `You get this because you're a member of ${workspace}.`,
         },
       };

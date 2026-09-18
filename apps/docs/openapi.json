@@ -1,14 +1,14 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Kaneo API",
+    "title": "Company OS API",
     "version": "1.0.0",
-    "description": "Kaneo Project Management API - Manage projects, tasks, labels, and more"
+    "description": "Company OS Project Management API - Manage projects, tasks, labels, and more"
   },
   "servers": [
     {
       "url": "https://cloud.kaneo.app/api",
-      "description": "Kaneo API Server"
+      "description": "Company OS API Server"
     }
   ],
   "security": [
@@ -1549,6 +1549,80 @@
         ]
       },
       "FileStorage": {
+        "type": "object",
+        "properties": {
+          "connected": {
+            "type": "boolean"
+          },
+          "endpoint": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bucket": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "region": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "accessKeyId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "keyPrefix": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "account",
+              "workspace",
+              null
+            ],
+            "description": "`account`: the owner's account bucket. `workspace`: an older bucket kept for this workspace. Null: files are kept in Postgres."
+          },
+          "ownerName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "connected",
+          "endpoint",
+          "bucket",
+          "region",
+          "accessKeyId",
+          "keyPrefix",
+          "updatedAt",
+          "source",
+          "ownerName"
+        ]
+      },
+      "AccountFileStorage": {
         "type": "object",
         "properties": {
           "connected": {
@@ -5220,7 +5294,7 @@
           },
           "commentTaskLinkOnGitHubIssue": {
             "type": "boolean",
-            "description": "When on, Kaneo comments a link back to the task on the linked GitHub issue."
+            "description": "When on, Company OS comments a link back to the task on the linked GitHub issue."
           },
           "isActive": {
             "type": [
@@ -5276,7 +5350,7 @@
           },
           "commentTaskLinkOnGitHubIssue": {
             "type": "boolean",
-            "description": "When on, Kaneo comments a link back to the task on the linked GitHub issue."
+            "description": "When on, Company OS comments a link back to the task on the linked GitHub issue."
           },
           "isActive": {
             "type": [
@@ -5493,7 +5567,7 @@
           },
           "commentTaskLinkOnGiteaIssue": {
             "type": "boolean",
-            "description": "When on, Kaneo comments a link back to the task on the linked Gitea issue."
+            "description": "When on, Company OS comments a link back to the task on the linked Gitea issue."
           },
           "isActive": {
             "type": [
@@ -8798,7 +8872,7 @@
           "MCP"
         ],
         "summary": "Start MCP authorization",
-        "description": "Begin an MCP OAuth authorization. Redirects the browser to the Kaneo consent page, which then approves or denies the request.",
+        "description": "Begin an MCP OAuth authorization. Redirects the browser to the Company OS consent page, which then approves or denies the request.",
         "security": [],
         "parameters": [
           {
@@ -8862,7 +8936,7 @@
         ],
         "responses": {
           "302": {
-            "description": "Redirect to the Kaneo consent page"
+            "description": "Redirect to the Company OS consent page"
           },
           "400": {
             "description": "Invalid authorization request",
@@ -12924,7 +12998,7 @@
           "Files"
         ],
         "summary": "File storage settings",
-        "description": "Whether a Cloudflare R2 (or other S3-compatible) bucket is connected. The secret key is never returned.",
+        "description": "Where this workspace's files go: the owner's account bucket, an older workspace bucket, or Postgres. Keys are never returned for the owner's account bucket.",
         "parameters": [
           {
             "schema": {
@@ -12961,13 +13035,81 @@
           }
         }
       },
-      "put": {
-        "operationId": "connectFileStorage",
+      "delete": {
+        "operationId": "disconnectFileStorage",
         "tags": [
           "Files"
         ],
-        "summary": "Connect a bucket",
-        "description": "Save R2 credentials after checking Kaneo can write to the bucket. Leave the secret empty to keep the saved one. Audit logged.",
+        "summary": "Disconnect the bucket",
+        "description": "Remove an older per-workspace bucket; new files then follow the owner's account storage. Refused while files still live in the bucket.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "workspaceId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Disconnected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileStorage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "409": {
+            "description": "Files still live in the bucket",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/files/storage/account": {
+      "get": {
+        "operationId": "getAccountFileStorage",
+        "tags": [
+          "Files"
+        ],
+        "summary": "My file storage",
+        "description": "Your own Cloudflare R2 (or other S3-compatible) bucket. Every workspace you own stores new files there. The secret key is never returned.",
+        "responses": {
+          "200": {
+            "description": "Storage",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountFileStorage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          }
+        }
+      },
+      "put": {
+        "operationId": "connectAccountFileStorage",
+        "tags": [
+          "Files"
+        ],
+        "summary": "Connect my bucket",
+        "description": "Save R2 credentials after checking Company OS can write to the bucket. Leave the secret empty to keep the saved one. Switching buckets is refused while files live in the current one. Audit logged in each workspace you own.",
         "requestBody": {
           "required": true,
           "content": {
@@ -12975,9 +13117,6 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "workspaceId": {
-                    "type": "string"
-                  },
                   "endpoint": {
                     "type": "string",
                     "format": "uri",
@@ -13008,7 +13147,6 @@
                   }
                 },
                 "required": [
-                  "workspaceId",
                   "endpoint",
                   "bucket",
                   "accessKeyId"
@@ -13023,7 +13161,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/FileStorage"
+                  "$ref": "#/components/schemas/AccountFileStorage"
                 }
               }
             }
@@ -13041,8 +13179,8 @@
           "401": {
             "description": "Missing or invalid credentials"
           },
-          "403": {
-            "description": "Missing workspace:manage_settings",
+          "409": {
+            "description": "Files still live in the current bucket",
             "content": {
               "text/plain": {
                 "schema": {
@@ -13054,29 +13192,19 @@
         }
       },
       "delete": {
-        "operationId": "disconnectFileStorage",
+        "operationId": "disconnectAccountFileStorage",
         "tags": [
           "Files"
         ],
-        "summary": "Disconnect the bucket",
-        "description": "Go back to storing files in Postgres. Refused while files still live in the bucket.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "workspaceId",
-            "in": "query"
-          }
-        ],
+        "summary": "Disconnect my bucket",
+        "description": "Your workspaces go back to storing files in Postgres. Refused while files still live in the bucket.",
         "responses": {
           "200": {
             "description": "Disconnected",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/FileStorage"
+                  "$ref": "#/components/schemas/AccountFileStorage"
                 }
               }
             }
@@ -13921,7 +14049,7 @@
           "Chat"
         ],
         "summary": "Who is online",
-        "description": "Ids of workspace members online now: Kaneo open in a browser, or the desktop app reporting in.",
+        "description": "Ids of workspace members online now: Company OS open in a browser, or the desktop app reporting in.",
         "parameters": [
           {
             "schema": {
@@ -17834,7 +17962,7 @@
           "Desktop agent"
         ],
         "summary": "Pair a desktop app",
-        "description": "Exchange a one-time pairing code (created in Kaneo by the employee) for a device token. The token only works for the desktop agent endpoints.",
+        "description": "Exchange a one-time pairing code (created in Company OS by the employee) for a device token. The token only works for the desktop agent endpoints.",
         "requestBody": {
           "required": true,
           "content": {
@@ -21003,7 +21131,7 @@
           "GitHub"
         ],
         "summary": "Verify GitHub installation",
-        "description": "Check that the GitHub App is installed on a repository and holds the permissions Kaneo needs. Always 200 -- problems are reported in the body so the client can guide the user.",
+        "description": "Check that the GitHub App is installed on a repository and holds the permissions Company OS needs. Always 200 -- problems are reported in the body so the client can guide the user.",
         "requestBody": {
           "required": true,
           "content": {
@@ -21500,7 +21628,7 @@
           "Gitea"
         ],
         "summary": "Verify Gitea access",
-        "description": "Check that the base URL is a Gitea instance and that the token can reach the repository with the permissions Kaneo needs. Always 200 -- problems are reported in the body.",
+        "description": "Check that the base URL is a Gitea instance and that the token can reach the repository with the permissions Company OS needs. Always 200 -- problems are reported in the body.",
         "requestBody": {
           "required": true,
           "content": {
@@ -21995,7 +22123,7 @@
           "Generic Webhook"
         ],
         "summary": "Create webhook integration",
-        "description": "Create or replace the outgoing webhook for a project. Kaneo POSTs the selected task events to this URL, signed with the secret when one is set.",
+        "description": "Create or replace the outgoing webhook for a project. Company OS POSTs the selected task events to this URL, signed with the secret when one is set.",
         "parameters": [
           {
             "schema": {

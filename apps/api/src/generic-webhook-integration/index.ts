@@ -106,7 +106,7 @@ const createGenericWebhookIntegrationRoute = createRoute({
   tags: ["Generic Webhook"],
   summary: "Create webhook integration",
   description:
-    "Create or replace the outgoing webhook for a project. Kaneo POSTs the selected task events to this URL, signed with the secret when one is set.",
+    "Create or replace the outgoing webhook for a project. Company OS POSTs the selected task events to this URL, signed with the secret when one is set.",
   middleware: manageAccess,
   request: {
     params: projectIdParam,

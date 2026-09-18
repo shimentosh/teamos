@@ -12,6 +12,6 @@ describe("PasswordResetEmail", () => {
       }),
     );
     expect(html).toContain("パスワードのリセット");
-    expect(html).toContain("Kaneo セキュリティメール");
+    expect(html).toContain("Company OS セキュリティメール");
   });
 });

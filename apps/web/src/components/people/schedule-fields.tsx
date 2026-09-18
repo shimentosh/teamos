@@ -49,7 +49,7 @@ export function ScheduleFields({ value, onChange, disabled }: Props) {
               pressed={value.workDays.includes(day)}
               onPressedChange={(on) => toggleDay(day, on)}
               aria-label={weekdayName(day, i18n.language, "short")}
-              className="w-11 data-pressed:border-primary data-pressed:bg-primary data-pressed:text-primary-foreground"
+              className="w-11 data-pressed:border-primary data-pressed:bg-primary data-pressed:text-primary-foreground dark:data-pressed:bg-primary"
             >
               {weekdayName(day, i18n.language, "short")}
             </Toggle>

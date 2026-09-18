@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverPopup, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import type { ChatConversation, ChatMessage } from "@/fetchers/chat";
+import { chatPlainText } from "@/lib/chat-mentions";
 import { cn } from "@/lib/cn";
 import { formatDateTime } from "@/lib/format";
-import { linkify, linksIn } from "@/lib/linkify";
+import { linksIn } from "@/lib/linkify";
 import { messageTime, PersonAvatar } from "./chat-shared";
-import { LinkedText, LinkPreviewCard } from "./link-preview-card";
+import { ChatText } from "./chat-text";
+import { LinkPreviewCard } from "./link-preview-card";
 
 export const QUICK_REACTIONS = ["👍", "❤️", "😂", "🎉"];
 export const ALL_REACTIONS = [
@@ -124,7 +126,7 @@ export function MessageItem({
               {message.replyTo.userName ?? t("chat:formerMember")}
             </span>
             <span className="truncate text-muted-foreground">
-              {message.replyTo.body}
+              {chatPlainText(message.replyTo.body)}
             </span>
           </button>
         )}
@@ -158,7 +160,11 @@ export function MessageItem({
           </div>
         ) : (
           <p className="whitespace-pre-wrap break-words text-sm leading-6 text-foreground/95">
-            <LinkedText parts={linkify(message.body)} />
+            <ChatText
+              body={message.body}
+              workspaceId={workspaceId}
+              meId={meId}
+            />
             {message.editedAt && (
               <span
                 className="ms-1.5 text-[10px] text-muted-foreground"

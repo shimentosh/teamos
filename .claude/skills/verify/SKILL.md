@@ -1,9 +1,9 @@
 ---
 name: verify
-description: Build/launch/drive recipe for verifying Kaneo changes end-to-end on a local dev instance
+description: Build/launch/drive recipe for verifying Company OS changes end-to-end on a local dev instance
 ---
 
-# Verifying Kaneo changes
+# Verifying Company OS changes
 
 ## Launch
 

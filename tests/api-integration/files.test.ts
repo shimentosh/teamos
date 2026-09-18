@@ -170,17 +170,16 @@ describe("files (stored in Postgres)", () => {
   });
 
   it("refuses storage endpoints inside the server's network", async () => {
-    const { user, workspace } = await createWorkspaceMember({ role: "owner" });
+    const { user } = await createWorkspaceMember({ role: "owner" });
     for (const endpoint of [
       "http://example.com",
       "https://127.0.0.1:9000",
       "https://169.254.169.254",
       "https://localhost",
     ]) {
-      const response = await requestAs(user)("/files/storage", {
+      const response = await requestAs(user)("/files/storage/account", {
         method: "PUT",
         body: {
-          workspaceId: workspace.id,
           endpoint,
           bucket: "b",
           accessKeyId: "k",
@@ -209,6 +208,117 @@ describe("files (stored in Postgres)", () => {
       .from(schema.auditLogTable)
       .where(eq(schema.auditLogTable.action, "file.deleted"));
     expect(audit).toHaveLength(1);
+  });
+
+  it("shows admins the owner's account bucket without its keys", async () => {
+    const { user: owner, workspace } = await createWorkspaceMember({
+      role: "owner",
+      userName: "Olivia",
+    });
+    const admin = await addWorkspaceMember(workspace.id, "admin", "Adam");
+    const status = () =>
+      requestAs(admin)(`/files/storage?workspaceId=${workspace.id}`);
+
+    expect((await status()).json).toMatchObject({
+      connected: false,
+      source: null,
+      ownerName: "Olivia",
+    });
+
+    await db.insert(schema.userStorageTable).values({
+      userId: owner.id,
+      endpoint: "https://acct.r2.cloudflarestorage.com",
+      bucket: "olivia-files",
+      accessKeyId: "AKIA-owner",
+      secretAccessKey: "enc:v1:not-a-real-secret",
+    });
+    const connected = (await status()).json;
+    expect(connected).toMatchObject({
+      connected: true,
+      source: "account",
+      bucket: "olivia-files",
+      ownerName: "Olivia",
+      accessKeyId: null,
+    });
+
+    // The owner sees their own settings, keys included (never the secret).
+    const mine = await requestAs(owner)("/files/storage/account");
+    expect(mine.json).toMatchObject({
+      connected: true,
+      accessKeyId: "AKIA-owner",
+    });
+    expect(JSON.stringify(mine.json)).not.toContain("not-a-real-secret");
+  });
+
+  it("moves workspace buckets to the owner's account without stranding files", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { sql } = await import("drizzle-orm");
+    const { user: owner, workspace: first } = await createWorkspaceMember({
+      role: "owner",
+    });
+    const [second] = await db
+      .insert(schema.workspaceTable)
+      .values({
+        id: `workspace-second-${Date.now()}`,
+        name: "Second",
+        slug: `second-${Date.now()}`,
+        createdAt: new Date(),
+      })
+      .returning();
+    await db.insert(schema.workspaceUserTable).values({
+      workspaceId: second.id,
+      userId: owner.id,
+      role: "owner",
+      joinedAt: new Date(),
+    });
+    const bucketRow = (workspaceId: string, bucket: string, at: string) => ({
+      workspaceId,
+      endpoint: "https://acct.r2.cloudflarestorage.com",
+      bucket,
+      accessKeyId: "k",
+      secretAccessKey: "enc:v1:x",
+      updatedAt: new Date(at),
+    });
+    // Two different buckets: the newer moves, the older stays put.
+    await db
+      .insert(schema.workspaceStorageTable)
+      .values([
+        bucketRow(first.id, "old-bucket", "2026-01-01"),
+        bucketRow(second.id, "new-bucket", "2026-06-01"),
+      ]);
+    const s3File = (workspaceId: string, key: string) => ({
+      workspaceId,
+      uploadedBy: owner.id,
+      filename: `${key}.txt`,
+      mimeType: "text/plain",
+      size: 1,
+      storage: "s3",
+      objectKey: key,
+      kind: "file",
+    });
+    await db
+      .insert(schema.storedFileTable)
+      .values([s3File(first.id, "a"), s3File(second.id, "b")]);
+
+    const migration = readFileSync(
+      new URL("../../apps/api/drizzle/0067_empty_marvex.sql", import.meta.url),
+      "utf8",
+    );
+    // The tables already exist in the test database; replay the data move.
+    const dataPart = migration.slice(migration.indexOf("-- Move each"));
+    for (const statement of dataPart.split("--> statement-breakpoint")) {
+      if (statement.trim()) await db.execute(sql.raw(statement));
+    }
+
+    const [account] = await db.select().from(schema.userStorageTable);
+    expect(account).toMatchObject({ userId: owner.id, bucket: "new-bucket" });
+    const left = await db.select().from(schema.workspaceStorageTable);
+    expect(left.map((r) => r.bucket)).toEqual(["old-bucket"]);
+    const files = await db.select().from(schema.storedFileTable);
+    const byKey = Object.fromEntries(
+      files.map((f) => [f.objectKey, f.storageOwnerId]),
+    );
+    expect(byKey).toEqual({ a: null, b: owner.id });
   });
 
   it("refuses files over 10 MB until a bucket is connected", async () => {
@@ -247,10 +357,9 @@ describe.runIf(Boolean(endpoint))(
         forcePathStyle: true,
         credentials: { accessKeyId, secretAccessKey },
       }).send(new CreateBucketCommand({ Bucket: bucket }));
-      return requestAs(owner)("/files/storage", {
+      return requestAs(owner)("/files/storage/account", {
         method: "PUT",
         body: {
-          workspaceId,
           endpoint,
           bucket,
           region: "us-east-1",
@@ -266,10 +375,9 @@ describe.runIf(Boolean(endpoint))(
       });
       const member = await addWorkspaceMember(workspace.id, "member");
 
-      const wrong = await requestAs(owner)("/files/storage", {
+      const wrong = await requestAs(owner)("/files/storage/account", {
         method: "PUT",
         body: {
-          workspaceId: workspace.id,
           endpoint,
           bucket: "does-not-exist-kaneo",
           accessKeyId,
@@ -281,7 +389,7 @@ describe.runIf(Boolean(endpoint))(
       const connected = await connectBucket(owner, workspace.id);
       expect(connected.json).toMatchObject({ connected: true, accessKeyId });
       expect(JSON.stringify(connected.json)).not.toContain(secretAccessKey);
-      const [row] = await db.select().from(schema.workspaceStorageTable);
+      const [row] = await db.select().from(schema.userStorageTable);
       expect(row?.secretAccessKey.startsWith("enc:v1:")).toBe(true);
 
       // Only settings managers see or change storage.
@@ -313,7 +421,7 @@ describe.runIf(Boolean(endpoint))(
       // Files still in the bucket keep it connected.
       expect(
         (
-          await requestAs(owner)(`/files/storage?workspaceId=${workspace.id}`, {
+          await requestAs(owner)("/files/storage/account", {
             method: "DELETE",
           })
         ).status,
@@ -326,7 +434,7 @@ describe.runIf(Boolean(endpoint))(
       );
       expect(
         (
-          await requestAs(owner)(`/files/storage?workspaceId=${workspace.id}`, {
+          await requestAs(owner)("/files/storage/account", {
             method: "DELETE",
           })
         ).status,

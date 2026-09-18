@@ -129,13 +129,13 @@ impl Tracker {
     pub fn connect(&self, address: &str, code: &str) -> Result<Status, String> {
         let base = api::api_base(address)?;
         if api::normalize_code(code).len() < 8 {
-            return Err("Enter the pairing code shown in Kaneo.".into());
+            return Err("Enter the pairing code shown in Company OS.".into());
         }
         let paired = Client::new(&base)
             .pair(code, &device_name())
             .map_err(|e| match e {
                 ApiError::Status(404, _) => format!(
-                    "No Kaneo server answered at {base}. If the API has its own address, enter that instead."
+                    "No Company OS server answered at {base}. If the API has its own address, enter that instead."
                 ),
                 e => e.to_string(),
             })?;
@@ -262,7 +262,7 @@ impl Tracker {
                 }
                 Err(ApiError::Network(e)) => {
                     s.offline = true;
-                    s.last_error = Some(format!("Could not reach Kaneo: {e}"));
+                    s.last_error = Some(format!("Could not reach Company OS: {e}"));
                 }
                 Err(ApiError::Unauthorized) => {}
                 Err(e) => {
@@ -273,7 +273,7 @@ impl Tracker {
         }
         if let Err(ApiError::Unauthorized) = result {
             self.forget(Some(
-                "This computer was disconnected in Kaneo. Pair it again to resume.".into(),
+                "This computer was disconnected in Company OS. Pair it again to resume.".into(),
             ));
         }
         self.notify();
@@ -324,7 +324,7 @@ impl Tracker {
                     // succeed, so drop it rather than block the queue forever.
                     Err(ApiError::Status(400, body)) => {
                         let mut s = self.lock();
-                        s.last_error = Some(format!("Kaneo rejected some activity: {body}"));
+                        s.last_error = Some(format!("Company OS rejected some activity: {body}"));
                         Ok(None)
                     }
                     Err(e) => Err(e),

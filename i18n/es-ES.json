@@ -1,6 +1,6 @@
 {
 	"common": {
-		"appName": "Kaneo",
+		"appName": "Company OS",
 		"actions": {
 			"cancel": "Cancelar",
 			"close": "Cerrar",
@@ -228,7 +228,7 @@
 			"toggleMessage": "¿Ya tienes cuenta?",
 			"toggleLink": "Iniciar sesión",
 			"instanceStatusError": "No se ha podido contactar con el servidor. Vuelve a intentarlo en un momento.",
-			"instanceAdminTitle": "Configura tu instancia de Kaneo",
+			"instanceAdminTitle": "Configura tu instancia de Company OS",
 			"instanceAdminSubtitle": "Esta cuenta se convierte en la administradora de la instancia con acceso completo."
 		},
 		"verifyOtp": {
@@ -286,7 +286,7 @@
 			"workspaceLabel": "Espacio de trabajo: {{workspaceName}}",
 			"joinWorkspace": "Unirse a {{workspaceName}}",
 			"inviteBodySignedIn": "<inviter>{{inviterName}}</inviter> te ha invitado a unirse a su espacio de trabajo.",
-			"inviteBodySignedOut": "<inviter>{{inviterName}}</inviter> te ha invitado a unirse a su espacio de trabajo en Kaneo.",
+			"inviteBodySignedOut": "<inviter>{{inviterName}}</inviter> te ha invitado a unirse a su espacio de trabajo en Company OS.",
 			"createAccountOrSignIn": "Crea una cuenta para aceptar esta invitación o inicia sesión si ya tienes una.",
 			"createAccount": "Crear cuenta",
 			"accepting": "Aceptando...",
@@ -302,7 +302,7 @@
 			}
 		},
 		"onboarding": {
-			"pageTitle": "Bienvenido a Kaneo",
+			"pageTitle": "Bienvenido a Company OS",
 			"workspacePageTitle": "Crear espacio de trabajo",
 			"createWorkspaceTitle": "Crear espacio de trabajo",
 			"createWorkspaceSubtitle": "Configura tu espacio de trabajo para empezar a gestionar proyectos",
@@ -392,7 +392,7 @@
 		},
 		"preferencesPage": {
 			"title": "Preferencias",
-			"subtitle": "Personaliza tu experiencia Kaneo.",
+			"subtitle": "Personaliza tu experiencia Company OS.",
 			"appearanceTitle": "Apariencia",
 			"appearanceSubtitle": "Ajustes visuales y de diseño.",
 			"theme": "Tema",
@@ -436,7 +436,7 @@
 			"title": "Ajustes de Desarrollador",
 			"subtitle": "Gestiona tus claves de API y recursos de desarrollo.",
 			"apiKeysCardTitle": "Claves de API",
-			"apiKeysCardDescription": "Crea y gestiona las claves de API para acceder a Kaneo.",
+			"apiKeysCardDescription": "Crea y gestiona las claves de API para acceder a Company OS.",
 			"createApiKey": "Crear clave de API",
 			"unnamedKey": "Clave sin nombre"
 		},
@@ -475,7 +475,7 @@
 			},
 			"createDialog": {
 				"title": "Crear clave de API",
-				"description": "Create una nueva clave de API para acceder a la API de Kaneo.",
+				"description": "Create una nueva clave de API para acceder a la API de Company OS.",
 				"nameLabel": "Nombre",
 				"namePlaceholder": "Mi API Key",
 				"nameDescription": "Un nombre descriptivo para esta clave de API",
@@ -671,7 +671,7 @@
 				"removeError": "Error al eliminar la integración con GitHub",
 				"issuesImported": "Issues importados correctamente",
 				"importError": "Error al importar issues",
-				"commentOnEnabled": "Kaneo añadirá un comentario con un enlace a la tarea en los nuevos issues",
+				"commentOnEnabled": "Company OS añadirá un comentario con un enlace a la tarea en los nuevos issues",
 				"commentOnDisabled": "Los comentarios con enlaces a tareas en nuevos issues están desactivados",
 				"settingsUpdateError": "Error al actualizar la integración de GitHub"
 			},
@@ -682,8 +682,8 @@
 			"badgeNotConnected": "No connectado",
 			"repository": "Repositorio",
 			"repositoryHint": "Repositorio de GitHub conectado",
-			"commentTaskLinkTitle": "Comenta Kaneo link en issues nuevos",
-			"commentTaskLinkHint": "Si está activado, Kaneo añade un comentario en cada nuevo issue de GitHub vinculado con la tarea.",
+			"commentTaskLinkTitle": "Comenta Company OS link en issues nuevos",
+			"commentTaskLinkHint": "Si está activado, Company OS añade un comentario en cada nuevo issue de GitHub vinculado con la tarea.",
 			"appStatusTitle": "Estado de la App de GitHub",
 			"appStatusHint": "Estado de instalación y permisos",
 			"statusProperlyConfigured": "Correctamente configurado",
@@ -806,10 +806,10 @@
 			"paused": "Pausado",
 			"webhookLabel": "URL del webhook",
 			"webhookPlaceholder": "https://ejemplo.com/webhooks/kaneo",
-			"webhookHint": "Kaneo envía requests POST como JSON para cada evento activo.",
+			"webhookHint": "Company OS envía requests POST como JSON para cada evento activo.",
 			"secretLabel": "Secreto para la firma",
 			"secretPlaceholder": "Secreto opcional",
-			"secretHint": "Opcional. Si está configurado, Kaneo envía el cuerpo de la petición y añade la cabecera X-Kaneo-Signature.",
+			"secretHint": "Opcional. Si está configurado, Company OS envía el cuerpo de la petición y añade la cabecera X-Kaneo-Signature.",
 			"secretHintConfigured": "Ya hay un secreto configurado ({{secret}}). Introduce uno nuevo para reemplazarlo.",
 			"eventsTitle": "Notificaciones de eventos",
 			"eventsHint": "Elige qué cambios en el proyecto deben ser notificados a través de webhooks.",
@@ -900,7 +900,7 @@
 		"notificationsPage": {
 			"pageTitle": "Notificaciones",
 			"title": "Notificaciones",
-			"subtitle": "Elige cómo Kaneo entrega las notificaciones de tu cuenta y qué canales usar.",
+			"subtitle": "Elige cómo Company OS entrega las notificaciones de tu cuenta y qué canales usar.",
 			"statusConnected": "Conectado",
 			"statusPaused": "Pausado",
 			"emailTitle": "Correo electrónico",
@@ -936,7 +936,7 @@
 			"webhookUrlPlaceholder": "https://example.com/webhooks/kaneo",
 			"webhookSecretPlaceholder": "Secreto compartido opcional",
 			"webhookSecretHintConfigured": "Ya hay un secreto de firma configurado ({{masked}}). Introduce uno nuevo para reemplazarlo.",
-			"webhookSecretHintOptional": "Opcional. Kaneo firma el cuerpo de la petición cuando hay un secreto configurado.",
+			"webhookSecretHintOptional": "Opcional. Company OS firma el cuerpo de la petición cuando hay un secreto configurado.",
 			"connectWebhook": "Conectar webhook",
 			"workspaceRulesTitle": "Reglas de entrega por espacio de trabajo",
 			"workspaceRulesDescription": "Reutiliza tus canales globales y decide qué espacios de trabajo y proyectos pueden enviar notificaciones a tu cuenta.",
@@ -1273,7 +1273,7 @@
 				"removeError": "Error al eliminar la integración con Gitea",
 				"issuesImported": "Issues importadas correctamente",
 				"importError": "Error al importar issues",
-				"commentOnEnabled": "Kaneo comentará con un enlace a la tarea en las nuevas issues",
+				"commentOnEnabled": "Company OS comentará con un enlace a la tarea en las nuevas issues",
 				"commentOnDisabled": "Los comentarios con enlace a la tarea en nuevas issues están desactivados",
 				"settingsUpdateError": "Error al actualizar la integración con Gitea",
 				"secretCopied": "Copiado",
@@ -1291,8 +1291,8 @@
 			"badgeNotConnected": "No conectado",
 			"repository": "Repositorio",
 			"repositoryHint": "Repositorio de Gitea vinculado",
-			"commentTaskLinkTitle": "Comentar el enlace de Kaneo en nuevas issues",
-			"commentTaskLinkHint": "Si está activado, Kaneo publica un comentario en cada nueva issue con un enlace a la tarea.",
+			"commentTaskLinkTitle": "Comentar el enlace de Company OS en nuevas issues",
+			"commentTaskLinkHint": "Si está activado, Company OS publica un comentario en cada nueva issue con un enlace a la tarea.",
 			"webhookTitle": "Webhook",
 			"webhookHint": "En tu repositorio de Gitea, añade un webhook con esta URL y secreto. Activa push, pull request, issues, comentarios de issues y create (para etiquetas).",
 			"webhookSecretLabel": "Secreto (debe coincidir con el secreto del webhook en Gitea)",
@@ -1357,7 +1357,7 @@
 			"threadIdHint": "Opcional. Úsalo para temas de foro dentro de grupos de Telegram.",
 			"chatLabelLabel": "Etiqueta del chat",
 			"chatLabelPlaceholder": "Actualizaciones de ingeniería",
-			"chatLabelHint": "Etiqueta opcional para tu referencia dentro de Kaneo.",
+			"chatLabelHint": "Etiqueta opcional para tu referencia dentro de Company OS.",
 			"eventsTitle": "Notificaciones de eventos",
 			"eventsHint": "Elige qué cambios del proyecto deben publicarse en Telegram.",
 			"events": {
@@ -2265,14 +2265,14 @@
 	},
 	"invitations": {
 		"email": {
-			"subject": "{{inviterName}} te ha invitado a unirte a {{workspaceName}} en Kaneo",
-			"preview": "Te han invitado a {{workspaceName}} en Kaneo",
+			"subject": "{{inviterName}} te ha invitado a unirte a {{workspaceName}} en Company OS",
+			"preview": "Te han invitado a {{workspaceName}} en Company OS",
 			"title": "Únete a {{workspaceName}}",
-			"subtitle": "{{inviterName}} ({{inviterEmail}}) te ha invitado a colaborar en Kaneo.",
+			"subtitle": "{{inviterName}} ({{inviterEmail}}) te ha invitado a colaborar en Company OS.",
 			"cta": "Aceptar invitación",
 			"sameEmail": "Puedes aceptarla con el mismo correo que recibió este mensaje.",
 			"ignore": "Si no esperabas este correo, puedes ignorarlo sin problema.",
-			"footer": "Invitación a un espacio de trabajo de Kaneo"
+			"footer": "Invitación a un espacio de trabajo de Company OS"
 		},
 		"pageTitle": "Invitaciones",
 		"pendingInvitations": "Invitaciones pendientes",
@@ -2664,7 +2664,10 @@
 			"subtitle": "Where your company works and how money is shown.",
 			"timezone": "Timezone",
 			"timezoneHint": "Decides what \"today\" means for attendance and reports.",
-			"title": "Basics"
+			"title": "Basics",
+			"noMatch": "Nothing matches",
+			"searchCurrency": "Search a currency",
+			"searchTimezone": "Search a city or region"
 		},
 		"departments": {
 			"add": "Add",
@@ -2684,7 +2687,8 @@
 			"overtimeRate": "Overtime pay (%)",
 			"overtimeRateHint": "Of the hourly rate. 150 means time and a half.",
 			"subtitle": "Yearly leave allowance and how overtime is paid.",
-			"title": "Leave and overtime"
+			"title": "Leave and overtime",
+			"overtimeExample": "Example: at an hourly rate of {{rate}}, one overtime hour pays {{pay}}."
 		},
 		"save": "Save changes",
 		"saved": "Company settings saved",
@@ -2703,7 +2707,7 @@
 			"idleMinutesHint": "No keyboard or mouse activity for this long. The clock-out is set back to the last activity, so the wait isn’t counted.",
 			"offlineMinutes": "Clock out when offline for (minutes)",
 			"offlineMinutesHint": "None of the person’s computers has checked in for this long (asleep, shut down, no internet). Coming back sooner continues the same session.",
-			"subtitle": "Let the Kaneo desktop app clock people in when they start working and out when they stop.",
+			"subtitle": "Let the Company OS desktop app clock people in when they start working and out when they stop.",
 			"title": "Automatic clock in/out"
 		}
 	},
@@ -2791,7 +2795,7 @@
 			"button": "Create a code",
 			"expires": "Expires {{time}}",
 			"newCode": "Create a new code",
-			"step1": "Open the Kaneo desktop app.",
+			"step1": "Open the Company OS desktop app.",
 			"step2": "Enter this address: {{address}}",
 			"step3": "Enter the code above and press Connect.",
 			"subtitle": "Create a one-time code and enter it in the app. The code works once and for 10 minutes.",
@@ -2811,7 +2815,7 @@
 			"revoked": "Computer disconnected",
 			"title": "Connected computers"
 		},
-		"subtitle": "The Kaneo desktop app records your active and idle time and which apps you use in {{workspace}}. You can pause it any time from its tray icon.",
+		"subtitle": "The Company OS desktop app records your active and idle time and which apps you use in {{workspace}}. You can pause it any time from its tray icon.",
 		"title": "Devices"
 	},
 	"desktopActivity": {
@@ -3134,7 +3138,7 @@
 		},
 		"copyLink": "Copy live link",
 		"createLink": "Create live link",
-		"databaseHint": "Files are stored in the database (10 MB each). Connect Cloudflare R2 in Settings → Company for bigger files.",
+		"databaseHint": "Files are stored in the database (10 MB each). The workspace owner can connect Cloudflare R2 in Settings → Account → File storage for bigger files.",
 		"delete": "Delete",
 		"deleted": "File deleted",
 		"deleteDescription": "{{name}} will be deleted for everyone, and its live link will stop working.",
@@ -3161,7 +3165,7 @@
 			"disconnect": "Disconnect",
 			"disconnected": "Storage disconnected",
 			"endpoint": "S3 endpoint",
-			"help": "In Cloudflare: R2 → Manage API tokens → create a token with Object Read & Write for this bucket. The endpoint is shown on the bucket's settings page. Kaneo checks that it can write before saving; the secret is stored encrypted.",
+			"help": "In Cloudflare: R2 → Manage API tokens → create a token with Object Read & Write for this bucket. The endpoint is shown on the bucket's settings page. Company OS checks that it can write before saving; the secret is stored encrypted.",
 			"prefix": "Folder in bucket (optional)",
 			"secretKept": "Saved (leave empty to keep)",
 			"secretKey": "Secret access key",
@@ -3170,7 +3174,14 @@
 			"subtitle": "Where workspace files and receipts are kept.",
 			"testing": "Testing…",
 			"title": "File storage",
-			"update": "Test and save"
+			"update": "Test and save",
+			"accountSubtitle": "Your own Cloudflare R2 bucket for files and receipts.",
+			"accountScope": "Every workspace you own stores new files in this bucket, each in its own folder.",
+			"usingOwner": "New files go to {{name}}'s bucket {{bucket}}.",
+			"usingLegacy": "New files go to this workspace's older bucket {{bucket}}.",
+			"managedInAccount": "File storage is set up by the workspace owner in their account settings.",
+			"openAccount": "Open File storage",
+			"disconnectLegacy": "Remove the workspace bucket"
 		},
 		"title": "Files",
 		"turnOffLink": "Turn off live link",
@@ -3305,7 +3316,17 @@
 		"onlineCount_many": "{{count}} online",
 		"onlineCount_one": "{{count}} online",
 		"onlineCount_other": "{{count}} online",
-		"onlineNow": "Online now"
+		"onlineNow": "Online now",
+		"mentions": {
+			"label": "Mention someone or something",
+			"button": "Mention a person, project or task",
+			"people": "People",
+			"projects": "Projects",
+			"tasks": "Tasks",
+			"none": "No matches",
+			"hint": "Type a name to mention",
+			"typeForTasks": "Keep typing to find tasks"
+		}
 	},
 	"emailLog": {
 		"all": "All",
@@ -3331,7 +3352,7 @@
 		"provider": {
 			"hint": "Members get email for assignments, mentions, due dates, leave, expenses and payslips unless they turn it off in their notification settings.",
 			"none": "Email is not set up",
-			"noneHint": "Ask whoever runs this Kaneo server to set RESEND_API_KEY and EMAIL_FROM (or SMTP). Notifications still show inside Kaneo.",
+			"noneHint": "Ask whoever runs this Company OS server to set RESEND_API_KEY and EMAIL_FROM (or SMTP). Notifications still show inside Company OS.",
 			"resend": "Sending with Resend",
 			"smtp": "Sending with SMTP"
 		},
@@ -3343,7 +3364,7 @@
 			"sending": "Sending",
 			"sent": "Sent"
 		},
-		"subtitle": "Every email Kaneo sent to people in this workspace, and whether it arrived at the mail provider. Failed emails are retried for about an hour.",
+		"subtitle": "Every email Company OS sent to people in this workspace, and whether it arrived at the mail provider. Failed emails are retried for about an hour.",
 		"title": "Email",
 		"noAccess": "Only people who manage workspace settings can see the email log."
 	},

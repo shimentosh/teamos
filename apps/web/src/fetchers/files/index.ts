@@ -13,8 +13,12 @@ export type FileStorage = InferResponseType<
   (typeof client)["files"]["storage"]["$get"],
   200
 >;
+export type AccountStorage = InferResponseType<
+  (typeof client)["files"]["storage"]["account"]["$get"],
+  200
+>;
 export type ConnectStorageRequest = InferRequestType<
-  (typeof client)["files"]["storage"]["$put"]
+  (typeof client)["files"]["storage"]["account"]["$put"]
 >["json"];
 
 async function unwrap<T>(response: {
@@ -38,8 +42,11 @@ export const filesApi = {
     unwrap(await client.files.$get({ query: { workspaceId, folder } })),
   storage: async (workspaceId: string) =>
     unwrap(await client.files.storage.$get({ query: { workspaceId } })),
-  connect: async (json: ConnectStorageRequest) =>
-    unwrap(await client.files.storage.$put({ json })),
+  accountStorage: async () => unwrap(await client.files.storage.account.$get()),
+  connectAccount: async (json: ConnectStorageRequest) =>
+    unwrap(await client.files.storage.account.$put({ json })),
+  disconnectAccount: async () =>
+    unwrap(await client.files.storage.account.$delete()),
   disconnect: async (workspaceId: string) =>
     unwrap(await client.files.storage.$delete({ query: { workspaceId } })),
   share: async (workspaceId: string, id: string) =>

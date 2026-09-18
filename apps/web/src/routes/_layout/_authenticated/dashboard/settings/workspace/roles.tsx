@@ -53,7 +53,7 @@ export const Route = createFileRoute(
 // (say, HR) can invite people and change roles; the API still refuses to let
 // anyone grant more than they hold.
 const HIDDEN_RESOURCES = new Set(["organization", "team", "ac"]);
-// Better Auth's direct "add member" skips invitations; Kaneo never uses it.
+// Better Auth's direct "add member" skips invitations; Company OS never uses it.
 const HIDDEN_ACTIONS: Record<string, string[]> = { member: ["create"] };
 const CUSTOM_RESOURCES = (
   Object.keys(statement) as (keyof typeof statement)[]

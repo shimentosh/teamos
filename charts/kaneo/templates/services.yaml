@@ -1,4 +1,4 @@
-# Kaneo Service
+# Company OS Service
 apiVersion: v1
 kind: Service
 metadata:

@@ -7,15 +7,18 @@ import db from "../database";
 import {
   fileFolderTable,
   storedFileTable,
+  userStorageTable,
   userTable,
   workspaceStorageTable,
+  workspaceUserTable,
 } from "../database/schema";
 import {
   type BucketConfig,
   deleteBlob,
-  getBucketConfig,
+  getUserBucket,
   storeBlob,
   testBucket,
+  workspaceOwnerId,
 } from "../storage/workspace-storage";
 import { sealSecret } from "../utils/secret-box";
 
@@ -33,8 +36,48 @@ export function normalizeFolder(folder: string | undefined) {
 
 // ---------------------------------------------------------------- storage
 
-export async function storageStatus(workspaceId: string) {
+type StorageInput = {
+  endpoint: string;
+  bucket: string;
+  region?: string;
+  accessKeyId: string;
+  secretAccessKey?: string;
+  keyPrefix?: string;
+};
+
+const notConnected = {
+  connected: false as const,
+  endpoint: null,
+  bucket: null,
+  region: null,
+  accessKeyId: null,
+  keyPrefix: null,
+  updatedAt: null,
+};
+
+/** A person's own bucket, as shown on their Account settings. */
+export async function accountStorageStatus(userId: string) {
   const [row] = await db
+    .select({
+      endpoint: userStorageTable.endpoint,
+      bucket: userStorageTable.bucket,
+      region: userStorageTable.region,
+      accessKeyId: userStorageTable.accessKeyId,
+      keyPrefix: userStorageTable.keyPrefix,
+      updatedAt: userStorageTable.updatedAt,
+    })
+    .from(userStorageTable)
+    .where(eq(userStorageTable.userId, userId));
+  return row ? { connected: true as const, ...row } : notConnected;
+}
+
+/**
+ * Where a workspace's files go now: a leftover workspace bucket, else the
+ * owner's account bucket, else Postgres. The owner's access key is theirs,
+ * so only the bucket is shown to other admins.
+ */
+export async function storageStatus(workspaceId: string) {
+  const [legacy] = await db
     .select({
       endpoint: workspaceStorageTable.endpoint,
       bucket: workspaceStorageTable.bucket,
@@ -45,34 +88,85 @@ export async function storageStatus(workspaceId: string) {
     })
     .from(workspaceStorageTable)
     .where(eq(workspaceStorageTable.workspaceId, workspaceId));
-  return row
-    ? { connected: true as const, ...row }
-    : {
-        connected: false as const,
-        endpoint: null,
-        bucket: null,
-        region: null,
+  if (legacy) {
+    return {
+      ...legacy,
+      connected: true as const,
+      source: "workspace" as const,
+      ownerName: null,
+    };
+  }
+
+  const ownerId = await workspaceOwnerId(workspaceId);
+  const [owner] = ownerId
+    ? await db
+        .select({ name: userTable.name })
+        .from(userTable)
+        .where(eq(userTable.id, ownerId))
+    : [];
+  const account = ownerId ? await accountStorageStatus(ownerId) : notConnected;
+  return account.connected
+    ? {
+        ...account,
         accessKeyId: null,
-        keyPrefix: null,
-        updatedAt: null,
-      };
+        source: "account" as const,
+        ownerName: owner?.name ?? null,
+      }
+    : { ...notConnected, source: null, ownerName: owner?.name ?? null };
 }
 
-export async function connectStorage(
-  workspaceId: string,
-  actorId: string,
-  input: {
-    endpoint: string;
-    bucket: string;
-    region?: string;
-    accessKeyId: string;
-    secretAccessKey?: string;
-    keyPrefix?: string;
-  },
+async function filesInUserBucket(userId: string) {
+  const [row] = await db
+    .select({ n: count() })
+    .from(storedFileTable)
+    .where(
+      and(
+        eq(storedFileTable.storageOwnerId, userId),
+        eq(storedFileTable.storage, "s3"),
+      ),
+    );
+  return row?.n ?? 0;
+}
+
+async function ownedWorkspaceIds(userId: string) {
+  const rows = await db
+    .select({ workspaceId: workspaceUserTable.workspaceId })
+    .from(workspaceUserTable)
+    .where(
+      and(
+        eq(workspaceUserTable.userId, userId),
+        eq(workspaceUserTable.role, "owner"),
+      ),
+    );
+  return rows.map((row) => row.workspaceId);
+}
+
+// Account storage applies to every workspace the person owns, so each of
+// those workspaces' audit logs records the change.
+async function auditOwned(
+  userId: string,
+  action: string,
+  data?: Record<string, unknown>,
 ) {
-  // Keeping the saved secret lets an admin change the bucket without
+  for (const workspaceId of await ownedWorkspaceIds(userId)) {
+    await recordAudit({
+      workspaceId,
+      actorId: userId,
+      action,
+      targetType: "workspace",
+      targetId: workspaceId,
+      data,
+    });
+  }
+}
+
+export async function connectAccountStorage(
+  userId: string,
+  input: StorageInput,
+) {
+  // Keeping the saved secret lets someone change the bucket settings without
   // retyping a key they may no longer have.
-  const existing = await getBucketConfig(workspaceId);
+  const existing = await getUserBucket(userId);
   const secret = input.secretAccessKey || existing?.secretAccessKey;
   if (!secret) {
     throw new HTTPException(400, {
@@ -87,7 +181,6 @@ export async function connectStorage(
     secretAccessKey: secret,
     keyPrefix: input.keyPrefix ?? "",
   };
-
   // Files already in the bucket are found by its endpoint, name and prefix;
   // pointing those somewhere else would leave every one of them unreachable.
   if (
@@ -96,24 +189,14 @@ export async function connectStorage(
       existing.bucket !== config.bucket ||
       existing.keyPrefix !== config.keyPrefix)
   ) {
-    const [inBucket] = await db
-      .select({ n: count() })
-      .from(storedFileTable)
-      .where(
-        and(
-          eq(storedFileTable.workspaceId, workspaceId),
-          eq(storedFileTable.storage, "s3"),
-        ),
-      );
-    if ((inBucket?.n ?? 0) > 0) {
+    const inBucket = await filesInUserBucket(userId);
+    if (inBucket > 0) {
       throw new HTTPException(409, {
-        message: `${inBucket?.n} files live in the current bucket. Delete them before switching buckets; the keys can still be updated.`,
+        message: `${inBucket} files live in the current bucket. Delete them before switching buckets; the keys can still be updated.`,
       });
     }
   }
-
   await testBucket(config);
-
   const values = {
     endpoint: config.endpoint,
     bucket: config.bucket,
@@ -121,28 +204,32 @@ export async function connectStorage(
     accessKeyId: config.accessKeyId,
     secretAccessKey: sealSecret(secret),
     keyPrefix: config.keyPrefix,
-    updatedBy: actorId,
   };
   await db
-    .insert(workspaceStorageTable)
-    .values({ workspaceId, ...values })
-    .onConflictDoUpdate({
-      target: workspaceStorageTable.workspaceId,
-      set: values,
-    });
-
-  await recordAudit({
-    workspaceId,
-    actorId,
-    action: "storage.connected",
-    targetType: "workspace",
-    targetId: workspaceId,
-    // Never the keys themselves.
-    data: { endpoint: config.endpoint, bucket: config.bucket },
+    .insert(userStorageTable)
+    .values({ userId, ...values })
+    .onConflictDoUpdate({ target: userStorageTable.userId, set: values });
+  // Never the keys themselves.
+  await auditOwned(userId, "storage.connected", {
+    endpoint: config.endpoint,
+    bucket: config.bucket,
   });
-  return storageStatus(workspaceId);
+  return accountStorageStatus(userId);
 }
 
+export async function disconnectAccountStorage(userId: string) {
+  const inBucket = await filesInUserBucket(userId);
+  if (inBucket > 0) {
+    throw new HTTPException(409, {
+      message: `${inBucket} files live in this bucket. Delete them first, or keep the bucket connected.`,
+    });
+  }
+  await db.delete(userStorageTable).where(eq(userStorageTable.userId, userId));
+  await auditOwned(userId, "storage.disconnected");
+  return accountStorageStatus(userId);
+}
+
+/** Drops a leftover workspace bucket once nothing is stored in it. */
 export async function disconnectStorage(workspaceId: string, actorId: string) {
   const [inBucket] = await db
     .select({ n: count() })
@@ -151,6 +238,7 @@ export async function disconnectStorage(workspaceId: string, actorId: string) {
       and(
         eq(storedFileTable.workspaceId, workspaceId),
         eq(storedFileTable.storage, "s3"),
+        isNull(storedFileTable.storageOwnerId),
       ),
     );
   if ((inBucket?.n ?? 0) > 0) {

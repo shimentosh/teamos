@@ -1,6 +1,6 @@
 # Environment Setup Guide
 
-This guide will help you set up the Kaneo development environment and troubleshoot common issues.
+This guide will help you set up the Company OS development environment and troubleshoot common issues.
 
 ## Quick Start
 
@@ -17,7 +17,7 @@ This starts both the API (port 1337) and web app (port 5173). Both will automati
 
 ## Environment Variables
 
-Kaneo uses a **single `.env` file** in the root of the project for all environment variables. This file is shared by both the API and web services.
+Company OS uses a **single `.env` file** in the root of the project for all environment variables. This file is shared by both the API and web services.
 
 ### Required Variables
 
@@ -26,7 +26,7 @@ For development, you'll need at minimum:
 - `KANEO_CLIENT_URL` - The URL of the web application (e.g., `http://localhost:5173`)
 - `KANEO_API_URL` - The URL of the API (e.g., `http://localhost:1337`)
 - `AUTH_SECRET` - Secret key for JWT token generation (**must be at least 32 characters long**; use a long, random value in production)
-- `DEVICE_AUTH_CLIENT_IDS` - **Optional.** Comma-separated list of allowed device-flow OAuth client IDs. When unset, Kaneo implicitly allows `kaneo-cli` and `kaneo-mcp` by default (no extra configuration for the CLI or MCP). Override only when you need additional trusted clients, for example `kaneo-cli,kaneo-mcp,my-desktop-app`.
+- `DEVICE_AUTH_CLIENT_IDS` - **Optional.** Comma-separated list of allowed device-flow OAuth client IDs. When unset, Company OS implicitly allows `kaneo-cli` and `kaneo-mcp` by default (no extra configuration for the CLI or MCP). Override only when you need additional trusted clients, for example `kaneo-cli,kaneo-mcp,my-desktop-app`.
 - `DATABASE_URL` - PostgreSQL connection string
 - `POSTGRES_DB` - PostgreSQL database name
 - `POSTGRES_USER` - PostgreSQL username
@@ -42,7 +42,7 @@ For local development, the web app also supports:
 
 ### Optional Variables
 
-Kaneo supports many optional configuration options including:
+Company OS supports many optional configuration options including:
 - `KANEO_INTERNAL_API_URL` - API origin used only for server-side requests from the built-in HTTP MCP endpoint. Defaults to `http://127.0.0.1:1337`; override it only if the API is not reachable there from its own process.
 - SSO providers (GitHub OAuth via `GITHUB_OAUTH_CLIENT_ID` / `GITHUB_OAUTH_CLIENT_SECRET`, Google, Discord, Custom OAuth/OIDC)
 - GitHub repository integration (GitHub App: `GITHUB_APP_ID`, `GITHUB_PRIVATE_KEY`, `GITHUB_WEBHOOK_SECRET`, optional `GITHUB_APP_NAME`), separate from GitHub SSO
@@ -54,7 +54,7 @@ Kaneo supports many optional configuration options including:
 
 #### Redis Configuration
 
-Kaneo supports three Redis deployment modes for WebSocket Pub/Sub. When any Redis mode is configured, WebSocket broadcasts use Redis Pub/Sub, allowing multiple API instances to relay real-time updates. When none are set, an in-memory adapter is used (single-instance only).
+Company OS supports three Redis deployment modes for WebSocket Pub/Sub. When any Redis mode is configured, WebSocket broadcasts use Redis Pub/Sub, allowing multiple API instances to relay real-time updates. When none are set, an in-memory adapter is used (single-instance only).
 
 **Standalone (single server):**
 - `REDIS_URL` - Redis connection string (e.g., `redis://localhost:6379`)
@@ -75,7 +75,7 @@ Kaneo supports three Redis deployment modes for WebSocket Pub/Sub. When any Redi
 
 #### Email with Resend
 
-Kaneo sends email through [Resend](https://resend.com) when `RESEND_API_KEY` is set, and falls back to SMTP otherwise:
+Company OS sends email through [Resend](https://resend.com) when `RESEND_API_KEY` is set, and falls back to SMTP otherwise:
 - `RESEND_API_KEY` - Resend API key with sending access
 - `EMAIL_FROM` - Sender such as `Acme <team@mail.acme.com>`; the domain must be verified in Resend (falls back to `SMTP_FROM`)
 
@@ -173,7 +173,7 @@ For a complete list of all environment variables, their descriptions, and config
 4. **Use the right configuration mode:**
    - For host-native development, prefer an explicit `DATABASE_URL`
    - If you derive from `POSTGRES_*`, set `POSTGRES_HOST=localhost` when running the API on your host
-   - `POSTGRES_DB` and `POSTGRES_USER` by themselves do not switch Kaneo into derived connection mode
+   - `POSTGRES_DB` and `POSTGRES_USER` by themselves do not switch Company OS into derived connection mode
 
 ### Authentication Issues
 

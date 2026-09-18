@@ -1,18 +1,18 @@
 ---
-title: Kaneo MCP Server
-description: Connect Kaneo to MCP clients like Cursor and Claude Desktop using the official Kaneo MCP server.
+title: Company OS MCP Server
+description: Connect Company OS to MCP clients like Cursor and Claude Desktop using the official Company OS MCP server.
 ---
 
-Kaneo supports the Model Context Protocol (MCP) in two ways:
+Company OS supports the Model Context Protocol (MCP) in two ways:
 
-1. **Built-in HTTP endpoint**: every Kaneo instance exposes `/api/mcp` out of the box. No extra setup, no extra process.
-2. **Stdio package** ([`@kaneo/mcp`](https://www.npmjs.com/package/@kaneo/mcp)): the official Kaneo MCP package on npm, a local stdio server for clients that prefer stdio transport.
+1. **Built-in HTTP endpoint**: every Company OS instance exposes `/api/mcp` out of the box. No extra setup, no extra process.
+2. **Stdio package** ([`@kaneo/mcp`](https://www.npmjs.com/package/@kaneo/mcp)): the official Company OS MCP package on npm, a local stdio server for clients that prefer stdio transport.
 
 Both offer the same tools for managing workspaces, projects, tasks, comments, and labels.
 
 ## Built-in HTTP endpoint
 
-Every Kaneo API instance ships with a Streamable HTTP MCP endpoint. This is the recommended approach for self-hosted deployments.
+Every Company OS API instance ships with a Streamable HTTP MCP endpoint. This is the recommended approach for self-hosted deployments.
 
 Point your MCP client at:
 
@@ -20,7 +20,7 @@ Point your MCP client at:
 https://your-kaneo-instance.com/api/mcp
 ```
 
-On first connect, you will be redirected to Kaneo to sign in and explicitly approve the MCP client. After approval, all MCP tools run as your authenticated user.
+On first connect, you will be redirected to Company OS to sign in and explicitly approve the MCP client. After approval, all MCP tools run as your authenticated user.
 
 The endpoint implements OAuth 2.1 with PKCE for authentication. Discovery metadata is available at:
 
@@ -34,15 +34,15 @@ for the exact contract, tests, Codex configuration, limitations, and rollback.
 
 ## Stdio package
 
-The `@kaneo/mcp` package runs a local stdio MCP server and authenticates with Kaneo using device authorization. Use this when your MCP client requires stdio transport.
+The `@kaneo/mcp` package runs a local stdio MCP server and authenticates with Company OS using device authorization. Use this when your MCP client requires stdio transport.
 
 ### Prerequisites
 
 - Node.js 24 or newer
-- A running Kaneo API
-- Access to the Kaneo web app to approve device login
+- A running Company OS API
+- Access to the Company OS web app to approve device login
 
-By default, self-hosted Kaneo allows both `kaneo-cli` and `kaneo-mcp` as device auth client IDs.
+By default, self-hosted Company OS allows both `kaneo-cli` and `kaneo-mcp` as device auth client IDs.
 
 ### Install and register
 
@@ -73,7 +73,7 @@ kaneo-mcp install --help
 
 ### Point to a self-hosted instance
 
-When generating config, pass your Kaneo base URL:
+When generating config, pass your Company OS base URL:
 
 ```bash
 kaneo-mcp install --target cursor-user -y --api-url https://kaneo.example.com
@@ -83,16 +83,16 @@ Or set it via environment variable:
 
 | Variable | Description |
 | --- | --- |
-| `KANEO_API_URL` | Kaneo API origin. Default: `http://localhost:1337`. Do not include `/api`. |
+| `KANEO_API_URL` | Company OS API origin. Default: `http://localhost:1337`. Do not include `/api`. |
 | `KANEO_MCP_CLIENT_ID` | Device auth client ID. Default: `kaneo-mcp`. |
 
 If you override `KANEO_MCP_CLIENT_ID`, make sure it is included in [`DEVICE_AUTH_CLIENT_IDS`](/core/installation/environment-variables).
 
 ### Authentication flow
 
-On the first tool call that needs Kaneo access, the MCP server:
+On the first tool call that needs Company OS access, the MCP server:
 
-1. Requests a device code from Kaneo
+1. Requests a device code from Company OS
 2. Prints a verification URL and user code
 3. Opens the browser when possible
 4. Polls until you approve sign-in

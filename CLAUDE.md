@@ -1,4 +1,4 @@
-# Kaneo project instructions
+# Company OS project instructions
 
 Canonical guidance: [AGENTS.md](./AGENTS.md)
 

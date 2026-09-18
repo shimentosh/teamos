@@ -1,6 +1,6 @@
-# Kaneo Mintlify Docs
+# Company OS Mintlify Docs
 
-This directory contains Kaneo documentation powered by Mintlify.
+This directory contains Company OS documentation powered by Mintlify.
 
 ## Monorepo setup
 

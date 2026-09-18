@@ -1,6 +1,6 @@
-# Kaneo Agent connector (Chrome / Edge)
+# Company OS Agent connector (Chrome / Edge)
 
-A Manifest V3 extension that tells the Kaneo Agent on the same Windows computer which **website domain** is open in the active tab. Without it, the agent on Windows records the browser as an application but no domain. macOS does not need it: the agent reads Safari and Chrome there through AppleScript.
+A Manifest V3 extension that tells the Company OS Agent on the same Windows computer which **website domain** is open in the active tab. Without it, the agent on Windows records the browser as an application but no domain. macOS does not need it: the agent reads Safari and Chrome there through AppleScript.
 
 ## What it shares
 
@@ -20,7 +20,7 @@ No host permissions, no content scripts, no remote code.
 
 ## Install (unpacked)
 
-1. Install and start the Kaneo Agent once. On start it registers the native messaging host for Chrome, Edge and Brave (per user, under `HKCU`).
+1. Install and start the Company OS Agent once. On start it registers the native messaging host for Chrome, Edge and Brave (per user, under `HKCU`).
 2. Open `chrome://extensions` (Chrome) or `edge://extensions` (Edge).
 3. Turn on **Developer mode**.
 4. Click **Load unpacked** and select this `browser-extension` folder.

@@ -37,6 +37,6 @@ Fixes land on the latest release. Self-hosted instances should track the most re
 
 In scope: the API (`apps/api`), the web app (`apps/web`), the MCP server (`packages/mcp`), the Helm chart, and the published Docker images.
 
-Out of scope: findings that require an already-compromised host or database, denial of service through sheer request volume, missing hardening headers with no demonstrated impact, and vulnerabilities in third-party dependencies without a working path through Kaneo. For dependency advisories, a pull request bumping the dependency is welcome and can be public.
+Out of scope: findings that require an already-compromised host or database, denial of service through sheer request volume, missing hardening headers with no demonstrated impact, and vulnerabilities in third-party dependencies without a working path through Company OS. For dependency advisories, a pull request bumping the dependency is welcome and can be public.
 
-Self-hosted deployments are configured by their operator. Reports that depend on an insecure configuration are useful when Kaneo's own defaults or documentation lead operators there; please say which default you followed.
+Self-hosted deployments are configured by their operator. Reports that depend on an insecure configuration are useful when Company OS's own defaults or documentation lead operators there; please say which default you followed.

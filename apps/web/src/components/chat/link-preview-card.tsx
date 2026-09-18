@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLinkPreview } from "@/hooks/queries/use-link-preview";
 import { cn } from "@/lib/cn";
-import type { TextPart } from "@/lib/linkify";
 
 const LINK_PROPS = {
   target: "_blank",
@@ -152,25 +151,3 @@ export function LinkPreviewCard({
 }
 
 /** Message text with http(s) links made clickable; the rest stays text. */
-export function LinkedText({ parts }: { parts: TextPart[] }) {
-  return (
-    <>
-      {parts.map((part, index) =>
-        part.type === "link" ? (
-          <a
-            // biome-ignore lint/suspicious/noArrayIndexKey: parts never reorder
-            key={index}
-            href={part.href}
-            {...LINK_PROPS}
-            className="break-all text-sky-600 underline-offset-2 hover:underline dark:text-sky-400"
-          >
-            {part.value}
-          </a>
-        ) : (
-          // biome-ignore lint/suspicious/noArrayIndexKey: parts never reorder
-          <span key={index}>{part.value}</span>
-        ),
-      )}
-    </>
-  );
-}

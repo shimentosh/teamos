@@ -1000,10 +1000,10 @@ export const taskRelationTable = pgTable(
     relationType: text("relation_type").notNull(),
     // Subtasks only: which of the parent's checklists the item sits in, and
     // its place there. Deleting a checklist deletes its items (the tasks).
-    checklistId: text("checklist_id").references(
-      () => taskChecklistTable.id,
-      { onDelete: "set null", onUpdate: "cascade" },
-    ),
+    checklistId: text("checklist_id").references(() => taskChecklistTable.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
     position: integer("position").notNull().default(0),
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   },
@@ -1794,6 +1794,13 @@ export const storedFileTable = pgTable(
     // "receipt" files belong to an expense; "file" ones show on the Files page.
     kind: text("kind").notNull().default("receipt"),
     folder: text("folder").notNull().default(""),
+    // For "s3" files: whose account bucket holds the object. Null means the
+    // older per-workspace bucket (workspace_storage). Reads always follow
+    // this, so a later owner or bucket change never strands a file.
+    storageOwnerId: text("storage_owner_id").references(() => userTable.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
     // Set while the file has a public link; clearing it revokes the link.
     shareToken: text("share_token").unique("stored_file_share_token_unique"),
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
@@ -1808,7 +1815,7 @@ export const storedFileTable = pgTable(
   ],
 );
 
-// Every email Kaneo sends goes through here: it is sent right away, retried
+// Every email Company OS sends goes through here: it is sent right away, retried
 // with backoff when the provider fails, and kept as a delivery log.
 export const emailOutboxTable = pgTable(
   "email_outbox",
@@ -1956,6 +1963,31 @@ export const userTaskOrderTable = pgTable(
 
 // A workspace's own S3-compatible bucket (Cloudflare R2 and the like). Without
 // a row, files are kept in Postgres.
+// A person's own S3-compatible bucket (Cloudflare R2 and the like). Every
+// workspace they own stores new files here; objects are keyed per workspace.
+export const userStorageTable = pgTable("user_storage", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => userTable.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+    }),
+  endpoint: text("endpoint").notNull(),
+  bucket: text("bucket").notNull(),
+  region: text("region").notNull().default("auto"),
+  accessKeyId: text("access_key_id").notNull(),
+  // Encrypted at rest; never returned by the API.
+  secretAccessKey: text("secret_access_key").notNull(),
+  keyPrefix: text("key_prefix").notNull().default(""),
+  updatedAt: timestamp("updated_at", { mode: "date" })
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+// Older per-workspace buckets. New setups use userStorageTable; a row stays
+// here only when moving it to the owner's account would have clashed with
+// another bucket, and it keeps serving that workspace until disconnected.
 export const workspaceStorageTable = pgTable("workspace_storage", {
   workspaceId: text("workspace_id")
     .primaryKey()
@@ -2011,6 +2043,11 @@ export const expenseTable = pgTable(
       () => storedFileTable.id,
       { onDelete: "set null", onUpdate: "cascade" },
     ),
+    // Optional: the task inside the project the money went to.
+    taskId: text("task_id").references(() => taskTable.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
     status: text("status").notNull().default("pending"),
     decidedBy: text("decided_by").references(() => userTable.id, {
       onDelete: "set null",
@@ -2029,6 +2066,38 @@ export const expenseTable = pgTable(
     index("expense_workspace_user_idx").on(table.workspaceId, table.userId),
     index("expense_projectId_idx").on(table.projectId),
     index("expense_receiptFileId_idx").on(table.receiptFileId),
+    index("expense_taskId_idx").on(table.taskId),
+  ],
+);
+
+// The categories people pick from when filing an expense. Expenses keep the
+// category's name as text, so removing one never rewrites past expenses.
+export const expenseCategoryTable = pgTable(
+  "expense_category",
+  {
+    id: text("id")
+      .$defaultFn(() => createId())
+      .primaryKey(),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaceTable.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    name: text("name").notNull(),
+    // A lucide icon name, from the fixed set the web app offers.
+    icon: text("icon").notNull().default("Tag"),
+    createdBy: text("created_by").references(() => userTable.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("expense_category_workspace_name_idx").on(
+      table.workspaceId,
+      sql`lower(${table.name})`,
+    ),
   ],
 );
 

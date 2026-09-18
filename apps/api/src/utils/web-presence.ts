@@ -1,4 +1,4 @@
-// Who has Kaneo open right now, per workspace: every open workspace page
+// Who has Company OS open right now, per workspace: every open workspace page
 // keeps the chat event stream connected, so an open stream means online.
 // Kept in memory, which is exact for a single API instance. With several
 // instances behind Redis each only knows its own streams.

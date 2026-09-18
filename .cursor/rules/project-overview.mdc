@@ -1,15 +1,15 @@
 ---
-description: Overview of the Kaneo project structure, architecture, and key technologies
+description: Overview of the Company OS project structure, architecture, and key technologies
 globs: 
 alwaysApply: true
 ---
 # Project Overview
 
-Kaneo is a self-hosted project management platform built with a focus on simplicity and performance. This document provides an overview of the project structure and architecture.
+Company OS is a self-hosted project management platform built with a focus on simplicity and performance. This document provides an overview of the project structure and architecture.
 
 ## Project Structure
 
-Kaneo is organized as a **monorepo** using pnpm workspaces:
+Company OS is organized as a **monorepo** using pnpm workspaces:
 
 ```
 kaneo/

@@ -1,6 +1,6 @@
 apiVersion: v2
 name: kaneo
-description: Kaneo - All you need. Nothing you don't. Open source project management that works for you.
+description: Company OS - All you need. Nothing you don't. Open source project management that works for you.
 type: application
 version: 2.25.0
 appVersion: "2.25.0"
@@ -15,7 +15,7 @@ sources:
   - https://github.com/usekaneo/kaneo
 icon: https://assets.kaneo.app/logo-text.png
 maintainers:
-  - name: Kaneo Team
+  - name: Company OS Team
     url: https://github.com/usekaneo
     email: info@kaneo.app
 annotations:

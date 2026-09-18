@@ -64,7 +64,7 @@ const pairRoute = createRoute({
   tags,
   summary: "Pair a desktop app",
   description:
-    "Exchange a one-time pairing code (created in Kaneo by the employee) for a device token. The token only works for the desktop agent endpoints.",
+    "Exchange a one-time pairing code (created in Company OS by the employee) for a device token. The token only works for the desktop agent endpoints.",
   middleware: [limitBody(4 * 1024)] as const,
   request: { body: json(pairBody) },
   responses: {
@@ -122,7 +122,7 @@ const activityRoute = createRoute({
   },
 });
 
-// --- Called from Kaneo by people (login session) -------------------------
+// --- Called from Company OS by people (login session) -------------------------
 
 const pairingCodeRoute = createRoute({
   method: "post",

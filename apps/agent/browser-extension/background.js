@@ -1,6 +1,6 @@
-// Kaneo Agent connector.
+// Company OS Agent connector.
 //
-// Tells the Kaneo Agent on this computer which website domain is in the active
+// Tells the Company OS Agent on this computer which website domain is in the active
 // tab of the focused browser window. Only the hostname leaves this script
 // (e.g. "github.com"), and only to the local agent over native messaging.
 // Paths, queries, titles, page contents and incognito windows are never read
@@ -79,7 +79,7 @@ function scheduleRetry(reason) {
   if (!loggedMissingHost) {
     loggedMissingHost = true;
     console.info(
-      "Kaneo Agent is not reachable; domains are not shared until it runs.",
+      "Company OS Agent is not reachable; domains are not shared until it runs.",
       reason || "",
     );
   }

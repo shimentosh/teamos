@@ -15,6 +15,6 @@ describe("OtpEmail", () => {
       createElement(OtpEmail, { otp: "123456", locale: "ja-JP" }),
     );
     expect(html).toContain("確認コード");
-    expect(html).toContain("Kaneo セキュリティメール");
+    expect(html).toContain("Company OS セキュリティメール");
   });
 });

@@ -4,7 +4,7 @@ import {
   Outlet,
   useLocation,
 } from "@tanstack/react-router";
-import { Bell, Code, Monitor, Settings, User } from "lucide-react";
+import { Bell, Code, HardDrive, Monitor, Settings, User } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import useAuth from "@/components/providers/auth-provider/hooks/use-auth";
 import SettingsSidebar from "@/components/SettingsSidebar";
@@ -51,6 +51,11 @@ function RouteComponent() {
       title: t("devices:title"),
       url: "/dashboard/settings/account/devices",
       icon: Monitor,
+    },
+    {
+      title: t("files:storage.title"),
+      url: "/dashboard/settings/account/storage",
+      icon: HardDrive,
     },
   ];
 

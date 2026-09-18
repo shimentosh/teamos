@@ -8,10 +8,15 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { createId } from "@paralleldrive/cuid2";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import db from "../database";
-import { storedFileTable, workspaceStorageTable } from "../database/schema";
+import {
+  storedFileTable,
+  userStorageTable,
+  workspaceStorageTable,
+  workspaceUserTable,
+} from "../database/schema";
 import {
   assertPublicDestination,
   privateDestinationsAllowed,
@@ -63,14 +68,11 @@ function clientFor(config: BucketConfig) {
   return client;
 }
 
-export async function getBucketConfig(
-  workspaceId: string,
-): Promise<BucketConfig | null> {
-  const [row] = await db
-    .select()
-    .from(workspaceStorageTable)
-    .where(eq(workspaceStorageTable.workspaceId, workspaceId));
-  if (!row) return null;
+type BucketRow = Omit<BucketConfig, "secretAccessKey"> & {
+  secretAccessKey: string;
+};
+
+function toConfig(row: BucketRow): BucketConfig {
   return {
     endpoint: row.endpoint,
     bucket: row.bucket,
@@ -79,6 +81,63 @@ export async function getBucketConfig(
     secretAccessKey: openSecret(row.secretAccessKey),
     keyPrefix: row.keyPrefix,
   };
+}
+
+/** A person's own bucket (Settings → Account → File storage). */
+export async function getUserBucket(
+  userId: string,
+): Promise<BucketConfig | null> {
+  const [row] = await db
+    .select()
+    .from(userStorageTable)
+    .where(eq(userStorageTable.userId, userId));
+  return row ? toConfig(row) : null;
+}
+
+/** A leftover per-workspace bucket, from before storage moved to accounts. */
+export async function getWorkspaceBucket(
+  workspaceId: string,
+): Promise<BucketConfig | null> {
+  const [row] = await db
+    .select()
+    .from(workspaceStorageTable)
+    .where(eq(workspaceStorageTable.workspaceId, workspaceId));
+  return row ? toConfig(row) : null;
+}
+
+export async function workspaceOwnerId(workspaceId: string) {
+  const [owner] = await db
+    .select({ userId: workspaceUserTable.userId })
+    .from(workspaceUserTable)
+    .where(
+      and(
+        eq(workspaceUserTable.workspaceId, workspaceId),
+        eq(workspaceUserTable.role, "owner"),
+      ),
+    )
+    .limit(1);
+  return owner?.userId ?? null;
+}
+
+/**
+ * Where a workspace's new files go: a leftover workspace bucket if it still
+ * has one, else its owner's account bucket, else Postgres (null).
+ */
+export async function bucketForWrite(
+  workspaceId: string,
+): Promise<{ config: BucketConfig; ownerId: string | null } | null> {
+  const legacy = await getWorkspaceBucket(workspaceId);
+  if (legacy) return { config: legacy, ownerId: null };
+  const ownerId = await workspaceOwnerId(workspaceId);
+  const config = ownerId ? await getUserBucket(ownerId) : null;
+  return config && ownerId ? { config, ownerId } : null;
+}
+
+/** The bucket an existing file was written to, wherever storage is now. */
+function bucketForFile(file: StoredFile) {
+  return file.storageOwnerId
+    ? getUserBucket(file.storageOwnerId)
+    : getWorkspaceBucket(file.workspaceId);
 }
 
 function objectKey(
@@ -93,7 +152,7 @@ function objectKey(
     .join("/");
 }
 
-/** Checks that Kaneo can write and delete in the bucket before saving. */
+/** Checks that Company OS can write and delete in the bucket before saving. */
 export async function testBucket(config: BucketConfig) {
   // The server connects to whatever endpoint an admin types, so it has to be
   // a public HTTPS host, never an address inside the server's own network.
@@ -162,7 +221,8 @@ type StoreInput = {
 
 /** Stores bytes in the workspace bucket when there is one, else Postgres. */
 export async function storeBlob(input: StoreInput) {
-  const bucket = await getBucketConfig(input.workspaceId);
+  const target = await bucketForWrite(input.workspaceId);
+  const bucket = target?.config ?? null;
   const limit = bucket ? BUCKET_MAX_BYTES : DB_MAX_BYTES;
   if (input.bytes.length > limit) {
     throw new HTTPException(413, {
@@ -194,6 +254,7 @@ export async function storeBlob(input: StoreInput) {
       mimeType: input.mimeType,
       size: input.bytes.length,
       storage: bucket ? "s3" : "db",
+      storageOwnerId: target?.ownerId ?? null,
       objectKey: objectKeyValue,
       data: bucket ? null : input.bytes,
       kind: input.kind,
@@ -214,7 +275,7 @@ export async function storeBlob(input: StoreInput) {
 
 // Only these are shown in the browser. Everything else (HTML, SVG, any +xml,
 // scripts, unknown types) is served as an opaque download, so an uploaded
-// file can never run as a page on Kaneo's origin or the bucket's.
+// file can never run as a page on Company OS's origin or the bucket's.
 const INLINE_TYPES = new Set([
   "image/png",
   "image/jpeg",
@@ -264,7 +325,7 @@ export async function openBlob(
   file: StoredFile,
 ): Promise<{ redirect: string } | { bytes: Buffer }> {
   if (file.storage === "s3" && file.objectKey) {
-    const bucket = await getBucketConfig(file.workspaceId);
+    const bucket = await bucketForFile(file);
     if (!bucket) {
       throw new HTTPException(410, {
         message: "This file's storage was disconnected",
@@ -294,7 +355,7 @@ export async function openBlob(
 /** The bytes themselves, for callers that must proxy (e.g. receipts). */
 export async function readBlobBytes(file: StoredFile): Promise<Buffer> {
   if (file.storage === "s3" && file.objectKey) {
-    const bucket = await getBucketConfig(file.workspaceId);
+    const bucket = await bucketForFile(file);
     if (!bucket) {
       throw new HTTPException(410, {
         message: "This file's storage was disconnected",
@@ -314,7 +375,7 @@ export async function readBlobBytes(file: StoredFile): Promise<Buffer> {
 
 export async function deleteBlob(file: StoredFile) {
   if (file.storage === "s3" && file.objectKey) {
-    const bucket = await getBucketConfig(file.workspaceId);
+    const bucket = await bucketForFile(file);
     if (bucket) {
       await clientFor(bucket).send(
         new DeleteObjectCommand({ Bucket: bucket.bucket, Key: file.objectKey }),

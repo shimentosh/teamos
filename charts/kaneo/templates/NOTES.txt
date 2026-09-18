@@ -38,7 +38,7 @@ or Gateway API by setting .Values.gateway.enabled=true
 {{- end }}
 
 NOTES:
-1. Kaneo is configured with PostgreSQL database for persistence.
+1. Company OS is configured with PostgreSQL database for persistence.
    {{- if .Values.postgresql.enabled }}
      {{- if .Values.postgresql.persistence.enabled }}
    A PersistentVolumeClaim is used to store the PostgreSQL database files.

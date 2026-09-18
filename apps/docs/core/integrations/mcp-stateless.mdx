@@ -1,6 +1,6 @@
 ---
 title: MCP 2026-07-28 stateless compatibility
-description: Protocol contract, verification, limitations, and rollback for Kaneo's dual-era Streamable HTTP endpoint.
+description: Protocol contract, verification, limitations, and rollback for Company OS's dual-era Streamable HTTP endpoint.
 ---
 
 # MCP 2026-07-28 stateless compatibility
@@ -31,7 +31,7 @@ Required modern request fields include:
 - matching `params._meta["io.modelcontextprotocol/protocolVersion"]`
 - per-request client capabilities and, preferably, client information
 
-Kaneo validates the bearer token before protocol routing on every request.
+Company OS validates the bearer token before protocol routing on every request.
 Modern requests use a fresh `McpServer` instance and hold no process-local
 protocol state. Requests classified as the 2025 era continue through the
 existing sessionful transport, preserving `initialize`,
@@ -59,8 +59,8 @@ pnpm --filter @kaneo/api build
 4. an effectful `update_task_status` request;
 5. separation of modern traffic from legacy `initialize` traffic.
 
-The tests use an in-process handler and stub the internal Kaneo API fetch. They
-do not mutate a real Kaneo database.
+The tests use an in-process handler and stub the internal Company OS API fetch. They
+do not mutate a real Company OS database.
 
 ## Codex configuration and manual verification
 
@@ -90,12 +90,12 @@ tool_timeout_sec = 60
 ```
 
 Keep the token in the environment, not in `config.toml`. Then start a new Codex
-session, inspect `/mcp`, list Kaneo tools, call `whoami`, and perform one
+session, inspect `/mcp`, list Company OS tools, call `whoami`, and perform one
 explicitly approved effectful call on test data. Capture traffic only with
 authorization values redacted. Modern traffic must show `server/discover`
 followed by self-contained calls, no `initialize`, and no `Mcp-Session-Id`.
 
-With the feature disabled, Codex uses its legacy MCP lifecycle. Kaneo should
+With the feature disabled, Codex uses its legacy MCP lifecycle. Company OS should
 still complete `initialize`, return a session ID, accept
 `notifications/initialized`, and serve tools on later requests carrying that
 ID.
@@ -106,7 +106,7 @@ ID.
   does not publish a Codex-release-to-MCP-revision matrix.
 - Modern Codex support remains experimental in `0.147.0`; dual-era serving is
   required until deployed clients are confirmed.
-- The modern handler is request-local. Kaneo tools currently need no
+- The modern handler is request-local. Company OS tools currently need no
   server-to-client request channel or cross-request protocol state.
 - No production image or NAS stack is changed by the repository tests.
 
@@ -117,6 +117,6 @@ leaving the existing v1 sessionful branch unchanged. Client rollback disables
 `features.mcp_2026_07_28` and starts a new Codex session. No database migration
 is involved.
 
-Production rollback must happen by deploying the previous Kaneo image through
+Production rollback must happen by deploying the previous Company OS image through
 the normal operator-controlled stack workflow. Do not restart the host and do
 not remove persistent volumes.

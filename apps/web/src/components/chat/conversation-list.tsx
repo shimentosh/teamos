@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/components/providers/auth-provider/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import type { ChatConversation } from "@/fetchers/chat";
+import { chatPlainText } from "@/lib/chat-mentions";
 import { cn } from "@/lib/cn";
 import {
   ConversationIcon,
@@ -87,7 +88,7 @@ export function ConversationList({
                 {!c.joined
                   ? t("chat:openToJoin")
                   : last
-                    ? `${c.type === "channel" && last.userName ? `${last.userName}: ` : ""}${last.body}`
+                    ? `${c.type === "channel" && last.userName ? `${last.userName}: ` : ""}${chatPlainText(last.body)}`
                     : t("chat:noMessagesYet")}
               </span>
               <UnreadBadge count={c.unreadCount} />

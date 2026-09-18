@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Trash2 } from "lucide-react";
 import { useEffect, useId, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { StorageSettings } from "@/components/files/storage-settings";
+import { WorkspaceStorageStatus } from "@/components/files/storage-settings";
 import PageTitle from "@/components/page-title";
 import {
   ScheduleFields,
@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { OptionPicker } from "@/components/ui/option-picker";
 import { Switch } from "@/components/ui/switch";
 import type { CompanySettings } from "@/fetchers/company/get-company-settings";
 import {
@@ -21,6 +22,8 @@ import {
 import useCompanySettings from "@/hooks/queries/company/use-company-settings";
 import useDepartments from "@/hooks/queries/company/use-departments";
 import { useWorkspacePermission } from "@/hooks/use-workspace-permission";
+import { currencyOptions, timeZoneOptions } from "@/lib/locale-options";
+import { formatMoney } from "@/lib/money";
 import { toast } from "@/lib/toast";
 
 export const Route = createFileRoute(
@@ -168,7 +171,7 @@ function Departments({
 }
 
 function RouteComponent() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const id = useId();
   const { workspace, canManageWorkspace, canManagePeople } =
     useWorkspacePermission();
@@ -185,13 +188,13 @@ function RouteComponent() {
     }
   }, [settings]);
 
-  const timeZones = useMemo(() => {
-    try {
-      return Intl.supportedValuesOf("timeZone");
-    } catch {
-      return [];
-    }
-  }, []);
+  const savedZone = settings?.timezone ?? "";
+  const savedCurrency = settings?.currency ?? "";
+  const zoneOptions = useMemo(() => timeZoneOptions(savedZone), [savedZone]);
+  const moneyOptions = useMemo(
+    () => currencyOptions(i18n.language, savedCurrency),
+    [i18n.language, savedCurrency],
+  );
 
   if (!workspaceId || !draft) return null;
 
@@ -237,28 +240,29 @@ function RouteComponent() {
               hint={t("company:basics.timezoneHint")}
               htmlFor={`${id}-tz`}
             >
-              <Input
+              <OptionPicker
                 id={`${id}-tz`}
-                list={`${id}-tz-list`}
+                options={zoneOptions}
                 value={draft.timezone}
-                onChange={(e) => set("timezone", e.target.value)}
+                onChange={(value) => set("timezone", value)}
+                placeholder={t("company:basics.searchTimezone")}
+                emptyText={t("company:basics.noMatch")}
+                disabled={!canEdit}
               />
-              <datalist id={`${id}-tz-list`}>
-                {timeZones.map((zone) => (
-                  <option key={zone} value={zone} />
-                ))}
-              </datalist>
             </Row>
             <Row
               label={t("company:basics.currency")}
               hint={t("company:basics.currencyHint")}
               htmlFor={`${id}-currency`}
             >
-              <Input
+              <OptionPicker
                 id={`${id}-currency`}
-                maxLength={3}
+                options={moneyOptions}
                 value={draft.currency}
-                onChange={(e) => set("currency", e.target.value.toUpperCase())}
+                onChange={(value) => set("currency", value)}
+                placeholder={t("company:basics.searchCurrency")}
+                emptyText={t("company:basics.noMatch")}
+                disabled={!canEdit}
               />
             </Row>
           </Section>
@@ -370,7 +374,18 @@ function RouteComponent() {
             </Row>
             <Row
               label={t("company:leave.overtimeRate")}
-              hint={t("company:leave.overtimeRateHint")}
+              hint={`${t("company:leave.overtimeRateHint")} ${t(
+                "company:leave.overtimeExample",
+                {
+                  // A 100 hourly rate makes the percentage read directly.
+                  rate: formatMoney(10000, draft.currency, i18n.language),
+                  pay: formatMoney(
+                    draft.overtimeRatePercent * 100,
+                    draft.currency,
+                    i18n.language,
+                  ),
+                },
+              )}`}
               htmlFor={`${id}-ot`}
             >
               <Input
@@ -457,7 +472,10 @@ function RouteComponent() {
             title={t("files:storage.title")}
             subtitle={t("files:storage.subtitle")}
           >
-            <StorageSettings workspaceId={workspaceId} canEdit={canEdit} />
+            <WorkspaceStorageStatus
+              workspaceId={workspaceId}
+              canEdit={canEdit}
+            />
           </Section>
         )}
       </div>

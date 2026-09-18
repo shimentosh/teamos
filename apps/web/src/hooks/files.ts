@@ -84,19 +84,36 @@ export function useFileActions(workspaceId: string) {
   };
 }
 
-export function useStorageActions(workspaceId: string) {
+/** Removes an older per-workspace bucket (storage now lives on accounts). */
+export function useDisconnectWorkspaceStorage(workspaceId: string) {
   const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => filesApi.disconnect(workspaceId),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["files", "storage"] }),
+  });
+}
+
+export function useAccountStorage() {
+  return useQuery({
+    queryKey: ["files", "storage", "account"],
+    queryFn: () => filesApi.accountStorage(),
+  });
+}
+
+export function useAccountStorageActions() {
+  const queryClient = useQueryClient();
+  // Every workspace the person owns follows this bucket.
   const onSuccess = () =>
-    queryClient.invalidateQueries({
-      queryKey: ["files", "storage", workspaceId],
-    });
+    queryClient.invalidateQueries({ queryKey: ["files", "storage"] });
   return {
     connect: useMutation({
-      mutationFn: (json: ConnectStorageRequest) => filesApi.connect(json),
+      mutationFn: (json: ConnectStorageRequest) =>
+        filesApi.connectAccount(json),
       onSuccess,
     }),
     disconnect: useMutation({
-      mutationFn: () => filesApi.disconnect(workspaceId),
+      mutationFn: () => filesApi.disconnectAccount(),
       onSuccess,
     }),
   };

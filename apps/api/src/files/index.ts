@@ -24,9 +24,11 @@ import {
 } from "../utils/require-workspace-permission";
 import { workspaceAccess } from "../utils/workspace-access-middleware";
 import {
-  connectStorage,
+  accountStorageStatus,
+  connectAccountStorage,
   createFolder,
   deleteFolder,
+  disconnectAccountStorage,
   disconnectStorage,
   fileRow,
   findFile,
@@ -53,17 +55,46 @@ const json = <T>(schema: T) => ({
   content: { "application/json": { schema } },
 });
 
+const storageFields = {
+  connected: z.boolean(),
+  endpoint: z.string().nullable(),
+  bucket: z.string().nullable(),
+  region: z.string().nullable(),
+  accessKeyId: z.string().nullable(),
+  keyPrefix: z.string().nullable(),
+  updatedAt: nullableResponseTimestamp,
+};
+
+const accountStorageSchema = z
+  .object(storageFields)
+  .openapi("AccountFileStorage");
+
 const storageSchema = z
   .object({
-    connected: z.boolean(),
-    endpoint: z.string().nullable(),
-    bucket: z.string().nullable(),
-    region: z.string().nullable(),
-    accessKeyId: z.string().nullable(),
-    keyPrefix: z.string().nullable(),
-    updatedAt: nullableResponseTimestamp,
+    ...storageFields,
+    source: z.enum(["account", "workspace"]).nullable().openapi({
+      description:
+        "`account`: the owner's account bucket. `workspace`: an older bucket kept for this workspace. Null: files are kept in Postgres.",
+    }),
+    ownerName: z.string().nullable(),
   })
   .openapi("FileStorage");
+
+const connectStorageBody = z.object({
+  endpoint: z.string().url().openapi({
+    example: "https://<account-id>.r2.cloudflarestorage.com",
+  }),
+  bucket: z.string().trim().min(3).max(63),
+  region: z.string().trim().max(40).optional(),
+  accessKeyId: z.string().trim().min(1).max(200),
+  secretAccessKey: z.string().trim().max(400).optional(),
+  keyPrefix: z
+    .string()
+    .trim()
+    .max(100)
+    .regex(/^[A-Za-z0-9._/-]*$/)
+    .optional(),
+});
 
 const fileSchema = z
   .object({
@@ -113,7 +144,7 @@ const getStorageRoute = createRoute({
   tags,
   summary: "File storage settings",
   description:
-    "Whether a Cloudflare R2 (or other S3-compatible) bucket is connected. The secret key is never returned.",
+    "Where this workspace's files go: the owner's account bucket, an older workspace bucket, or Postgres. Keys are never returned for the owner's account bucket.",
   middleware: [workspaceAccess.fromQuery(), settingsGuard] as const,
   request: { query: workspaceQuery },
   responses: {
@@ -122,39 +153,46 @@ const getStorageRoute = createRoute({
   },
 });
 
-const connectStorageRoute = createRoute({
-  method: "put",
-  operationId: "connectFileStorage",
-  path: "/storage",
+const accountStorageRoute = createRoute({
+  method: "get",
+  operationId: "getAccountFileStorage",
+  path: "/storage/account",
   tags,
-  summary: "Connect a bucket",
+  summary: "My file storage",
   description:
-    "Save R2 credentials after checking Kaneo can write to the bucket. Leave the secret empty to keep the saved one. Audit logged.",
-  middleware: [workspaceAccess.fromBody(), settingsGuard] as const,
-  request: {
-    body: json(
-      z.object({
-        workspaceId: z.string(),
-        endpoint: z.string().url().openapi({
-          example: "https://<account-id>.r2.cloudflarestorage.com",
-        }),
-        bucket: z.string().trim().min(3).max(63),
-        region: z.string().trim().max(40).optional(),
-        accessKeyId: z.string().trim().min(1).max(200),
-        secretAccessKey: z.string().trim().max(400).optional(),
-        keyPrefix: z
-          .string()
-          .trim()
-          .max(100)
-          .regex(/^[A-Za-z0-9._/-]*$/)
-          .optional(),
-      }),
-    ),
-  },
+    "Your own Cloudflare R2 (or other S3-compatible) bucket. Every workspace you own stores new files there. The secret key is never returned.",
   responses: {
-    200: jsonResponse("Connected", storageSchema),
+    200: jsonResponse("Storage", accountStorageSchema),
+  },
+});
+
+const connectAccountStorageRoute = createRoute({
+  method: "put",
+  operationId: "connectAccountFileStorage",
+  path: "/storage/account",
+  tags,
+  summary: "Connect my bucket",
+  description:
+    "Save R2 credentials after checking Company OS can write to the bucket. Leave the secret empty to keep the saved one. Switching buckets is refused while files live in the current one. Audit logged in each workspace you own.",
+  request: { body: json(connectStorageBody) },
+  responses: {
+    200: jsonResponse("Connected", accountStorageSchema),
     400: errorResponse("The bucket could not be written to"),
-    403: errorResponse("Missing workspace:manage_settings"),
+    409: errorResponse("Files still live in the current bucket"),
+  },
+});
+
+const disconnectAccountStorageRoute = createRoute({
+  method: "delete",
+  operationId: "disconnectAccountFileStorage",
+  path: "/storage/account",
+  tags,
+  summary: "Disconnect my bucket",
+  description:
+    "Your workspaces go back to storing files in Postgres. Refused while files still live in the bucket.",
+  responses: {
+    200: jsonResponse("Disconnected", accountStorageSchema),
+    409: errorResponse("Files still live in the bucket"),
   },
 });
 
@@ -165,7 +203,7 @@ const disconnectStorageRoute = createRoute({
   tags,
   summary: "Disconnect the bucket",
   description:
-    "Go back to storing files in Postgres. Refused while files still live in the bucket.",
+    "Remove an older per-workspace bucket; new files then follow the owner's account storage. Refused while files still live in the bucket.",
   middleware: [workspaceAccess.fromQuery(), settingsGuard] as const,
   request: { query: workspaceQuery },
   responses: {
@@ -481,13 +519,18 @@ const files = apiRouter()
   .openapi(getStorageRoute, async (c) =>
     c.json(await storageStatus(c.req.valid("query").workspaceId), 200),
   )
-  .openapi(connectStorageRoute, async (c) => {
-    const { workspaceId, ...input } = c.req.valid("json");
-    return c.json(
-      await connectStorage(workspaceId, c.get("userId"), input),
+  .openapi(accountStorageRoute, async (c) =>
+    c.json(await accountStorageStatus(c.get("userId")), 200),
+  )
+  .openapi(connectAccountStorageRoute, async (c) =>
+    c.json(
+      await connectAccountStorage(c.get("userId"), c.req.valid("json")),
       200,
-    );
-  })
+    ),
+  )
+  .openapi(disconnectAccountStorageRoute, async (c) =>
+    c.json(await disconnectAccountStorage(c.get("userId")), 200),
+  )
   .openapi(disconnectStorageRoute, async (c) =>
     c.json(
       await disconnectStorage(
