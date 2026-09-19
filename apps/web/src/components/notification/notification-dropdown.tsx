@@ -1,6 +1,12 @@
 import { useNavigate } from "@tanstack/react-router";
 import { Bell, Mail } from "lucide-react";
-import { forwardRef, useCallback, useImperativeHandle, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { openChangeSet } from "@/components/ai/ask-teamos";
 import {
@@ -35,6 +41,7 @@ import useGetNotifications from "@/hooks/queries/notification/use-get-notificati
 import { useInvitationActions } from "@/hooks/use-invitation-actions";
 import { useRegisterShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { cn } from "@/lib/cn";
+import { desktopSetBadge, isDesktop } from "@/lib/desktop";
 import { formatDateMedium, formatRelativeTime } from "@/lib/format";
 import { getStatusLabel } from "@/lib/i18n/domain";
 import type { Notification } from "@/types/notification";
@@ -459,6 +466,21 @@ const NotificationDropdown = forwardRef<NotificationDropdownRef>(
     useImperativeHandle(ref, () => ({
       toggle: () => setIsOpen(!isOpen),
     }));
+
+    // Clicking an OS notification focuses the app and opens the bell, so the
+    // thing that was announced is one glance away rather than one hunt away.
+    useEffect(() => {
+      const open = () => setIsOpen(true);
+      window.addEventListener("teamos:open-notifications", open);
+      return () =>
+        window.removeEventListener("teamos:open-notifications", open);
+    }, []);
+
+    // Mirrors the bell's count onto the taskbar/dock icon in the desktop shell.
+    useEffect(() => {
+      if (!isDesktop()) return;
+      void desktopSetBadge(badgeCount);
+    }, [badgeCount]);
 
     const handleClearAll = () => {
       clearAll();

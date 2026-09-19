@@ -44,6 +44,7 @@ import githubIntegration, {
 } from "./github-integration";
 import getInstanceStatus from "./instance/controllers/get-instance-status";
 import instanceEmail, { watchEmailSettings } from "./instance-settings";
+import instanceRegistration from "./instance-settings/registration";
 import invitation from "./invitation";
 import label from "./label";
 import linkPreview from "./link-preview";
@@ -686,6 +687,10 @@ export function createApp() {
   const taskAttachmentApi = api.route("/task-attachment", taskAttachment);
   const expenseCategoryApi = api.route("/expense-category", expenseCategory);
   const instanceEmailApi = api.route("/instance/email", instanceEmail);
+  const instanceRegistrationApi = api.route(
+    "/instance/registration",
+    instanceRegistration,
+  );
   const emailTemplatesApi = api.route("/email-templates", emailTemplates);
   const notificationPolicyApi = api.route(
     "/notification-policy",
@@ -845,6 +850,7 @@ export function createApp() {
     taskAttachmentApi,
     expenseCategoryApi,
     instanceEmailApi,
+    instanceRegistrationApi,
     emailTemplatesApi,
     notificationPolicyApi,
     genericWebhookIntegrationApi,
@@ -985,6 +991,7 @@ const {
   taskAttachmentApi,
   expenseCategoryApi,
   instanceEmailApi,
+  instanceRegistrationApi,
   emailTemplatesApi,
   notificationPolicyApi,
   genericWebhookIntegrationApi,
@@ -1074,6 +1081,7 @@ export type AppType =
   | typeof taskAttachmentApi
   | typeof expenseCategoryApi
   | typeof instanceEmailApi
+  | typeof instanceRegistrationApi
   | typeof emailTemplatesApi
   | typeof notificationPolicyApi
   | typeof workflowRuleApi

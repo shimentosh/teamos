@@ -5,7 +5,6 @@ import {
   setEmailSettings,
 } from "@kaneo/email";
 import { eq, inArray } from "drizzle-orm";
-import type { Context, Next } from "hono";
 import { HTTPException } from "hono/http-exception";
 import db from "../database";
 import { instanceSettingTable, userTable } from "../database/schema";
@@ -17,7 +16,7 @@ import {
   nullableResponseTimestamp,
   z,
 } from "../openapi";
-import { isInstanceAdmin } from "../utils/is-instance-admin";
+import { requireInstanceAdmin } from "../utils/require-instance-admin";
 import { openSecret, sealSecret } from "../utils/secret-box";
 
 const KEYS = {
@@ -74,15 +73,6 @@ export function watchEmailSettings() {
   void loadEmailSettings();
   refresh ??= setInterval(() => void loadEmailSettings(), 60_000);
   refresh.unref?.();
-}
-
-async function requireInstanceAdmin(c: Context, next: Next) {
-  if (!(await isInstanceAdmin(c))) {
-    throw new HTTPException(403, {
-      message: "Only the instance admin can change this",
-    });
-  }
-  return next();
 }
 
 async function status() {

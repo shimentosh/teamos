@@ -3,6 +3,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { getApiUrl } from "@/fetchers/get-api-url";
 import { authClient } from "@/lib/auth-client";
+import {
+  requestNotificationPermission,
+  showOsNotification,
+} from "@/lib/os-notifications";
 
 export function getUserWsUrl() {
   const base = getApiUrl("ws");
@@ -26,6 +30,20 @@ export function useUserWebSocket() {
   const retriesRef = useRef(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Browsers only honour a permission prompt raised from a user gesture, so
+  // the ask waits for the first click of the session rather than firing on
+  // mount. It asks once; a dismissal is remembered.
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    const ask = () => {
+      void requestNotificationPermission();
+    };
+
+    window.addEventListener("pointerdown", ask, { once: true });
+    return () => window.removeEventListener("pointerdown", ask);
+  }, [session?.user?.id]);
 
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -58,9 +76,17 @@ export function useUserWebSocket() {
         try {
           const message = JSON.parse(event.data as string) as {
             type?: string;
+            title?: string | null;
+            content?: string | null;
           };
           if (message.type === "NOTIFICATION_CREATED") {
             queryClient.invalidateQueries({ queryKey: ["notifications"] });
+            // Raised only while TeamOS is in the background; the bell covers
+            // the foreground case.
+            void showOsNotification({
+              title: message.title,
+              content: message.content,
+            });
           }
           if (message.type === "PRESENCE_CHANGED") {
             queryClient.invalidateQueries({ queryKey: ["people-live"] });

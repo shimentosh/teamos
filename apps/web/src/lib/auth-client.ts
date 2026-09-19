@@ -8,6 +8,7 @@ import {
   inferAdditionalFields,
   lastLoginMethodClient,
   magicLinkClient,
+  oneTimeTokenClient,
   organizationClient,
 } from "better-auth/client/plugins";
 import type { AccessControl } from "better-auth/plugins/access";
@@ -49,6 +50,7 @@ export const authClient = createAuthClient({
     }),
     genericOAuthClient(),
     deviceAuthorizationClient(),
+    oneTimeTokenClient(),
     apiKeyClient(),
     adminClient(),
     inferAdditionalFields({

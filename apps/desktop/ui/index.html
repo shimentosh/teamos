@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>TeamOS — Instance</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>TeamOS server</h1>
+      <p class="hint">
+        The web address of the TeamOS your team uses. Changing it signs this app
+        out of the current one.
+      </p>
+
+      <form id="form" autocomplete="off">
+        <input
+          id="url"
+          type="text"
+          spellcheck="false"
+          autocapitalize="none"
+          placeholder="https://teamos.example.com"
+          aria-label="TeamOS web address"
+        />
+        <p id="error" class="error" role="alert" hidden></p>
+        <button id="save" type="submit">Use this server</button>
+      </form>
+
+      <p class="version" id="version"></p>
+    </main>
+
+    <script type="module" src="main.js"></script>
+  </body>
+</html>

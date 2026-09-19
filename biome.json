@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.5.4/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.5.7/schema.json",
 	"vcs": {
 		"enabled": false,
 		"clientKind": "git",
@@ -60,6 +60,16 @@
 		}
 	},
 	"overrides": [
+		{
+			"includes": ["scripts/**/*.mjs"],
+			"linter": {
+				"rules": {
+					"suspicious": {
+						"noUndeclaredEnvVars": "off"
+					}
+				}
+			}
+		},
 		{
 			"includes": ["release.config.js", "scripts/release/*.mjs"],
 			"linter": {

@@ -345,6 +345,7 @@
 	"settings": {
 		"account": "Account",
 		"developer": "Developer",
+		"instance": "Instance",
 		"information": "Information",
 		"notifications": "Notifications",
 		"preferences": "Preferences",
@@ -2386,7 +2387,13 @@
 			"noMatches": "No tasks here match."
 		},
 		"kanban": {
-			"addTask": "Add task"
+			"addTask": "Add task",
+			"addCard": "Add a card",
+			"addCardPlaceholder": "Enter a title for this card...",
+			"addCardSubmit": "Add card",
+			"addCardWithDetails": "Add card with details...",
+			"addCardError": "Couldn't add the card",
+			"emptyHint": "Double-click or right-click here to add a card"
 		},
 		"pr": {
 			"merged": "Merged",
@@ -4441,5 +4448,58 @@
 		"seeProjects": "All projects",
 		"seeAttendance": "Attendance",
 		"seeAll": "See all"
+	},
+	"registrationSetup": {
+		"title": "Registration",
+		"instanceAdmin": "Instance admin",
+		"subtitle": "Whether new people can create an account on this server. Only you can see this.",
+		"open": "Open",
+		"closed": "Invite only",
+		"toggleLabel": "Allow anyone to sign up",
+		"toggleHelp": "When this is off, an account can only be created from a valid workspace invitation. The very first signup on an empty server is always allowed, so setup never locks you out.",
+		"sourceEnv": "Following the server setting (DISABLE_REGISTRATION)",
+		"sourceApp": "Set here",
+		"followEnv": "Follow the server setting",
+		"followEnvDone": "Now following the server setting",
+		"saved": "Registration settings saved",
+		"updated": "Updated {{date}} by {{name}}",
+		"error": "Couldn't save the registration setting"
+	},
+	"desktopApp": {
+		"signIn": {
+			"pageTitle": "Sign in",
+			"title": "Sign in to TeamOS",
+			"subtitle": "Signing in opens your browser, where TeamOS already knows you.",
+			"button": "Continue in browser",
+			"opening": "Opening your browser...",
+			"hint": "Come back here once your browser says you're done."
+		},
+		"handoff": {
+			"pageTitle": "Open TeamOS Desktop",
+			"title": "Open TeamOS Desktop",
+			"subtitle": "Continue as {{email}} in the desktop app.",
+			"checkingSession": "Checking your session...",
+			"continueButton": "Open the desktop app",
+			"differentAccount": "Use a different account",
+			"signInTitle": "Sign in to continue",
+			"signInSubtitle": "Sign in, and the desktop app picks up from here.",
+			"signInButton": "Sign in",
+			"doneTitle": "You're signed in",
+			"doneSubtitle": "The desktop app is taking over. You can close this tab.",
+			"retry": "Send it again",
+			"invalidTitle": "This link is incomplete",
+			"invalidSubtitle": "Open the desktop app and start sign-in from there so it can verify the request.",
+			"goToTeamOS": "Go to TeamOS",
+			"error": "Could not hand your session to the desktop app. Try again."
+		},
+		"callback": {
+			"pageTitle": "Signing in",
+			"title": "Signing you in",
+			"subtitle": "Finishing up with your browser session.",
+			"working": "One moment...",
+			"errorTitle": "That sign-in link didn't work",
+			"errorSubtitle": "Sign-in links are single-use and expire after two minutes. Start again to get a fresh one.",
+			"retry": "Sign in again"
+		}
 	}
 }

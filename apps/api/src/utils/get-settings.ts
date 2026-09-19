@@ -2,12 +2,15 @@ import { isEmailConfigured } from "@kaneo/email";
 import { config } from "dotenv-mono";
 import { isBillingEnabled } from "../billing/config";
 import { isGithubSsoConfigured } from "./github-sso-env";
+import { isRegistrationDisabled } from "./registration-settings";
 
 config();
 
-function getSettings() {
+// Async because registration can be closed from Settings, which is stored in
+// the database rather than the environment.
+async function getSettings() {
   return {
-    disableRegistration: process.env.DISABLE_REGISTRATION === "true",
+    disableRegistration: await isRegistrationDisabled(),
     disablePasswordRegistration:
       process.env.DISABLE_PASSWORD_REGISTRATION === "true",
     disableEmailOtpSignIn: process.env.DISABLE_EMAIL_OTP_SIGN_IN === "true",

@@ -1587,7 +1587,8 @@
 				"number": "Number",
 				"text": "Text"
 			}
-		}
+		},
+		"instance": "Instance"
 	},
 	"navigation": {
 		"commandPalette": {
@@ -2373,7 +2374,13 @@
 			"updateError": "Couldn't update the task"
 		},
 		"kanban": {
-			"addTask": "Προσθήκη εργασίας"
+			"addTask": "Προσθήκη εργασίας",
+			"addCard": "Add a card",
+			"addCardError": "Couldn't add the card",
+			"addCardPlaceholder": "Enter a title for this card...",
+			"addCardSubmit": "Add card",
+			"addCardWithDetails": "Add card with details...",
+			"emptyHint": "Double-click or right-click here to add a card"
 		},
 		"pr": {
 			"merged": "Συγχωνευμένο",
@@ -4441,5 +4448,58 @@
 		},
 		"title": "Dashboard",
 		"unassigned": "Unassigned"
+	},
+	"registrationSetup": {
+		"closed": "Invite only",
+		"error": "Couldn't save the registration setting",
+		"followEnv": "Follow the server setting",
+		"followEnvDone": "Now following the server setting",
+		"instanceAdmin": "Instance admin",
+		"open": "Open",
+		"saved": "Registration settings saved",
+		"sourceApp": "Set here",
+		"sourceEnv": "Following the server setting (DISABLE_REGISTRATION)",
+		"subtitle": "Whether new people can create an account on this server. Only you can see this.",
+		"title": "Registration",
+		"toggleHelp": "When this is off, an account can only be created from a valid workspace invitation. The very first signup on an empty server is always allowed, so setup never locks you out.",
+		"toggleLabel": "Allow anyone to sign up",
+		"updated": "Updated {{date}} by {{name}}"
+	},
+	"desktopApp": {
+		"callback": {
+			"errorSubtitle": "Sign-in links are single-use and expire after two minutes. Start again to get a fresh one.",
+			"errorTitle": "That sign-in link didn't work",
+			"pageTitle": "Signing in",
+			"retry": "Sign in again",
+			"subtitle": "Finishing up with your browser session.",
+			"title": "Signing you in",
+			"working": "One moment..."
+		},
+		"handoff": {
+			"checkingSession": "Checking your session...",
+			"continueButton": "Open the desktop app",
+			"differentAccount": "Use a different account",
+			"doneSubtitle": "The desktop app is taking over. You can close this tab.",
+			"doneTitle": "You're signed in",
+			"error": "Could not hand your session to the desktop app. Try again.",
+			"goToTeamOS": "Go to TeamOS",
+			"invalidSubtitle": "Open the desktop app and start sign-in from there so it can verify the request.",
+			"invalidTitle": "This link is incomplete",
+			"pageTitle": "Open TeamOS Desktop",
+			"retry": "Send it again",
+			"signInButton": "Sign in",
+			"signInSubtitle": "Sign in, and the desktop app picks up from here.",
+			"signInTitle": "Sign in to continue",
+			"subtitle": "Continue as {{email}} in the desktop app.",
+			"title": "Open TeamOS Desktop"
+		},
+		"signIn": {
+			"button": "Continue in browser",
+			"hint": "Come back here once your browser says you're done.",
+			"opening": "Opening your browser...",
+			"pageTitle": "Sign in",
+			"subtitle": "Signing in opens your browser, where TeamOS already knows you.",
+			"title": "Sign in to TeamOS"
+		}
 	}
 }

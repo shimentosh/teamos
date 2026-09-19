@@ -27,6 +27,7 @@ import {
   genericOAuth,
   lastLoginMethod,
   magicLink,
+  oneTimeToken,
   openAPI,
   organization,
 } from "better-auth/plugins";
@@ -57,13 +58,13 @@ import { getGithubSsoOAuthCredentials } from "./utils/github-sso-env";
 import { isCloud } from "./utils/is-cloud";
 import { isDisposableEmail } from "./utils/is-disposable-email";
 import { isLocalSignInPath } from "./utils/is-local-sign-in-path";
+import { isRegistrationDisabled } from "./utils/registration-settings";
 import { verifyTurnstile } from "./utils/verify-turnstile";
 
 config();
 
 const githubSso = getGithubSsoOAuthCredentials();
 
-const isRegistrationDisabled = process.env.DISABLE_REGISTRATION === "true";
 const isPasswordRegistrationDisabled =
   process.env.DISABLE_PASSWORD_REGISTRATION === "true";
 const isLoginFormDisabled = process.env.DISABLE_LOGIN_FORM === "true";
@@ -606,6 +607,14 @@ export const auth = betterAuth({
       validateClient: async (clientId) =>
         getDeviceAuthClientIds().has(clientId),
     }),
+    // Hands a browser session to the desktop app: the browser mints a
+    // single-use token after signing in, the desktop webview redeems it and
+    // gets the session cookie. Both then share one session, so signing out
+    // in either place ends it everywhere.
+    oneTimeToken({
+      expiresIn: 2,
+      storeToken: "hashed",
+    }),
     adminPlugin({
       defaultRole: "user",
       adminRoles: ["admin"],
@@ -859,7 +868,7 @@ export const auth = betterAuth({
         }
       }
 
-      if (!isRegistrationDisabled || isInstanceAdminSetup) {
+      if (!(await isRegistrationDisabled()) || isInstanceAdminSetup) {
         return;
       }
 

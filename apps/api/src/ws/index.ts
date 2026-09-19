@@ -363,14 +363,24 @@ subscribeToEvent<{
   );
 });
 
-subscribeToEvent<{ notificationId: string; userId: string }>(
-  "notification.created",
-  async (data) => {
-    if (data.userId) {
-      broadcastToUser(data.userId, { type: "NOTIFICATION_CREATED" });
-    }
-  },
-);
+subscribeToEvent<{
+  notificationId: string;
+  userId: string;
+  title?: string | null;
+  content?: string | null;
+}>("notification.created", async (data) => {
+  if (!data.userId) return;
+
+  // Only this user's own connections receive it, so the notification's own
+  // title and body are safe to carry, and carrying them lets a client raise an
+  // OS notification immediately instead of refetching the list first.
+  broadcastToUser(data.userId, {
+    type: "NOTIFICATION_CREATED",
+    notificationId: data.notificationId,
+    title: data.title ?? null,
+    content: data.content ?? null,
+  });
+});
 
 for (const eventName of taskUpdateEvents) {
   subscribeToEvent<TaskEvent>(eventName, async (data) => {

@@ -13,6 +13,7 @@ import {
   Monitor,
   Settings,
   User,
+  UserPlus,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import useAuth from "@/components/providers/auth-provider/hooks/use-auth";
@@ -26,6 +27,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/cn";
 import { getInitials } from "@/lib/get-initials";
 
@@ -40,6 +42,11 @@ function RouteComponent() {
   const { user } = useAuth();
   const location = useLocation();
   const isActivePath = (path: string) => location.pathname === path;
+  // Server-wide settings belong to the instance admin (the first person who
+  // signed up here). Everyone else never sees the group; the API refuses them
+  // either way.
+  const { data: session } = authClient.useSession();
+  const isInstanceAdmin = session?.user?.role === "admin";
   const menuItems = [
     {
       title: t("settings:information"),
@@ -125,6 +132,36 @@ function RouteComponent() {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
+
+          {isInstanceAdmin && (
+            <SidebarGroup className="gap-1 p-1">
+              <SidebarGroupLabel className="h-7 px-2 text-xs uppercase tracking-wide text-sidebar-foreground/70">
+                {t("settings:instance")}
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu className="gap-0.5">
+                  <SidebarMenuItem>
+                    <Button
+                      render={
+                        <Link to="/dashboard/settings/account/registration" />
+                      }
+                      variant="ghost"
+                      size="sm"
+                      className={cn(
+                        "h-8 w-full justify-start gap-2 rounded-lg px-2 text-sm font-normal text-sidebar-foreground/80",
+                        isActivePath(
+                          "/dashboard/settings/account/registration",
+                        ) && "bg-sidebar-accent text-sidebar-accent-foreground",
+                      )}
+                    >
+                      <UserPlus className="h-4 w-4" />
+                      <span>{t("registrationSetup:title")}</span>
+                    </Button>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          )}
 
           <SidebarGroup className="gap-1 p-1">
             <SidebarGroupLabel className="h-7 px-2 text-xs uppercase tracking-wide text-sidebar-foreground/70">

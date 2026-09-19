@@ -15,7 +15,9 @@ import useGetConfig from "@/hooks/queries/config/use-get-config";
 import useInstanceStatus from "@/hooks/queries/instance/use-instance-status";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/cn";
+import { isDesktop } from "@/lib/desktop";
 import { toast } from "@/lib/toast";
+import { DesktopSignIn } from "../../components/auth/desktop-sign-in";
 import { AuthLayout } from "../../components/auth/layout";
 import { OtpSignInForm } from "../../components/auth/otp-sign-in-form";
 import { SignInForm } from "../../components/auth/sign-in-form";
@@ -239,6 +241,12 @@ function SignIn() {
       handleCustomOAuth();
     }
   }, [config, handleCustomOAuth, search.error]);
+
+  // The desktop shell never shows a credential form: it signs in through the
+  // system browser so password managers, passkeys and SSO all still work.
+  if (isDesktop()) {
+    return <DesktopSignIn />;
+  }
 
   // Treat "no users yet" as still loading so the skeleton stays visible
   // while the useEffect above redirects to /auth/sign-up. Otherwise the

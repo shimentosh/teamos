@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as DesktopRouteImport } from './routes/desktop'
 import { Route as DeviceRouteImport } from './routes/device'
 import { Route as TestErrorRouteImport } from './routes/test-error'
 import { Route as LayoutAuthenticatedRouteImport } from './routes/_layout/_authenticated'
@@ -19,6 +20,8 @@ import { Route as AuthCheckEmailRouteImport } from './routes/auth/check-email'
 import { Route as AuthSignInRouteImport } from './routes/auth/sign-in'
 import { Route as AuthSignUpRouteImport } from './routes/auth/sign-up'
 import { Route as AuthVerifyOtpRouteImport } from './routes/auth/verify-otp'
+import { Route as DesktopIndexRouteImport } from './routes/desktop/index'
+import { Route as DesktopCallbackRouteImport } from './routes/desktop/callback'
 import { Route as DeviceIndexRouteImport } from './routes/device/index'
 import { Route as DeviceApproveRouteImport } from './routes/device/approve'
 import { Route as McpAuthorizeRouteImport } from './routes/mcp.authorize'
@@ -43,6 +46,7 @@ import { Route as LayoutAuthenticatedDashboardSettingsAccountEmailRouteImport } 
 import { Route as LayoutAuthenticatedDashboardSettingsAccountInformationRouteImport } from './routes/_layout/_authenticated/dashboard/settings/account/information'
 import { Route as LayoutAuthenticatedDashboardSettingsAccountNotificationsRouteImport } from './routes/_layout/_authenticated/dashboard/settings/account/notifications'
 import { Route as LayoutAuthenticatedDashboardSettingsAccountPreferencesRouteImport } from './routes/_layout/_authenticated/dashboard/settings/account/preferences'
+import { Route as LayoutAuthenticatedDashboardSettingsAccountRegistrationRouteImport } from './routes/_layout/_authenticated/dashboard/settings/account/registration'
 import { Route as LayoutAuthenticatedDashboardSettingsAccountStorageRouteImport } from './routes/_layout/_authenticated/dashboard/settings/account/storage'
 import { Route as LayoutAuthenticatedDashboardSettingsWorkspaceAuditRouteImport } from './routes/_layout/_authenticated/dashboard/settings/workspace/audit'
 import { Route as LayoutAuthenticatedDashboardSettingsWorkspaceBillingRouteImport } from './routes/_layout/_authenticated/dashboard/settings/workspace/billing'
@@ -92,6 +96,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DesktopRoute = DesktopRouteImport.update({
+  id: '/desktop',
+  path: '/desktop',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DeviceRoute = DeviceRouteImport.update({
   id: '/device',
   path: '/device',
@@ -125,6 +134,16 @@ const AuthVerifyOtpRoute = AuthVerifyOtpRouteImport.update({
   id: '/verify-otp',
   path: '/verify-otp',
   getParentRoute: () => AuthRoute,
+} as any)
+const DesktopIndexRoute = DesktopIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DesktopRoute,
+} as any)
+const DesktopCallbackRoute = DesktopCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => DesktopRoute,
 } as any)
 const DeviceIndexRoute = DeviceIndexRouteImport.update({
   id: '/',
@@ -264,6 +283,12 @@ const LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute =
   LayoutAuthenticatedDashboardSettingsAccountPreferencesRouteImport.update({
     id: '/preferences',
     path: '/preferences',
+    getParentRoute: () => LayoutAuthenticatedDashboardSettingsAccountRoute,
+  } as any)
+const LayoutAuthenticatedDashboardSettingsAccountRegistrationRoute =
+  LayoutAuthenticatedDashboardSettingsAccountRegistrationRouteImport.update({
+    id: '/registration',
+    path: '/registration',
     getParentRoute: () => LayoutAuthenticatedDashboardSettingsAccountRoute,
   } as any)
 const LayoutAuthenticatedDashboardSettingsAccountStorageRoute =
@@ -515,15 +540,18 @@ const LayoutAuthenticatedDashboardWorkspaceWorkspaceIdProjectProjectIdTaskTaskId
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
+  '/desktop': typeof DesktopRouteWithChildren
   '/device': typeof DeviceRouteWithChildren
   '/test-error': typeof TestErrorRoute
   '/auth/check-email': typeof AuthCheckEmailRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
+  '/desktop/callback': typeof DesktopCallbackRoute
   '/device/approve': typeof DeviceApproveRoute
   '/mcp/authorize': typeof McpAuthorizeRoute
   '/public-project/$projectId': typeof PublicProjectProjectIdRoute
+  '/desktop/': typeof DesktopIndexRoute
   '/device/': typeof DeviceIndexRoute
   '/dashboard': typeof LayoutAuthenticatedDashboardRouteWithChildren
   '/invitations': typeof LayoutAuthenticatedInvitationsRoute
@@ -545,6 +573,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings/account/information': typeof LayoutAuthenticatedDashboardSettingsAccountInformationRoute
   '/dashboard/settings/account/notifications': typeof LayoutAuthenticatedDashboardSettingsAccountNotificationsRoute
   '/dashboard/settings/account/preferences': typeof LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute
+  '/dashboard/settings/account/registration': typeof LayoutAuthenticatedDashboardSettingsAccountRegistrationRoute
   '/dashboard/settings/account/storage': typeof LayoutAuthenticatedDashboardSettingsAccountStorageRoute
   '/dashboard/settings/workspace/audit': typeof LayoutAuthenticatedDashboardSettingsWorkspaceAuditRoute
   '/dashboard/settings/workspace/billing': typeof LayoutAuthenticatedDashboardSettingsWorkspaceBillingRoute
@@ -588,9 +617,11 @@ export interface FileRoutesByTo {
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
+  '/desktop/callback': typeof DesktopCallbackRoute
   '/device/approve': typeof DeviceApproveRoute
   '/mcp/authorize': typeof McpAuthorizeRoute
   '/public-project/$projectId': typeof PublicProjectProjectIdRoute
+  '/desktop': typeof DesktopIndexRoute
   '/device': typeof DeviceIndexRoute
   '/invitations': typeof LayoutAuthenticatedInvitationsRoute
   '/onboarding': typeof LayoutAuthenticatedOnboardingRoute
@@ -610,6 +641,7 @@ export interface FileRoutesByTo {
   '/dashboard/settings/account/information': typeof LayoutAuthenticatedDashboardSettingsAccountInformationRoute
   '/dashboard/settings/account/notifications': typeof LayoutAuthenticatedDashboardSettingsAccountNotificationsRoute
   '/dashboard/settings/account/preferences': typeof LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute
+  '/dashboard/settings/account/registration': typeof LayoutAuthenticatedDashboardSettingsAccountRegistrationRoute
   '/dashboard/settings/account/storage': typeof LayoutAuthenticatedDashboardSettingsAccountStorageRoute
   '/dashboard/settings/workspace/audit': typeof LayoutAuthenticatedDashboardSettingsWorkspaceAuditRoute
   '/dashboard/settings/workspace/billing': typeof LayoutAuthenticatedDashboardSettingsWorkspaceBillingRoute
@@ -650,6 +682,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_layout': typeof LayoutRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
+  '/desktop': typeof DesktopRouteWithChildren
   '/device': typeof DeviceRouteWithChildren
   '/test-error': typeof TestErrorRoute
   '/_layout/_authenticated': typeof LayoutAuthenticatedRouteWithChildren
@@ -657,9 +690,11 @@ export interface FileRoutesById {
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
+  '/desktop/callback': typeof DesktopCallbackRoute
   '/device/approve': typeof DeviceApproveRoute
   '/mcp/authorize': typeof McpAuthorizeRoute
   '/public-project/$projectId': typeof PublicProjectProjectIdRoute
+  '/desktop/': typeof DesktopIndexRoute
   '/device/': typeof DeviceIndexRoute
   '/_layout/_authenticated/dashboard': typeof LayoutAuthenticatedDashboardRouteWithChildren
   '/_layout/_authenticated/invitations': typeof LayoutAuthenticatedInvitationsRoute
@@ -681,6 +716,7 @@ export interface FileRoutesById {
   '/_layout/_authenticated/dashboard/settings/account/information': typeof LayoutAuthenticatedDashboardSettingsAccountInformationRoute
   '/_layout/_authenticated/dashboard/settings/account/notifications': typeof LayoutAuthenticatedDashboardSettingsAccountNotificationsRoute
   '/_layout/_authenticated/dashboard/settings/account/preferences': typeof LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute
+  '/_layout/_authenticated/dashboard/settings/account/registration': typeof LayoutAuthenticatedDashboardSettingsAccountRegistrationRoute
   '/_layout/_authenticated/dashboard/settings/account/storage': typeof LayoutAuthenticatedDashboardSettingsAccountStorageRoute
   '/_layout/_authenticated/dashboard/settings/workspace/audit': typeof LayoutAuthenticatedDashboardSettingsWorkspaceAuditRoute
   '/_layout/_authenticated/dashboard/settings/workspace/billing': typeof LayoutAuthenticatedDashboardSettingsWorkspaceBillingRoute
@@ -721,15 +757,18 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/desktop'
     | '/device'
     | '/test-error'
     | '/auth/check-email'
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/auth/verify-otp'
+    | '/desktop/callback'
     | '/device/approve'
     | '/mcp/authorize'
     | '/public-project/$projectId'
+    | '/desktop/'
     | '/device/'
     | '/dashboard'
     | '/invitations'
@@ -751,6 +790,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/account/information'
     | '/dashboard/settings/account/notifications'
     | '/dashboard/settings/account/preferences'
+    | '/dashboard/settings/account/registration'
     | '/dashboard/settings/account/storage'
     | '/dashboard/settings/workspace/audit'
     | '/dashboard/settings/workspace/billing'
@@ -794,9 +834,11 @@ export interface FileRouteTypes {
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/auth/verify-otp'
+    | '/desktop/callback'
     | '/device/approve'
     | '/mcp/authorize'
     | '/public-project/$projectId'
+    | '/desktop'
     | '/device'
     | '/invitations'
     | '/onboarding'
@@ -816,6 +858,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/account/information'
     | '/dashboard/settings/account/notifications'
     | '/dashboard/settings/account/preferences'
+    | '/dashboard/settings/account/registration'
     | '/dashboard/settings/account/storage'
     | '/dashboard/settings/workspace/audit'
     | '/dashboard/settings/workspace/billing'
@@ -855,6 +898,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_layout'
     | '/auth'
+    | '/desktop'
     | '/device'
     | '/test-error'
     | '/_layout/_authenticated'
@@ -862,9 +906,11 @@ export interface FileRouteTypes {
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/auth/verify-otp'
+    | '/desktop/callback'
     | '/device/approve'
     | '/mcp/authorize'
     | '/public-project/$projectId'
+    | '/desktop/'
     | '/device/'
     | '/_layout/_authenticated/dashboard'
     | '/_layout/_authenticated/invitations'
@@ -886,6 +932,7 @@ export interface FileRouteTypes {
     | '/_layout/_authenticated/dashboard/settings/account/information'
     | '/_layout/_authenticated/dashboard/settings/account/notifications'
     | '/_layout/_authenticated/dashboard/settings/account/preferences'
+    | '/_layout/_authenticated/dashboard/settings/account/registration'
     | '/_layout/_authenticated/dashboard/settings/account/storage'
     | '/_layout/_authenticated/dashboard/settings/workspace/audit'
     | '/_layout/_authenticated/dashboard/settings/workspace/billing'
@@ -926,6 +973,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LayoutRoute: typeof LayoutRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
+  DesktopRoute: typeof DesktopRouteWithChildren
   DeviceRoute: typeof DeviceRouteWithChildren
   TestErrorRoute: typeof TestErrorRoute
   McpAuthorizeRoute: typeof McpAuthorizeRoute
@@ -954,6 +1002,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/desktop': {
+      id: '/desktop'
+      path: '/desktop'
+      fullPath: '/desktop'
+      preLoaderRoute: typeof DesktopRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/device': {
@@ -1004,6 +1059,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/verify-otp'
       preLoaderRoute: typeof AuthVerifyOtpRouteImport
       parentRoute: typeof AuthRoute
+    }
+    '/desktop/': {
+      id: '/desktop/'
+      path: '/'
+      fullPath: '/desktop/'
+      preLoaderRoute: typeof DesktopIndexRouteImport
+      parentRoute: typeof DesktopRoute
+    }
+    '/desktop/callback': {
+      id: '/desktop/callback'
+      path: '/callback'
+      fullPath: '/desktop/callback'
+      preLoaderRoute: typeof DesktopCallbackRouteImport
+      parentRoute: typeof DesktopRoute
     }
     '/device/': {
       id: '/device/'
@@ -1171,6 +1240,13 @@ declare module '@tanstack/react-router' {
       path: '/preferences'
       fullPath: '/dashboard/settings/account/preferences'
       preLoaderRoute: typeof LayoutAuthenticatedDashboardSettingsAccountPreferencesRouteImport
+      parentRoute: typeof LayoutAuthenticatedDashboardSettingsAccountRoute
+    }
+    '/_layout/_authenticated/dashboard/settings/account/registration': {
+      id: '/_layout/_authenticated/dashboard/settings/account/registration'
+      path: '/registration'
+      fullPath: '/dashboard/settings/account/registration'
+      preLoaderRoute: typeof LayoutAuthenticatedDashboardSettingsAccountRegistrationRouteImport
       parentRoute: typeof LayoutAuthenticatedDashboardSettingsAccountRoute
     }
     '/_layout/_authenticated/dashboard/settings/account/storage': {
@@ -1422,6 +1498,7 @@ interface LayoutAuthenticatedDashboardSettingsAccountRouteChildren {
   LayoutAuthenticatedDashboardSettingsAccountInformationRoute: typeof LayoutAuthenticatedDashboardSettingsAccountInformationRoute
   LayoutAuthenticatedDashboardSettingsAccountNotificationsRoute: typeof LayoutAuthenticatedDashboardSettingsAccountNotificationsRoute
   LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute: typeof LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute
+  LayoutAuthenticatedDashboardSettingsAccountRegistrationRoute: typeof LayoutAuthenticatedDashboardSettingsAccountRegistrationRoute
   LayoutAuthenticatedDashboardSettingsAccountStorageRoute: typeof LayoutAuthenticatedDashboardSettingsAccountStorageRoute
 }
 
@@ -1441,6 +1518,8 @@ const LayoutAuthenticatedDashboardSettingsAccountRouteChildren: LayoutAuthentica
       LayoutAuthenticatedDashboardSettingsAccountNotificationsRoute,
     LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute:
       LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute,
+    LayoutAuthenticatedDashboardSettingsAccountRegistrationRoute:
+      LayoutAuthenticatedDashboardSettingsAccountRegistrationRoute,
     LayoutAuthenticatedDashboardSettingsAccountStorageRoute:
       LayoutAuthenticatedDashboardSettingsAccountStorageRoute,
   }
@@ -1678,6 +1757,19 @@ const AuthRouteChildren: AuthRouteChildren = {
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
+interface DesktopRouteChildren {
+  DesktopCallbackRoute: typeof DesktopCallbackRoute
+  DesktopIndexRoute: typeof DesktopIndexRoute
+}
+
+const DesktopRouteChildren: DesktopRouteChildren = {
+  DesktopCallbackRoute: DesktopCallbackRoute,
+  DesktopIndexRoute: DesktopIndexRoute,
+}
+
+const DesktopRouteWithChildren =
+  DesktopRoute._addFileChildren(DesktopRouteChildren)
+
 interface DeviceRouteChildren {
   DeviceApproveRoute: typeof DeviceApproveRoute
   DeviceIndexRoute: typeof DeviceIndexRoute
@@ -1695,6 +1787,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LayoutRoute: LayoutRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
+  DesktopRoute: DesktopRouteWithChildren,
   DeviceRoute: DeviceRouteWithChildren,
   TestErrorRoute: TestErrorRoute,
   McpAuthorizeRoute: McpAuthorizeRoute,

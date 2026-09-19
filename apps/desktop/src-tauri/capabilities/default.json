@@ -1,0 +1,15 @@
+{
+	"$schema": "../gen/schemas/desktop-schema.json",
+	"identifier": "default",
+	"description": "The shell's own setup window. Only it can read or change which server the app points at.",
+	"windows": ["main", "setup"],
+	"permissions": [
+		"core:default",
+		"allow-desktop-info",
+		"allow-desktop-start-login",
+		"allow-desktop-notify",
+		"allow-desktop-set-badge",
+		"allow-desktop-is-foreground",
+		"allow-desktop-set-instance-url"
+	]
+}

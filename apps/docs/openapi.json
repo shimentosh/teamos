@@ -6941,6 +6941,46 @@
           "updatedByName"
         ]
       },
+      "InstanceRegistrationSettings": {
+        "type": "object",
+        "properties": {
+          "disabled": {
+            "type": "boolean",
+            "description": "True when only invited people can create an account."
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "app",
+              "environment"
+            ]
+          },
+          "envDisabled": {
+            "type": "boolean",
+            "description": "What DISABLE_REGISTRATION says, for the reset option."
+          },
+          "updatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "updatedByName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "disabled",
+          "source",
+          "envDisabled",
+          "updatedAt",
+          "updatedByName"
+        ]
+      },
       "EmailTemplate": {
         "type": "object",
         "properties": {
@@ -27264,6 +27304,125 @@
               "text/plain": {
                 "schema": {
                   "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "Not the instance admin",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/instance/registration": {
+      "get": {
+        "operationId": "getInstanceRegistrationSettings",
+        "tags": [
+          "Instance"
+        ],
+        "summary": "Registration settings",
+        "description": "Whether new people can sign up on this server. Saved here wins over DISABLE_REGISTRATION in the environment. Instance admin only.",
+        "responses": {
+          "200": {
+            "description": "Settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceRegistrationSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "Not the instance admin",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "saveInstanceRegistrationSettings",
+        "tags": [
+          "Instance"
+        ],
+        "summary": "Open or close registration",
+        "description": "When closed, an account can only be created from a valid workspace invitation. The first signup on an empty instance is always allowed, so a server can still be set up.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "disabled": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "disabled"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceRegistrationSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "Not the instance admin",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "clearInstanceRegistrationSettings",
+        "tags": [
+          "Instance"
+        ],
+        "summary": "Follow the server setting again",
+        "description": "Registration falls back to DISABLE_REGISTRATION.",
+        "responses": {
+          "200": {
+            "description": "Settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceRegistrationSettings"
                 }
               }
             }

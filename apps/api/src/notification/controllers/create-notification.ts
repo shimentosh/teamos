@@ -89,6 +89,10 @@ async function createNotification({
     await publishEvent("notification.created", {
       notificationId: notification.id,
       userId,
+      // Carried through to the user's own WebSocket so the browser or the
+      // desktop app can raise an OS notification without a round trip.
+      title: notification.title,
+      content: notification.content,
     });
     void deliverNotification(notification.id).catch((error) => {
       console.error("Failed to deliver notification", {

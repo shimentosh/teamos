@@ -2,7 +2,6 @@ import { produce } from "immer";
 import { Archive, Plus } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import CreateTaskModal from "@/components/shared/modals/create-task-modal";
 import { useUpdateTask } from "@/hooks/mutations/task/use-update-task";
 import { useWorkspacePermission } from "@/hooks/use-workspace-permission";
 import { getColumnIcon } from "@/lib/column";
@@ -13,9 +12,10 @@ import { ArchiveTasksModal } from "../../shared/modals/archive-tasks-modal";
 
 type ColumnHeaderProps = {
   column: ProjectWithTasks["columns"][number];
+  onAddTask: () => void;
 };
 
-export function ColumnHeader({ column }: ColumnHeaderProps) {
+export function ColumnHeader({ column, onAddTask }: ColumnHeaderProps) {
   const { t } = useTranslation();
   const { project, setProject } = useProjectStore();
   const { mutate: updateTask } = useUpdateTask();
@@ -24,7 +24,6 @@ export function ColumnHeader({ column }: ColumnHeaderProps) {
   const canCreate = canCreateTasks();
 
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
-  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
   const handleConfirmArchive = () => {
     if (!column.isFinal || !project) return;
@@ -78,7 +77,7 @@ export function ColumnHeader({ column }: ColumnHeaderProps) {
         {canCreate && (
           <button
             type="button"
-            onClick={() => setIsTaskModalOpen(true)}
+            onClick={onAddTask}
             className="flex items-center rounded-md px-2 py-1 text-left text-muted-foreground transition-colors hover:bg-accent/50"
             title={t("tasks:kanban.addTask")}
           >
@@ -86,13 +85,6 @@ export function ColumnHeader({ column }: ColumnHeaderProps) {
           </button>
         )}
       </div>
-
-      <CreateTaskModal
-        open={isTaskModalOpen}
-        onClose={() => setIsTaskModalOpen(false)}
-        projectId={project?.id}
-        status={column.id}
-      />
 
       <ArchiveTasksModal
         open={isArchiveModalOpen}

@@ -18,8 +18,8 @@ const getConfigRoute = createRoute({
   },
 });
 
-const config = apiRouter().openapi(getConfigRoute, (c) =>
-  c.json(getSettings(), 200),
+const config = apiRouter().openapi(getConfigRoute, async (c) =>
+  c.json(await getSettings(), 200),
 );
 
 export default config;
