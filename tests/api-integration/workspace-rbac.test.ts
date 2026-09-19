@@ -49,13 +49,13 @@ async function joinTeam(projectId: string, userId: string) {
     .onConflictDoNothing();
 }
 
-async function createWorkspaceRoleRow(
-  workspaceId: string,
+// Role definitions are instance-wide, so a test defines a role once rather
+// than per workspace. Each test truncates first, so the row is its own.
+async function createRoleRow(
   role: string,
   permission: Record<string, string[]> | string,
 ) {
-  await db.insert(schema.workspaceRoleTable).values({
-    workspaceId,
+  await db.insert(schema.instanceRoleTable).values({
     role,
     permission:
       typeof permission === "string" ? permission : JSON.stringify(permission),
@@ -482,13 +482,13 @@ describe("API integration: workspace RBAC enforcement", () => {
     });
   });
 
-  describe("custom workspace roles", () => {
+  describe("custom roles", () => {
     it("blocks a custom role that only grants task:read from creating a task", async () => {
       const member = await createWorkspaceMember({ role: "readonly" });
       const { project } = await createProjectFixture({
         workspaceId: member.workspace.id,
       });
-      await createWorkspaceRoleRow(member.workspace.id, "readonly", {
+      await createRoleRow("readonly", {
         task: ["read"],
         project: ["read"],
       });
@@ -506,7 +506,7 @@ describe("API integration: workspace RBAC enforcement", () => {
       const { project } = await createProjectFixture({
         workspaceId: member.workspace.id,
       });
-      await createWorkspaceRoleRow(member.workspace.id, "creator", {
+      await createRoleRow("creator", {
         task: ["create", "read"],
         project: ["read"],
       });
@@ -519,14 +519,14 @@ describe("API integration: workspace RBAC enforcement", () => {
       expect(response.status).toBe(200);
     });
 
-    it("lets a workspace_role row override the built-in viewer permissions", async () => {
-      // viewer's compiled-in statements have no task:create. A workspace_role
-      // row for "viewer" with task:create should override and grant access.
+    it("lets a catalog row override the built-in viewer permissions", async () => {
+      // viewer's compiled-in statements have no task:create. A catalog row
+      // for "viewer" with task:create should override and grant access.
       const member = await createWorkspaceMember({ role: "viewer" });
       const { project } = await createProjectFixture({
         workspaceId: member.workspace.id,
       });
-      await createWorkspaceRoleRow(member.workspace.id, "viewer", {
+      await createRoleRow("viewer", {
         task: ["create", "read", "update"],
         project: ["read"],
         workspace: ["read"],
@@ -540,14 +540,14 @@ describe("API integration: workspace RBAC enforcement", () => {
       expect(response.status).toBe(200);
     });
 
-    it("returns 403 when the workspace_role permission JSON is malformed", async () => {
+    it("returns 403 when the catalog permission JSON is malformed", async () => {
       const member = await createWorkspaceMember({ role: "broken" });
       const { project } = await createProjectFixture({
         workspaceId: member.workspace.id,
       });
       // Malformed permission payload. The middleware should refuse rather than
       // crash; with no built-in fallback for "broken", access is denied.
-      await createWorkspaceRoleRow(member.workspace.id, "broken", "not-json");
+      await createRoleRow("broken", "not-json");
 
       await joinTeam(project.id, member.user.id);
       mockAuthenticatedSession(member.user);
@@ -564,8 +564,7 @@ describe("API integration: workspace RBAC enforcement", () => {
       });
       // Some entries are valid string arrays, others are objects/strings/etc.
       // Middleware keeps the valid ones and ignores the rest.
-      await createWorkspaceRoleRow(
-        member.workspace.id,
+      await createRoleRow(
         "partial",
         JSON.stringify({
           task: ["create"],
@@ -582,8 +581,8 @@ describe("API integration: workspace RBAC enforcement", () => {
       expect(response.status).toBe(200);
     });
 
-    it("falls back to built-in role when no workspace_role row exists for the name", async () => {
-      // No workspace_role row, role is the compiled-in "admin"; should work.
+    it("falls back to the built-in role when the catalog has no row for the name", async () => {
+      // No catalog row, role is the compiled-in "admin"; should work.
       const member = await createWorkspaceMember({ role: "admin" });
       const { project } = await createProjectFixture({
         workspaceId: member.workspace.id,
@@ -813,7 +812,7 @@ describe("API integration: workspace RBAC enforcement", () => {
   });
 
   describe("resource coverage: project:create / update / delete", () => {
-    it("allows a member to create a project", async () => {
+    it("blocks a member from creating a project", async () => {
       const member = await createWorkspaceMember({ role: "member" });
       mockAuthenticatedSession(member.user);
       const { app } = createApp();
@@ -825,6 +824,24 @@ describe("API integration: workspace RBAC enforcement", () => {
           name: "Member-made",
           workspaceId: member.workspace.id,
           slug: "MEM",
+          icon: "Folder",
+        }),
+      });
+      expect(response.status).toBe(403);
+    });
+
+    it("allows a manager to create a project", async () => {
+      const manager = await createWorkspaceMember({ role: "manager" });
+      mockAuthenticatedSession(manager.user);
+      const { app } = createApp();
+
+      const response = await app.request("/api/project", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name: "Manager-made",
+          workspaceId: manager.workspace.id,
+          slug: "MGR",
           icon: "Folder",
         }),
       });

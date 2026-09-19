@@ -1,5 +1,9 @@
-import { DEFAULT_ROLE_NAMES, statement } from "@kaneo/permissions";
-import { createFileRoute } from "@tanstack/react-router";
+import {
+  DEFAULT_ROLE_NAMES,
+  isInstanceAdminRole,
+  statement,
+} from "@kaneo/permissions";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Plus, Shield, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -32,18 +36,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import useCreateWorkspaceRole from "@/hooks/mutations/workspace/use-create-workspace-role";
-import useDeleteWorkspaceRole from "@/hooks/mutations/workspace/use-delete-workspace-role";
-import useUpdateWorkspaceRole from "@/hooks/mutations/workspace/use-update-workspace-role";
-import useWorkspaceRoles, {
-  type WorkspaceRole,
-} from "@/hooks/queries/workspace/use-workspace-roles";
-import { useWorkspacePermission } from "@/hooks/use-workspace-permission";
+import {
+  type InstanceRole,
+  useInstanceRoleActions,
+  useInstanceRoles,
+} from "@/hooks/queries/use-instance-roles";
+import { authClient } from "@/lib/auth-client";
 import { toast } from "@/lib/toast";
 
 export const Route = createFileRoute(
-  "/_layout/_authenticated/dashboard/settings/workspace/roles",
+  "/_layout/_authenticated/dashboard/settings/account/roles",
 )({
+  // Roles apply to the whole server, so only an instance admin edits them.
+  // The API enforces the same check.
+  beforeLoad: async () => {
+    const session = await authClient.getSession();
+    if (!isInstanceAdminRole(session?.data?.user?.role)) {
+      throw redirect({ to: "/dashboard/settings/account/information" });
+    }
+  },
   component: RouteComponent,
 });
 
@@ -181,7 +192,7 @@ const PERMISSION_LABELS: Record<
 };
 
 // Default roles are seeded per workspace by the API (see
-// `seedDefaultWorkspaceRoles` and the afterCreateOrganization hook). They show
+// `seedDefaultInstanceRoles` and the afterCreateOrganization hook). They show
 // up in `customRoles` like any other dynamic role but get a "Default" badge,
 // can't be deleted, and reserve their names against new custom roles. Owner
 // stays a static role on the auth side and is hidden from this UI, but its
@@ -224,23 +235,21 @@ function permissionCount(permissions: Record<string, string[] | undefined>) {
 
 function RouteComponent() {
   const { t } = useTranslation();
-  const { workspace, isAdmin } = useWorkspacePermission();
-  const workspaceId = workspace?.id ?? "";
   const {
     data: customRoles = [],
     isLoading,
     isError: customRolesError,
     error: customRolesErrorValue,
-  } = useWorkspaceRoles(workspaceId);
+  } = useInstanceRoles();
   const [draftActive, setDraftActive] = useState(false);
-  const [roleToDelete, setRoleToDelete] = useState<WorkspaceRole | null>(null);
+  const [roleToDelete, setRoleToDelete] = useState<InstanceRole | null>(null);
   const [openCustom, setOpenCustom] = useState<string[]>([]);
 
   // Defaults (viewer/member/admin) first so they anchor the list, then
   // user-created roles in their natural order.
   const sortedRoles = useMemo(() => {
-    const defaults: WorkspaceRole[] = [];
-    const custom: WorkspaceRole[] = [];
+    const defaults: InstanceRole[] = [];
+    const custom: InstanceRole[] = [];
     for (const role of customRoles) {
       if (isDefaultRole(role.role)) defaults.push(role);
       else custom.push(role);
@@ -253,24 +262,6 @@ function RouteComponent() {
     return [...defaults, ...custom];
   }, [customRoles]);
 
-  if (!isAdmin) {
-    return (
-      <>
-        <PageTitle title={t("settings:workspaceRoles.pageTitle")} />
-        <div className="max-w-4xl mx-auto space-y-8">
-          <div className="space-y-2">
-            <h1 className="text-2xl font-semibold">
-              {t("settings:workspaceRoles.title")}
-            </h1>
-            <p className="text-muted-foreground">
-              {t("settings:workspaceRoles.noAccess")}
-            </p>
-          </div>
-        </div>
-      </>
-    );
-  }
-
   return (
     <>
       <PageTitle title={t("settings:workspaceRoles.pageTitle")} />
@@ -280,10 +271,7 @@ function RouteComponent() {
             {t("settings:workspaceRoles.title")}
           </h1>
           <p className="text-muted-foreground">
-            {t("settings:workspaceRoles.subtitle", {
-              workspaceName:
-                workspace?.name ?? t("settings:workspaceRoles.thisWorkspace"),
-            })}
+            {t("settings:workspaceRoles.subtitle")}
           </p>
         </div>
 
@@ -298,11 +286,7 @@ function RouteComponent() {
               </p>
             </div>
             <div className="flex shrink-0 flex-wrap justify-end gap-2">
-              <RolesTransfer
-                workspaceId={workspaceId}
-                workspaceName={workspace?.name}
-                roles={sortedRoles}
-              />
+              <RolesTransfer roles={sortedRoles} />
               <Button
                 size="sm"
                 className="gap-1.5"
@@ -367,7 +351,6 @@ function RouteComponent() {
                     </AccordionTrigger>
                     <AccordionPanel className="px-0 pt-0 pb-0">
                       <DraftEditor
-                        workspaceId={workspaceId}
                         existingNames={[
                           ...RESERVED_ROLE_NAMES,
                           ...customRoles.map((r) => r.role),
@@ -447,7 +430,6 @@ function RouteComponent() {
                       <AccordionPanel className="px-0 pt-0 pb-0">
                         <CustomRoleEditor
                           key={role.id}
-                          workspaceId={workspaceId}
                           role={role}
                           isDefault={isDefault}
                           onDelete={() => setRoleToDelete(role)}
@@ -468,7 +450,6 @@ function RouteComponent() {
       >
         <DeleteRoleConfirm
           role={roleToDelete}
-          workspaceId={workspaceId}
           onDeleted={() => {
             setOpenCustom((prev) =>
               prev.filter((v) => v !== roleToDelete?.role),
@@ -579,12 +560,10 @@ function PermissionList({
 }
 
 function DraftEditor({
-  workspaceId,
   existingNames,
   onCreated,
   onDiscard,
 }: {
-  workspaceId: string;
   existingNames: string[];
   onCreated: (roleName: string) => void;
   onDiscard: () => void;
@@ -594,7 +573,8 @@ function DraftEditor({
   const [permissions, setPermissions] = useState<Record<string, Set<string>>>(
     {},
   );
-  const { mutateAsync: createRole, isPending } = useCreateWorkspaceRole();
+  const { create } = useInstanceRoleActions();
+  const isPending = create.isPending;
 
   const togglePermission = (resource: string, action: string) => {
     setPermissions((prev) => {
@@ -626,7 +606,7 @@ function DraftEditor({
       return;
     }
     try {
-      await createRole({ workspaceId, role: trimmed, permission });
+      await create.mutateAsync({ role: trimmed, permission });
       toast.success(t("settings:workspaceRoles.toast.created"));
       onCreated(trimmed);
     } catch (error) {
@@ -688,13 +668,11 @@ function DraftEditor({
 }
 
 function CustomRoleEditor({
-  workspaceId,
   role,
   isDefault,
   onDelete,
 }: {
-  workspaceId: string;
-  role: WorkspaceRole;
+  role: InstanceRole;
   isDefault?: boolean;
   onDelete: () => void;
 }) {
@@ -708,7 +686,8 @@ function CustomRoleEditor({
       return out;
     },
   );
-  const { mutateAsync: updateRole, isPending } = useUpdateWorkspaceRole();
+  const { update } = useInstanceRoleActions();
+  const isPending = update.isPending;
 
   const currentPermissions = useMemo(() => {
     const out: Record<string, string[]> = {};
@@ -737,9 +716,8 @@ function CustomRoleEditor({
       return;
     }
     try {
-      await updateRole({
-        workspaceId,
-        roleName: role.role,
+      await update.mutateAsync({
+        role: role.role,
         permission: currentPermissions,
       });
       toast.success(t("settings:workspaceRoles.toast.updated"));
@@ -802,17 +780,16 @@ function CustomRoleEditor({
 
 function DeleteRoleConfirm({
   role,
-  workspaceId,
   onDeleted,
   onCancel,
 }: {
-  role: WorkspaceRole | null;
-  workspaceId: string;
+  role: InstanceRole | null;
   onDeleted: () => void;
   onCancel: () => void;
 }) {
   const { t } = useTranslation();
-  const { mutateAsync: deleteRole, isPending } = useDeleteWorkspaceRole();
+  const { remove } = useInstanceRoleActions();
+  const isPending = remove.isPending;
 
   return (
     <AlertDialogContent>
@@ -848,7 +825,7 @@ function DeleteRoleConfirm({
           onClick={async () => {
             if (!role) return;
             try {
-              await deleteRole({ workspaceId, roleName: role.role });
+              await remove.mutateAsync(role.role);
               toast.success(t("settings:workspaceRoles.toast.deleted"));
               // Caller closes the dialog after the mutation succeeds so a
               // failed delete leaves the confirmation visible.

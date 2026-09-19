@@ -1,8 +1,9 @@
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
+import { isInstanceAdminRole } from "@kaneo/permissions";
 import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, MailQuestion } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Trans, useTranslation } from "react-i18next";
@@ -20,6 +21,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { usePendingInvitations } from "@/hooks/queries/invitation/use-pending-invitations";
 import useCreateWorkspace from "@/hooks/queries/workspace/use-create-workspace";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "@/lib/toast";
@@ -49,6 +51,12 @@ export function OnboardingFlow() {
   const queryClient = useQueryClient();
   const { mutateAsync: createWorkspace, isPending } = useCreateWorkspace();
   const { user } = useAuth();
+  // Creating a workspace is reserved for instance admins. Everyone else lands
+  // here with nothing to join yet, so show them what they are waiting for
+  // instead of a form the API would refuse.
+  const { data: session } = authClient.useSession();
+  const canCreateWorkspace = isInstanceAdminRole(session?.user?.role);
+  const { data: invitations = [] } = usePendingInvitations();
 
   const workspaceSchema = useMemo(
     () =>
@@ -182,6 +190,58 @@ export function OnboardingFlow() {
     </motion.div>
   );
 
+  const renderWaitingStep = () => (
+    <motion.div
+      key="waiting"
+      variants={fadeTransition}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+      className="w-full max-w-sm mx-auto"
+    >
+      <Logo className="mx-auto mb-6 w-full flex items-end justify-center" />
+
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto">
+            <MailQuestion className="h-6 w-6 text-muted-foreground" />
+          </div>
+
+          <div className="space-y-2">
+            <h1 className="text-xl font-semibold text-foreground">
+              {t("auth:onboarding.waitingTitle")}
+            </h1>
+            <p className="text-muted-foreground text-sm">
+              {invitations.length > 0
+                ? t("auth:onboarding.waitingInvitePending", {
+                    count: invitations.length,
+                  })
+                : t("auth:onboarding.waitingSubtitle")}
+            </p>
+          </div>
+
+          {invitations.length > 0 && (
+            <Button render={<Link to="/invitations" />} className="w-full">
+              {t("auth:onboarding.waitingViewInvitations")}
+            </Button>
+          )}
+
+          <Button
+            variant="ghost"
+            className="w-full"
+            onClick={async () => {
+              await authClient.signOut();
+              navigate({ to: "/auth/sign-in", replace: true });
+            }}
+          >
+            {t("auth:onboarding.waitingSignOut")}
+          </Button>
+        </div>
+      </div>
+    </motion.div>
+  );
+
   const renderSuccessStep = () => (
     <motion.div
       key="success"
@@ -226,7 +286,8 @@ export function OnboardingFlow() {
       <PageTitle title={t("auth:onboarding.workspacePageTitle")} />
       <div className="min-h-screen w-full bg-background flex flex-col items-center justify-center p-4">
         <AnimatePresence mode="wait">
-          {step === "workspace" && renderWorkspaceStep()}
+          {step === "workspace" &&
+            (canCreateWorkspace ? renderWorkspaceStep() : renderWaitingStep())}
           {step === "success" && renderSuccessStep()}
         </AnimatePresence>
       </div>

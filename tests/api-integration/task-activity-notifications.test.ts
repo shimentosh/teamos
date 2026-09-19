@@ -28,7 +28,7 @@ async function setup() {
   const { user: owner, workspace } = await createWorkspaceMember({
     role: "owner",
   });
-  await grantSeeAllTasks(workspace.id, "admin");
+  await grantSeeAllTasks("admin");
   const bob = await addWorkspaceMember(workspace.id, "admin", "Bob");
   const alice = await addWorkspaceMember(workspace.id, "member", "Alice");
   const carol = await addWorkspaceMember(workspace.id, "member", "Carol");

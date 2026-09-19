@@ -5,7 +5,7 @@ import {
   DEFAULT_ROLE_NAMES,
 } from "@kaneo/permissions";
 import { useMemo } from "react";
-import useWorkspaceRoles from "@/hooks/queries/workspace/use-workspace-roles";
+import { useInstanceRoles } from "@/hooks/queries/use-instance-roles";
 import { useGetActiveWorkspaceUser } from "@/hooks/queries/workspace-users/use-active-workspace-user";
 
 type Statements = Record<string, readonly string[]>;
@@ -13,10 +13,11 @@ type Statements = Record<string, readonly string[]>;
 // Roles the current member may hand out when inviting or changing a role.
 // Mirrors the API's canGrantRole so the picker never offers a role the
 // server would reject. Owner is never offered: ownership changes need a
-// dedicated transfer flow.
+// dedicated transfer flow. Definitions come from the instance catalog, which
+// is the same everywhere; `workspaceId` only gates the fetch.
 function useGrantableRoles(workspaceId: string | undefined) {
   const { data: activeMember } = useGetActiveWorkspaceUser();
-  const { data: roles = [], isLoading } = useWorkspaceRoles(workspaceId);
+  const { data: roles = [], isLoading } = useInstanceRoles(Boolean(workspaceId));
 
   const grantable = useMemo(() => {
     const statementsFor = (role: string): Statements | null =>

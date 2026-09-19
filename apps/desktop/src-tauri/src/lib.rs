@@ -22,8 +22,8 @@ use auth::PendingLogin;
 /// throwing a window in front of someone who just turned their computer on.
 const MINIMIZED_FLAG: &str = "--minimized";
 
-/// What a TeamOS instance loaded in the window is allowed to call. Deliberately
-/// short, and deliberately without `desktop_set_instance_url`.
+/// What a TeamOS instance loaded in the window is allowed to call. This is the
+/// whole IPC surface: nothing here can change which server the app points at.
 const REMOTE_COMMAND_PERMISSIONS: &[&str] = &[
     "allow-desktop-start-login",
     "allow-desktop-notify",
@@ -61,12 +61,10 @@ fn run_app(start_minimized: bool) {
         ))
         .manage(PendingLogin::default())
         .invoke_handler(tauri::generate_handler![
-            commands::desktop_info,
             commands::desktop_start_login,
             commands::desktop_notify,
             commands::desktop_set_badge,
             commands::desktop_is_foreground,
-            commands::desktop_set_instance_url,
         ])
         .setup(move |app| {
             let handle = app.handle().clone();
@@ -142,23 +140,6 @@ fn build_main_window(app: &AppHandle, instance_url: &str, visible: bool) -> taur
     Ok(())
 }
 
-/// The local page for pointing the shell at a different server. Separate from
-/// the main window so the instance's own pages never share its permissions.
-fn open_setup_window(app: &AppHandle) {
-    if let Some(window) = app.get_webview_window("setup") {
-        let _ = window.show();
-        let _ = window.set_focus();
-        return;
-    }
-
-    let _ = WebviewWindowBuilder::new(app, "setup", WebviewUrl::App("index.html".into()))
-        .title("TeamOS — Instance")
-        .inner_size(460.0, 320.0)
-        .resizable(false)
-        .center()
-        .build();
-}
-
 fn build_tray(app: &AppHandle, autostart_enabled: bool) -> tauri::Result<()> {
     let autostart_item = CheckMenuItem::with_id(
         app,
@@ -175,7 +156,6 @@ fn build_tray(app: &AppHandle, autostart_enabled: bool) -> tauri::Result<()> {
             &MenuItem::with_id(app, "open", "Open TeamOS", true, None::<&str>)?,
             &PredefinedMenuItem::separator(app)?,
             &autostart_item,
-            &MenuItem::with_id(app, "instance", "Change instance…", true, None::<&str>)?,
             &PredefinedMenuItem::separator(app)?,
             &MenuItem::with_id(app, "quit", "Quit TeamOS", true, None::<&str>)?,
         ],
@@ -188,7 +168,6 @@ fn build_tray(app: &AppHandle, autostart_enabled: bool) -> tauri::Result<()> {
         .show_menu_on_left_click(false)
         .on_menu_event(move |app, event| match event.id.as_ref() {
             "open" => show_window(app),
-            "instance" => open_setup_window(app),
             "autostart" => {
                 let enabled = autostart_item.is_checked().unwrap_or(false);
                 if let Err(error) = commands::set_autostart(app, enabled) {

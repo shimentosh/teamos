@@ -11,9 +11,10 @@ import {
   DialogPopup,
   DialogTitle,
 } from "@/components/ui/dialog";
-import useCreateWorkspaceRole from "@/hooks/mutations/workspace/use-create-workspace-role";
-import useUpdateWorkspaceRole from "@/hooks/mutations/workspace/use-update-workspace-role";
-import type { WorkspaceRole } from "@/hooks/queries/workspace/use-workspace-roles";
+import {
+  type InstanceRole,
+  useInstanceRoleActions,
+} from "@/hooks/queries/use-instance-roles";
 import { cn } from "@/lib/cn";
 import {
   buildRolesFile,
@@ -30,32 +31,29 @@ function slugify(value: string) {
     .replace(/^-|-$/g, "");
 }
 
-/** Export this workspace's roles to a file, or import roles from one. */
+/** Export the instance's roles to a file, or import roles from one. */
 export function RolesTransfer({
-  workspaceId,
-  workspaceName,
+  instanceName,
   roles,
 }: {
-  workspaceId: string;
-  workspaceName?: string;
-  roles: WorkspaceRole[];
+  instanceName?: string;
+  roles: InstanceRole[];
 }) {
   const { t } = useTranslation();
   const fileInput = useRef<HTMLInputElement>(null);
   const [plan, setPlan] = useState<ImportPlanItem[] | null>(null);
   const [importing, setImporting] = useState(false);
-  const { mutateAsync: createRole } = useCreateWorkspaceRole();
-  const { mutateAsync: updateRole } = useUpdateWorkspaceRole();
+  const { create, update } = useInstanceRoleActions();
 
   const exportRoles = () => {
-    const file = buildRolesFile(roles, workspaceName);
+    const file = buildRolesFile(roles, instanceName);
     const blob = new Blob([`${JSON.stringify(file, null, 2)}\n`], {
       type: "application/json",
     });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${slugify(workspaceName ?? "") || "workspace"}-roles.json`;
+    link.download = `${slugify(instanceName ?? "") || "teamos"}-roles.json`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -79,20 +77,18 @@ export function RolesTransfer({
     setImporting(true);
     let done = 0;
     const failed: string[] = [];
-    // One at a time through the normal role endpoints, so the API still
-    // refuses any role stronger than the importer's own.
+    // One at a time through the normal role endpoints, so the API validates
+    // each one and the mirror is rebuilt after every change.
     for (const item of changes) {
       try {
         if (item.action === "create") {
-          await createRole({
-            workspaceId,
+          await create.mutateAsync({
             role: item.name,
             permission: item.permissions,
           });
         } else {
-          await updateRole({
-            workspaceId,
-            roleName: item.name,
+          await update.mutateAsync({
+            role: item.name,
             permission: item.permissions,
           });
         }

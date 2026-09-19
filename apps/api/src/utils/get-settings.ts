@@ -14,7 +14,11 @@ async function getSettings() {
     disablePasswordRegistration:
       process.env.DISABLE_PASSWORD_REGISTRATION === "true",
     disableEmailOtpSignIn: process.env.DISABLE_EMAIL_OTP_SIGN_IN === "true",
-    disableWorkspaceCreation: process.env.DISABLE_WORKSPACE_CREATION === "true",
+    // Creating a workspace is reserved for instance admins (`super-admin`
+    // and `admin`), enforced by `allowUserToCreateOrganization` in auth.ts.
+    // The flag stays in the config payload because the web reads it as
+    // `isInstanceAdmin || !disableWorkspaceCreation`.
+    disableWorkspaceCreation: true,
     isDemoMode: process.env.DEMO_MODE === "true",
     // "Can send email", via SMTP or Resend; the name predates Resend.
     hasSmtp: isEmailConfigured(),

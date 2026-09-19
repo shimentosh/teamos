@@ -5,7 +5,10 @@ export const configSchema = z
     disableRegistration: z.boolean(),
     disablePasswordRegistration: z.boolean(),
     disableEmailOtpSignIn: z.boolean(),
-    disableWorkspaceCreation: z.boolean(),
+    disableWorkspaceCreation: z.boolean().openapi({
+      description:
+        "True when only instance admins may create a workspace, which is always the case.",
+    }),
     isDemoMode: z.boolean(),
     hasSmtp: z.boolean(),
     hasGithubSignIn: z.boolean(),

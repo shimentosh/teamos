@@ -160,6 +160,20 @@ async function memberIds(conversationId: string) {
   return rows.map((r) => r.userId);
 }
 
+/**
+ * Everyone who sees a channel in their conversation list: the whole workspace
+ * while it is open, only its members once it is private.
+ */
+async function channelAudience(conversation: Conversation, open: boolean) {
+  const members = await memberIds(conversation.id);
+  if (!open) return members;
+  const rows = await db
+    .select({ userId: workspaceUserTable.userId })
+    .from(workspaceUserTable)
+    .where(eq(workspaceUserTable.workspaceId, conversation.workspaceId));
+  return [...new Set([...members, ...rows.map((r) => r.userId)])];
+}
+
 async function notify(
   conversation: Conversation,
   type: ChatEventType,
@@ -474,22 +488,105 @@ export async function addChannelMembers(
   return { id: conversationId };
 }
 
+/**
+ * Whoever created a channel keeps hold of it; `canManage` carries the
+ * caller's channel:update / channel:delete permission for everyone else's.
+ */
+function assertOwnsChannel(
+  conversation: Conversation,
+  userId: string,
+  canManage: boolean,
+  action: "change" | "delete",
+) {
+  if (conversation.type !== "channel") {
+    throw new HTTPException(400, {
+      message: `Only channels can be ${action === "delete" ? "deleted" : "changed"}`,
+    });
+  }
+  if (conversation.createdBy !== userId && !canManage) {
+    throw new HTTPException(403, {
+      message: `Only whoever created the channel can ${action} it`,
+    });
+  }
+}
+
+export async function updateChannel(
+  workspaceId: string,
+  conversationId: string,
+  userId: string,
+  canManage: boolean,
+  input: { name?: string; isPrivate?: boolean },
+) {
+  const conversation = await findConversation(workspaceId, conversationId);
+  assertOwnsChannel(conversation, userId, canManage, "change");
+
+  const changes: { name?: string; isPrivate?: boolean } = {};
+
+  if (input.name !== undefined) {
+    const name = input.name.trim().replace(/^#/, "").trim();
+    if (!name) throw new HTTPException(400, { message: "Name the channel" });
+    if (name.toLowerCase() !== (conversation.name ?? "").toLowerCase()) {
+      const [taken] = await db
+        .select({ id: chatConversationTable.id })
+        .from(chatConversationTable)
+        .where(
+          and(
+            eq(chatConversationTable.workspaceId, workspaceId),
+            eq(chatConversationTable.type, "channel"),
+            ne(chatConversationTable.id, conversationId),
+            sql`lower(${chatConversationTable.name}) = lower(${name})`,
+          ),
+        );
+      if (taken) {
+        throw new HTTPException(409, {
+          message: "A channel with that name already exists",
+        });
+      }
+    }
+    changes.name = name;
+  }
+
+  if (
+    input.isPrivate !== undefined &&
+    input.isPrivate !== conversation.isPrivate
+  ) {
+    changes.isPrivate = input.isPrivate;
+  }
+
+  if (Object.keys(changes).length === 0) return { id: conversationId };
+
+  const updated = { ...conversation, ...changes };
+  await db
+    .update(chatConversationTable)
+    .set(changes)
+    .where(eq(chatConversationTable.id, conversationId));
+
+  // A channel that was open, or has just been opened, is in everyone's list.
+  const recipientIds = await channelAudience(
+    conversation,
+    isOpenChannel(conversation) || isOpenChannel(updated),
+  );
+  await publishEvent("chat.changed", {
+    type: "CHAT_UPDATED",
+    workspaceId,
+    conversationId,
+    recipientIds,
+  });
+  return { id: conversationId };
+}
+
 export async function deleteChannel(
   workspaceId: string,
   conversationId: string,
   userId: string,
-  canManageWorkspace: boolean,
+  canManage: boolean,
 ) {
   const conversation = await findConversation(workspaceId, conversationId);
-  if (conversation.type !== "channel") {
-    throw new HTTPException(400, { message: "Only channels can be deleted" });
-  }
-  if (conversation.createdBy !== userId && !canManageWorkspace) {
-    throw new HTTPException(403, {
-      message: "Only whoever created the channel can delete it",
-    });
-  }
-  const recipients = await memberIds(conversationId);
+  assertOwnsChannel(conversation, userId, canManage, "delete");
+  const recipientIds = await channelAudience(
+    conversation,
+    isOpenChannel(conversation),
+  );
   await db
     .delete(chatConversationTable)
     .where(eq(chatConversationTable.id, conversationId));
@@ -497,7 +594,7 @@ export async function deleteChannel(
     type: "CHAT_UPDATED",
     workspaceId,
     conversationId,
-    recipientIds: recipients,
+    recipientIds,
   });
   return { id: conversationId };
 }

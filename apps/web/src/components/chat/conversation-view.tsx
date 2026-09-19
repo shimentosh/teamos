@@ -5,6 +5,7 @@ import {
   CheckCheck,
   EllipsisIcon,
   LogOut,
+  Pencil,
   Reply,
   SendHorizontal,
   Trash2,
@@ -54,6 +55,7 @@ type Props = {
   workspaceId: string;
   conversation: ChatConversation;
   onAddPeople: () => void;
+  onEditChannel: () => void;
   onClosed: () => void;
   /** Extra controls at the start of the header, e.g. a back arrow. */
   leading?: ReactNode;
@@ -75,6 +77,7 @@ export function ConversationView({
   workspaceId,
   conversation,
   onAddPeople,
+  onEditChannel,
   onClosed,
   leading,
   trailing,
@@ -83,7 +86,7 @@ export function ConversationView({
   const { t } = useTranslation();
   const { user } = useAuth();
   const meId = user?.id;
-  const { canManageWorkspace } = useWorkspacePermission();
+  const { canUpdateChannels, canDeleteChannels } = useWorkspacePermission();
   const actions = useChatActions(workspaceId);
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
     useChatMessages(workspaceId, conversation.id);
@@ -124,9 +127,10 @@ export function ConversationView({
   const title = conversationTitle(conversation, meId, t("chat:you"));
   const isChannel = conversation.type === "channel";
   const others = conversation.members.filter((m) => m.id !== meId);
-  const canDelete =
-    isChannel &&
-    (conversation.createdBy === meId || Boolean(canManageWorkspace()));
+  // Whoever made a channel keeps hold of it; everyone else needs the role.
+  const isCreator = conversation.createdBy === meId;
+  const canEdit = isChannel && (isCreator || Boolean(canUpdateChannels()));
+  const canDelete = isChannel && (isCreator || Boolean(canDeleteChannels()));
   const typingNames = Object.entries(typists)
     .filter(([id]) => id !== meId)
     .map(([, typist]) => typist.name);
@@ -339,7 +343,7 @@ export function ConversationView({
           ))}
         </div>
       )}
-      {isChannel && conversation.joined && (
+      {isChannel && (conversation.joined || canEdit || canDelete) && (
         <Menu>
           <MenuTrigger
             render={
@@ -353,18 +357,31 @@ export function ConversationView({
             <EllipsisIcon className="size-4" />
           </MenuTrigger>
           <MenuPopup align="end">
-            <MenuItem onClick={onAddPeople}>
-              <UserPlus className="size-4" />
-              {t("chat:addPeople")}
-            </MenuItem>
-            <MenuItem
-              onClick={() =>
-                run(() => actions.leave.mutateAsync(conversation.id), onClosed)
-              }
-            >
-              <LogOut className="size-4" />
-              {t("chat:leave")}
-            </MenuItem>
+            {conversation.joined && (
+              <MenuItem onClick={onAddPeople}>
+                <UserPlus className="size-4" />
+                {t("chat:addPeople")}
+              </MenuItem>
+            )}
+            {canEdit && (
+              <MenuItem onClick={onEditChannel}>
+                <Pencil className="size-4" />
+                {t("chat:editChannel")}
+              </MenuItem>
+            )}
+            {conversation.joined && (
+              <MenuItem
+                onClick={() =>
+                  run(
+                    () => actions.leave.mutateAsync(conversation.id),
+                    onClosed,
+                  )
+                }
+              >
+                <LogOut className="size-4" />
+                {t("chat:leave")}
+              </MenuItem>
+            )}
             {canDelete && (
               <MenuItem
                 variant="destructive"

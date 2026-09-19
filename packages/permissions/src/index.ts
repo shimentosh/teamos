@@ -6,6 +6,27 @@ import {
   ownerAc,
 } from "better-auth/plugins/organization/access";
 
+// Instance-wide tiers, stored on `user.role` by Better Auth's admin plugin.
+// They sit above workspace membership: both bypass every workspace permission
+// check, and only they may create a workspace. `super-admin` is the first user
+// to sign up and is additionally the only tier that can promote or demote
+// another admin.
+export const SUPER_ADMIN_ROLE = "super-admin";
+export const INSTANCE_ADMIN_ROLE = "admin";
+export const INSTANCE_ADMIN_ROLES = [
+  SUPER_ADMIN_ROLE,
+  INSTANCE_ADMIN_ROLE,
+] as const;
+export type InstanceAdminRole = (typeof INSTANCE_ADMIN_ROLES)[number];
+
+export function isInstanceAdminRole(role: string | null | undefined): boolean {
+  return role === SUPER_ADMIN_ROLE || role === INSTANCE_ADMIN_ROLE;
+}
+
+export function isSuperAdminRole(role: string | null | undefined): boolean {
+  return role === SUPER_ADMIN_ROLE;
+}
+
 export const statement = {
   ...defaultStatements,
   project: ["create", "read", "update", "delete", "share"],
@@ -29,6 +50,10 @@ export const statement = {
   // Workspace-wide reports. Everyone sees a report of their own work; this
   // covers the whole team's.
   report: ["read"],
+  // Chat channels. Everyone in the workspace reads open channels and posts in
+  // the conversations they belong to; these cover the channels themselves.
+  // Whoever creates a channel can always rename and delete that one.
+  channel: ["create", "update", "delete"],
 } as const;
 
 export const ac = createAccessControl(statement);
@@ -41,13 +66,17 @@ export const viewer = ac.newRole({
   workspace: ["read"],
 });
 
+// Projects are opened by whoever runs them, not by everyone: a member works
+// inside the projects they are on the team of and sees only the tasks assigned
+// to them. Give a role `project:create` in Settings > Roles to change that.
 export const member = ac.newRole({
   ...memberAc.statements,
-  project: ["create", "read"],
+  project: ["read"],
   task: ["create", "read", "update"],
   label: ["create", "read", "update", "delete"],
   workspace: ["read"],
   file: ["upload"],
+  channel: ["create"],
 });
 
 // Runs a team day to day: sees people, time and activity, approves leave and
@@ -64,6 +93,7 @@ export const manager = ac.newRole({
   request: ["approve"],
   file: ["upload"],
   report: ["read"],
+  channel: ["create", "update", "delete"],
 });
 
 export const admin = ac.newRole({
@@ -80,6 +110,7 @@ export const admin = ac.newRole({
   audit: ["read"],
   file: ["upload", "manage"],
   report: ["read"],
+  channel: ["create", "update", "delete"],
 });
 
 export const owner = ac.newRole({
@@ -96,17 +127,18 @@ export const owner = ac.newRole({
   audit: ["read"],
   file: ["upload", "manage"],
   report: ["read"],
+  channel: ["create", "update", "delete"],
 });
 
 export const builtInRoles = { viewer, member, manager, admin, owner } as const;
 
 export type BuiltInRoleName = keyof typeof builtInRoles;
 
-// Default-role names that the API seeds per workspace. These ARE editable in
-// the UI (their permissions live as rows in `workspace_role`), but their names
-// are reserved and the rows are auto-created on workspace creation /
-// backfilled at boot. `owner` is intentionally NOT in this list because it
-// stays a true static role on the better-auth side.
+// Default-role names the API seeds into the instance catalog. These ARE
+// editable in the UI (their permissions live as rows in `instance_role`), but
+// their names are reserved and the rows are created at boot if missing.
+// `owner` is intentionally NOT in this list because it stays a true static
+// role on the better-auth side.
 export const DEFAULT_ROLE_NAMES = [
   "viewer",
   "member",
@@ -127,8 +159,8 @@ function toMutablePayload(
 
 // Plain JSON-serializable permission payloads for the seeded default roles.
 // Mirrors each role's `.statements` (including better-auth's organization/
-// member/team/invitation/ac defaults) so a workspace_role row that uses one
-// of these has parity with the prior static definition.
+// member/team/invitation/ac defaults) so a catalog row that uses one of these
+// has parity with the compiled-in definition.
 export const defaultRolePayloads: Record<
   DefaultRoleName,
   Record<string, string[]>

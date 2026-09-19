@@ -3160,6 +3160,9 @@
 								},
 								"invitation": {
 									"type": "string"
+								},
+								"channel": {
+									"type": "string"
 								}
 							},
 							"required": [
@@ -3175,7 +3178,8 @@
 								"audit",
 								"file",
 								"member",
-								"invitation"
+								"invitation",
+								"channel"
 							]
 						},
 						"permissions": {
@@ -3721,6 +3725,52 @@
 										}
 									},
 									"required": ["update", "delete"]
+								},
+								"channel": {
+									"type": "object",
+									"additionalProperties": false,
+									"properties": {
+										"create": {
+											"type": "object",
+											"additionalProperties": false,
+											"properties": {
+												"label": {
+													"type": "string"
+												},
+												"description": {
+													"type": "string"
+												}
+											},
+											"required": ["label", "description"]
+										},
+										"update": {
+											"type": "object",
+											"additionalProperties": false,
+											"properties": {
+												"label": {
+													"type": "string"
+												},
+												"description": {
+													"type": "string"
+												}
+											},
+											"required": ["label", "description"]
+										},
+										"delete": {
+											"type": "object",
+											"additionalProperties": false,
+											"properties": {
+												"label": {
+													"type": "string"
+												},
+												"description": {
+													"type": "string"
+												}
+											},
+											"required": ["label", "description"]
+										}
+									},
+									"required": ["create", "update", "delete"]
 								}
 							},
 							"required": [
@@ -3736,7 +3786,8 @@
 								"audit",
 								"file",
 								"invitation",
-								"member"
+								"member",
+								"channel"
 							]
 						},
 						"validation": {
@@ -14688,6 +14739,9 @@
 				"deleteChannel": {
 					"type": "string"
 				},
+				"editChannel": {
+					"type": "string"
+				},
 				"deleteConfirm": {
 					"type": "string"
 				},
@@ -14952,6 +15006,7 @@
 				"options",
 				"leave",
 				"deleteChannel",
+				"editChannel",
 				"deleteConfirm",
 				"formerMember",
 				"edited",

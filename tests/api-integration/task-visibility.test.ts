@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 import db, { schema } from "../../apps/api/src/database";
 import { addWorkspaceMember, requestAs } from "./helpers/company";
@@ -183,33 +183,23 @@ describe("members see only the tasks assigned to them", () => {
   });
 
   it("lets a role grant the whole view back", async () => {
-    const { owner, member, workspaceId, project, task } = await setup();
+    const { owner, member, project, task } = await setup();
     await task(owner);
     const [row] = await db
       .select()
-      .from(schema.workspaceRoleTable)
-      .where(
-        and(
-          eq(schema.workspaceRoleTable.workspaceId, workspaceId),
-          eq(schema.workspaceRoleTable.role, "member"),
-        ),
-      );
+      .from(schema.instanceRoleTable)
+      .where(eq(schema.instanceRoleTable.role, "member"));
     const permission = row
       ? JSON.parse(row.permission)
       : { task: ["create", "read", "update"] };
     permission.task = [...permission.task, "read_all"];
-    if (row) {
-      await db
-        .update(schema.workspaceRoleTable)
-        .set({ permission: JSON.stringify(permission) })
-        .where(eq(schema.workspaceRoleTable.id, row.id));
-    } else {
-      await db.insert(schema.workspaceRoleTable).values({
-        workspaceId,
-        role: "member",
-        permission: JSON.stringify(permission),
+    await db
+      .insert(schema.instanceRoleTable)
+      .values({ role: "member", permission: JSON.stringify(permission) })
+      .onConflictDoUpdate({
+        target: schema.instanceRoleTable.role,
+        set: { permission: JSON.stringify(permission) },
       });
-    }
     expect(await listIds(member, project.id)).toHaveLength(1);
   });
 });

@@ -29,7 +29,7 @@ export async function seesEveryTask(workspaceId: string, userId: string) {
   if (!role) return false;
   // A member's role string can name several roles; any of them may grant it.
   for (const name of role.split(",").map((part) => part.trim())) {
-    const statements = name ? await getRoleStatements(workspaceId, name) : null;
+    const statements = name ? await getRoleStatements(name) : null;
     if (statements?.task?.includes("read_all")) return true;
   }
   return false;

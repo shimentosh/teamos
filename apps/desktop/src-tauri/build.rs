@@ -5,12 +5,10 @@
 fn main() {
     let attributes = tauri_build::Attributes::new().app_manifest(
         tauri_build::AppManifest::new().commands(&[
-            "desktop_info",
             "desktop_start_login",
             "desktop_notify",
             "desktop_set_badge",
             "desktop_is_foreground",
-            "desktop_set_instance_url",
         ]),
     );
 

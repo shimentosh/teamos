@@ -17,7 +17,8 @@ type Props = {
   conversations: ChatConversation[];
   activeId: string | null;
   onSelect: (id: string) => void;
-  onNewChannel: () => void;
+  /** Left out when the caller can't create channels. */
+  onNewChannel?: () => void;
   onNewMessage: () => void;
 };
 
@@ -103,7 +104,7 @@ export function ConversationList({
     label: string,
     items: ChatConversation[],
     addLabel: string,
-    onAdd: () => void,
+    onAdd: (() => void) | undefined,
     empty: string,
   ) => (
     <section>
@@ -116,24 +117,32 @@ export function ConversationList({
             </span>
           )}
         </h3>
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          aria-label={addLabel}
-          title={addLabel}
-          onClick={onAdd}
-        >
-          <Plus className="size-3.5" />
-        </Button>
+        {onAdd && (
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            aria-label={addLabel}
+            title={addLabel}
+            onClick={onAdd}
+          >
+            <Plus className="size-3.5" />
+          </Button>
+        )}
       </div>
       {items.length === 0 ? (
-        <button
-          type="button"
-          onClick={onAdd}
-          className="mx-2 my-1 w-[calc(100%-1rem)] rounded-lg border border-dashed border-border px-3 py-2.5 text-left text-xs text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground"
-        >
-          {empty}
-        </button>
+        onAdd ? (
+          <button
+            type="button"
+            onClick={onAdd}
+            className="mx-2 my-1 w-[calc(100%-1rem)] rounded-lg border border-dashed border-border px-3 py-2.5 text-left text-xs text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground"
+          >
+            {empty}
+          </button>
+        ) : (
+          <p className="mx-2 my-1 rounded-lg border border-dashed border-border px-3 py-2.5 text-xs text-muted-foreground">
+            {empty}
+          </p>
+        )
       ) : (
         <ul className="space-y-px">{items.map(row)}</ul>
       )}

@@ -20,7 +20,7 @@ async function approvers(workspaceId: string, except: string) {
     .where(eq(workspaceUserTable.workspaceId, workspaceId));
   const canApprove = new Map<string, boolean>();
   for (const role of new Set(members.map((m) => m.role))) {
-    const statements = await getRoleStatements(workspaceId, role);
+    const statements = await getRoleStatements(role);
     canApprove.set(role, Boolean(statements?.request?.includes("approve")));
   }
   return members

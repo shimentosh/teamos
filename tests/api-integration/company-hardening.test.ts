@@ -176,8 +176,7 @@ describe("requests", () => {
 describe("audit log", () => {
   it("hides pay amounts from audit readers without payroll:read", async () => {
     const { owner, workspace, alice } = await company();
-    await db.insert(schema.workspaceRoleTable).values({
-      workspaceId: workspace.id,
+    await db.insert(schema.instanceRoleTable).values({
       role: "auditor",
       permission: JSON.stringify({ audit: ["read"] }),
     });

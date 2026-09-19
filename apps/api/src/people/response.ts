@@ -17,7 +17,7 @@ export const personSchema = z
     }),
     online: z.boolean().openapi({
       description:
-        "A paired desktop app reported in during the last two minutes. Presence only, not work time.",
+        "Used TeamOS, or had a paired desktop app report in, during the last two minutes. Presence only, not work time.",
     }),
   })
   .openapi("Person");

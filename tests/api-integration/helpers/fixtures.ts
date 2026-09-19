@@ -1,5 +1,4 @@
 import { randomUUID } from "node:crypto";
-import { and, eq } from "drizzle-orm";
 import db, { schema } from "../../../apps/api/src/database";
 import { DEFAULT_PROJECT_COLUMNS } from "../../../apps/api/src/project/controllers/create-project";
 import { defaultRolePayloads } from "../../../packages/permissions/src";
@@ -54,31 +53,31 @@ export async function createWorkspaceMember(
     (overrides?.role ?? "member") === "member" &&
     overrides?.seeAllTasks !== false
   ) {
-    await grantSeeAllTasks(workspace.id);
+    await grantSeeAllTasks();
   }
 
   return { user, workspace };
 }
 
-/** Gives a workspace role task:read_all, the whole-board view. */
-export async function grantSeeAllTasks(workspaceId: string, role = "member") {
+/**
+ * Gives a role task:read_all, the whole-board view. Roles are defined once for
+ * the instance, so this writes the catalog rather than one workspace. Each
+ * test truncates first, so a row written here lives only for that test.
+ */
+export async function grantSeeAllTasks(role = "member") {
   const base =
     defaultRolePayloads[role as keyof typeof defaultRolePayloads] ?? {};
-  const permission = {
+  const permission = JSON.stringify({
     ...base,
     task: [...new Set([...(base.task ?? []), "read_all"])],
-  };
+  });
   await db
-    .delete(schema.workspaceRoleTable)
-    .where(
-      and(
-        eq(schema.workspaceRoleTable.workspaceId, workspaceId),
-        eq(schema.workspaceRoleTable.role, role),
-      ),
-    );
-  await db
-    .insert(schema.workspaceRoleTable)
-    .values({ workspaceId, role, permission: JSON.stringify(permission) });
+    .insert(schema.instanceRoleTable)
+    .values({ role, permission })
+    .onConflictDoUpdate({
+      target: schema.instanceRoleTable.role,
+      set: { permission },
+    });
 }
 
 export async function createProjectFixture({

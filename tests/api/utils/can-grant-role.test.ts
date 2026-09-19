@@ -15,7 +15,7 @@ vi.mock("../../../apps/api/src/database", () => ({
 
 vi.mock("../../../apps/api/src/utils/require-workspace-permission", () => ({
   getMemberRole: async () => state.granterRole,
-  getRoleStatements: async (_workspaceId: string, role: string) => {
+  getRoleStatements: async (role: string) => {
     const builtIns: Record<string, Record<string, readonly string[]>> = {
       viewer: viewer.statements,
       member: member.statements,

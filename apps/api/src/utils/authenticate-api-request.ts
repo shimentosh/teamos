@@ -4,6 +4,7 @@ import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { auth } from "../auth";
 import { verifyApiKey } from "./verify-api-key";
+import { markWebPresence } from "./web-presence";
 
 // User is tagged on Sentry's isolation scope; the per-request isolation
 // scope is forked by Sentry.withIsolationScope in the api.use("*", ...)
@@ -153,6 +154,9 @@ export async function authenticateApiRequest(c: Context): Promise<void> {
   }
 
   attachUserToScope(sessionResult.user.id);
+  // A cookie session is a person with TeamOS open, which is what presence
+  // means; bearer tokens and API keys are automated callers.
+  markWebPresence(sessionResult.user.id);
 }
 
 export async function resolveAssetBearerOrCookie(c: Context): Promise<{

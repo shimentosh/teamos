@@ -314,6 +314,12 @@
 			"createWorkspace": "Create workspace",
 			"workspaceCreatedTitle": "Workspace created",
 			"redirectingToWorkspace": "Taking you to <name>{{name}}</name>...",
+			"waitingTitle": "Waiting for an invitation",
+			"waitingSubtitle": "Only an admin can create a workspace here. Ask one to invite you, and it will show up on this page.",
+			"waitingInvitePending_one": "You have {{count}} pending invitation.",
+			"waitingInvitePending_other": "You have {{count}} pending invitations.",
+			"waitingViewInvitations": "View invitations",
+			"waitingSignOut": "Sign out",
 			"toast": {
 				"workspaceCreated": "Workspace created successfully",
 				"createFailed": "Failed to create workspace"
@@ -773,10 +779,10 @@
 		"workspaceRoles": {
 			"pageTitle": "Roles",
 			"title": "Roles",
-			"subtitle": "Define which actions members can perform in {{workspaceName}}.",
+			"subtitle": "Define what each role can do. Roles are set once here and apply in every workspace on this server.",
 			"thisWorkspace": "this workspace",
-			"noAccess": "You need admin or owner permissions to manage workspace roles.",
-			"sectionTitle": "Workspace roles",
+			"noAccess": "You need to be an instance admin to manage roles.",
+			"sectionTitle": "Roles",
 			"sectionSubtitle": "Edit the default roles or add a tailored one. Members keep their assigned role name across edits.",
 			"newRole": "New role",
 			"loading": "Loading…",
@@ -814,7 +820,8 @@
 				"audit": "Audit log",
 				"file": "Files",
 				"member": "Members",
-				"invitation": "Invitations"
+				"invitation": "Invitations",
+				"channel": "Chat channels"
 			},
 			"permissions": {
 				"project": {
@@ -977,6 +984,20 @@
 					"delete": {
 						"label": "Remove members",
 						"description": "Remove people from the workspace."
+					}
+				},
+				"channel": {
+					"create": {
+						"label": "Create channels",
+						"description": "Start new chat channels in this workspace."
+					},
+					"update": {
+						"label": "Edit everyone's channels",
+						"description": "Rename any channel and change who can see it. Everyone can always edit the channels they created."
+					},
+					"delete": {
+						"label": "Delete everyone's channels",
+						"description": "Delete any channel and its messages. Everyone can always delete the channels they created."
 					}
 				}
 			},
@@ -3563,6 +3584,7 @@
 		"options": "Conversation options",
 		"leave": "Leave channel",
 		"deleteChannel": "Delete channel",
+		"editChannel": "Edit channel",
 		"deleteConfirm": "Delete #{{name}} and all of its messages? This can’t be undone.",
 		"memberCount_one": "{{count}} member",
 		"memberCount_other": "{{count}} members",
@@ -4464,6 +4486,23 @@
 		"saved": "Registration settings saved",
 		"updated": "Updated {{date}} by {{name}}",
 		"error": "Couldn't save the registration setting"
+	},
+	"instancePeople": {
+		"navTitle": "People",
+		"title": "Instance people",
+		"subtitle": "Everyone with an account on this server, and the tier they hold. Admins can create workspaces and see every workspace; only a super-admin can change a tier.",
+		"loading": "Loading people...",
+		"saved": "Tier updated",
+		"error": "Couldn't change that tier",
+		"columns": {
+			"person": "Person",
+			"tier": "Instance tier"
+		},
+		"tiers": {
+			"super-admin": "Super admin",
+			"admin": "Admin",
+			"user": "Member"
+		}
 	},
 	"desktopApp": {
 		"signIn": {

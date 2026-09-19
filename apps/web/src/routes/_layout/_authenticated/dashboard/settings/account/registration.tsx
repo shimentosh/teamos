@@ -1,3 +1,4 @@
+import { isInstanceAdminRole } from "@kaneo/permissions";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { RegistrationSetupCard } from "@/components/instance/registration-setup-card";
@@ -7,11 +8,11 @@ import { authClient } from "@/lib/auth-client";
 export const Route = createFileRoute(
   "/_layout/_authenticated/dashboard/settings/account/registration",
 )({
-  // Server-wide setting: only the instance admin has any business here. The
+  // Server-wide setting: only an instance admin has any business here. The
   // API enforces the same check, so this is about not showing a dead end.
   beforeLoad: async () => {
     const session = await authClient.getSession();
-    if (session?.data?.user?.role !== "admin") {
+    if (!isInstanceAdminRole(session?.data?.user?.role)) {
       throw redirect({ to: "/dashboard/settings/account/information" });
     }
   },

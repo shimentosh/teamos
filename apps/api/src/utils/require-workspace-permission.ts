@@ -50,19 +50,13 @@ function parsePermissionStatements(
   return result;
 }
 
-async function customRoleStatements(
-  workspaceId: string,
+async function catalogRoleStatements(
   role: string,
 ): Promise<Record<string, readonly string[]> | null> {
   const [row] = await db
-    .select({ permission: schema.workspaceRoleTable.permission })
-    .from(schema.workspaceRoleTable)
-    .where(
-      and(
-        eq(schema.workspaceRoleTable.workspaceId, workspaceId),
-        eq(schema.workspaceRoleTable.role, role),
-      ),
-    )
+    .select({ permission: schema.instanceRoleTable.permission })
+    .from(schema.instanceRoleTable)
+    .where(eq(schema.instanceRoleTable.role, role))
     .limit(1);
 
   if (!row?.permission) return null;
@@ -70,20 +64,15 @@ async function customRoleStatements(
   return parsePermissionStatements(row.permission);
 }
 
-// Prefer the DB row when present so admin-edited defaults
-// (viewer/member/admin) take effect immediately. Falls back to the
-// compiled-in static definitions only when no row exists, which protects
-// viewer/member/admin users from a 403 if their workspace somehow
-// missed the seed (e.g., seed failed during workspace creation and
-// the boot-time backfill hasn't run yet).
+// What a role may do, anywhere on the instance. The catalog row wins so an
+// edit in Settings > Roles takes effect immediately; the compiled-in defaults
+// are the fallback, which protects viewer/member/manager/admin from a 403 if
+// the catalog somehow missed its seed (a fresh database before the boot-time
+// sync has run, say).
 export async function getRoleStatements(
-  workspaceId: string,
   role: string,
 ): Promise<Record<string, readonly string[]> | null> {
-  return (
-    (await customRoleStatements(workspaceId, role)) ??
-    builtInRoleStatements(role)
-  );
+  return (await catalogRoleStatements(role)) ?? builtInRoleStatements(role);
 }
 
 export async function getMemberRole(
@@ -142,7 +131,7 @@ export async function hasWorkspacePermission(
   const role = await getMemberRole(workspaceId, userId);
   if (!role) return false;
 
-  const statements = await getRoleStatements(workspaceId, role);
+  const statements = await getRoleStatements(role);
 
   return Boolean(statements && satisfies(statements, permissions));
 }

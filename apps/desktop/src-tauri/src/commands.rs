@@ -2,35 +2,16 @@
 //!
 //! Which of these a page may call is decided in `capabilities/`. A TeamOS
 //! instance loaded in the window gets the four it needs to raise notifications
-//! and start a browser sign-in. Reading or changing which server the app points
-//! at is granted to the shell's own setup window only, so a page can never
-//! repoint the app somewhere else.
+//! and start a browser sign-in. Which server the app points at is not one of
+//! them, and is not changeable from the app at all: it is a build-time constant
+//! with a development-only environment override.
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use tauri::{AppHandle, Manager};
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_notification::NotificationExt;
 
-use crate::{auth, config, grant_instance_ipc, set_tray_tooltip, show_window};
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct DesktopInfo {
-    version: String,
-    platform: String,
-    instance_url: String,
-    autostart: bool,
-}
-
-#[tauri::command]
-pub fn desktop_info(app: AppHandle) -> DesktopInfo {
-    DesktopInfo {
-        version: app.package_info().version.to_string(),
-        platform: std::env::consts::OS.to_string(),
-        instance_url: config::load().instance_url,
-        autostart: app.autolaunch().is_enabled().unwrap_or(false),
-    }
-}
+use crate::{auth, config, set_tray_tooltip};
 
 #[tauri::command]
 pub fn desktop_start_login(app: AppHandle) -> Result<(), String> {
@@ -97,30 +78,6 @@ pub fn desktop_is_foreground(app: AppHandle) -> bool {
     window.is_visible().unwrap_or(false)
         && !window.is_minimized().unwrap_or(false)
         && window.is_focused().unwrap_or(false)
-}
-
-/// Points the shell at a different TeamOS server. Setup window only.
-#[tauri::command]
-pub fn desktop_set_instance_url(app: AppHandle, url: String) -> Result<(), String> {
-    let normalized = config::normalize_url(&url)
-        .ok_or_else(|| "Enter a web address like https://teamos.example.com".to_string())?;
-
-    let mut config = config::load();
-    config.instance_url = normalized.clone();
-    config::save(&config)?;
-
-    grant_instance_ipc(&app, &normalized);
-
-    let target = normalized.parse::<tauri::Url>().map_err(|e| e.to_string())?;
-    if let Some(window) = app.get_webview_window("main") {
-        window.navigate(target).map_err(|e| e.to_string())?;
-    }
-
-    if let Some(setup) = app.get_webview_window("setup") {
-        let _ = setup.close();
-    }
-    show_window(&app);
-    Ok(())
 }
 
 /// Start with the computer. Driven by the tray menu, not by any page.

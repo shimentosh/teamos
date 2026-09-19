@@ -258,7 +258,7 @@ export function AskTeamOsButton({
       {!hideTrigger && (
         <Button
           variant="ghost"
-          size="icon"
+          size="icon-sm"
           aria-label={t("ai:ask.open")}
           title={`${t("ai:ask.open")} (Ctrl+J)`}
           onClick={() => setOpen(true)}

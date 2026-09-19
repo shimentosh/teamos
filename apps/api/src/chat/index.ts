@@ -9,8 +9,10 @@ import {
   responseTimestamp,
   z,
 } from "../openapi";
-import { hasWorkspacePermission } from "../utils/require-workspace-permission";
-import { markWebPresence, webPresentUserIds } from "../utils/web-presence";
+import {
+  hasWorkspacePermission,
+  requireWorkspacePermission,
+} from "../utils/require-workspace-permission";
 import { workspaceAccess } from "../utils/workspace-access-middleware";
 import { addUserListener } from "../ws";
 import {
@@ -28,6 +30,7 @@ import {
   sendMessage,
   toggleReaction,
   typing,
+  updateChannel,
 } from "./controllers";
 
 const tags = ["Chat"];
@@ -127,8 +130,11 @@ const createChannelRoute = createRoute({
   tags,
   summary: "Create a channel",
   description:
-    "Open channels can be joined by anyone in the workspace; private ones only by the people added.",
-  middleware: [workspaceAccess.fromBody()] as const,
+    "Open channels can be joined by anyone in the workspace; private ones only by the people added. Needs channel:create.",
+  middleware: [
+    workspaceAccess.fromBody(),
+    requireWorkspacePermission({ channel: ["create"] }),
+  ] as const,
   request: {
     body: json(
       z.object({
@@ -142,6 +148,7 @@ const createChannelRoute = createRoute({
   responses: {
     200: jsonResponse("Created", idSchema),
     400: errorResponse("Someone listed is not in the workspace"),
+    403: errorResponse("Missing channel:create"),
     409: errorResponse("A channel with that name already exists"),
   },
 });
@@ -213,6 +220,40 @@ const addMembersRoute = createRoute({
   },
 });
 
+const updateChannelRoute = createRoute({
+  method: "patch",
+  operationId: "updateChatChannel",
+  path: "/{id}",
+  tags,
+  summary: "Rename a channel or change who can see it",
+  description:
+    "Whoever created the channel, or anyone with channel:update. Making a channel private hides it from everyone who has not been added.",
+  middleware: [workspaceAccess.fromBody()] as const,
+  request: {
+    params: idParam,
+    body: json(
+      z.object({
+        workspaceId: z.string(),
+        name: z
+          .string()
+          .trim()
+          .min(1)
+          .max(80)
+          .optional()
+          .openapi({ example: "design-team" }),
+        isPrivate: z.boolean().optional(),
+      }),
+    ),
+  },
+  responses: {
+    200: jsonResponse("Updated", idSchema),
+    400: errorResponse("Direct messages can't be renamed"),
+    403: errorResponse("Not the creator, and missing channel:update"),
+    404: errorResponse("Not found"),
+    409: errorResponse("A channel with that name already exists"),
+  },
+});
+
 const deleteChannelRoute = createRoute({
   method: "delete",
   operationId: "deleteChatChannel",
@@ -220,14 +261,12 @@ const deleteChannelRoute = createRoute({
   tags,
   summary: "Delete a channel",
   description:
-    "Deletes the channel and its messages. Whoever created it, or anyone with workspace:manage_settings.",
+    "Deletes the channel and its messages. Whoever created it, or anyone with channel:delete.",
   middleware: [workspaceAccess.fromQuery()] as const,
   request: { params: idParam, query: workspaceQuery },
   responses: {
     200: jsonResponse("Deleted", idSchema),
-    403: errorResponse(
-      "Not the creator, and missing workspace:manage_settings",
-    ),
+    403: errorResponse("Not the creator, and missing channel:delete"),
     404: errorResponse("Not found"),
   },
 });
@@ -359,7 +398,7 @@ const presenceRoute = createRoute({
   tags,
   summary: "Who is online",
   description:
-    "Ids of workspace members online now: TeamOS open in a browser, or the desktop app reporting in.",
+    "Ids of workspace members online now: used TeamOS recently, or the desktop app reporting in.",
   middleware: [workspaceAccess.fromQuery()] as const,
   request: { query: workspaceQuery },
   responses: {
@@ -425,8 +464,6 @@ const chat = apiRouter()
     // Stops proxies such as nginx from holding events back in a buffer.
     c.header("X-Accel-Buffering", "no");
     return streamSSE(c, async (stream) => {
-      const leave = markWebPresence(workspaceId, userId);
-      stream.onAbort(leave);
       const unsubscribe = addUserListener(userId, (message) => {
         if (
           !message.type.startsWith("CHAT_") ||
@@ -447,15 +484,11 @@ const chat = apiRouter()
         await stream.writeSSE({ event: "ping", data: "" }).catch(() => {});
       }
       unsubscribe();
-      leave();
     });
   })
   .openapi(presenceRoute, async (c) => {
     const { workspaceId } = c.req.valid("query");
-    const online = new Set([
-      ...webPresentUserIds(workspaceId),
-      ...(await onlineUserIds(workspaceId)),
-    ]);
+    const online = await onlineUserIds(workspaceId);
     return c.json({ online: [...online] }, 200);
   })
   .openapi(listConversationsRoute, async (c) =>
@@ -513,13 +546,26 @@ const chat = apiRouter()
       200,
     );
   })
+  .openapi(updateChannelRoute, async (c) => {
+    const { workspaceId, ...input } = c.req.valid("json");
+    return c.json(
+      await updateChannel(
+        workspaceId,
+        c.req.valid("param").id,
+        c.get("userId"),
+        await hasWorkspacePermission(c, { channel: ["update"] }),
+        input,
+      ),
+      200,
+    );
+  })
   .openapi(deleteChannelRoute, async (c) =>
     c.json(
       await deleteChannel(
         c.req.valid("query").workspaceId,
         c.req.valid("param").id,
         c.get("userId"),
-        await hasWorkspacePermission(c, { workspace: ["manage_settings"] }),
+        await hasWorkspacePermission(c, { channel: ["delete"] }),
       ),
       200,
     ),

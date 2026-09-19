@@ -16,9 +16,9 @@ function parseRoles(role: unknown): string[] {
     .filter(Boolean);
 }
 
-async function statementsForRoles(workspaceId: string, roles: string[]) {
+async function statementsForRoles(roles: string[]) {
   const resolved = await Promise.all(
-    roles.map((role) => getRoleStatements(workspaceId, role)),
+    roles.map((role) => getRoleStatements(role)),
   );
   // Unknown roles are left to Better Auth, which rejects them with
   // ROLE_NOT_FOUND; failing here would hide that clearer error.
@@ -49,8 +49,8 @@ export async function canGrantRole({
   if (targetRoles.includes("owner")) return false;
 
   return coversPermissions(
-    await statementsForRoles(workspaceId, granterRoles),
-    await statementsForRoles(workspaceId, targetRoles),
+    await statementsForRoles(granterRoles),
+    await statementsForRoles(targetRoles),
   );
 }
 

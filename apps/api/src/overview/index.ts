@@ -45,7 +45,7 @@ const companyTodaySchema = z
   .object({
     people: z.number(),
     present: z.number().openapi({
-      description: "Clocked in, or with the desktop app online.",
+      description: "Clocked in, or online in a browser or the desktop app.",
     }),
     tasksDueToday: z.number(),
     overdueTasks: z.number(),

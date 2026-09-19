@@ -6,9 +6,12 @@ import {
 } from "@kaneo/email";
 import {
   ac,
-  DEFAULT_ROLE_NAMES,
-  defaultRolePayloads,
+  INSTANCE_ADMIN_ROLE,
+  INSTANCE_ADMIN_ROLES,
+  isInstanceAdminRole,
+  isSuperAdminRole,
   owner,
+  SUPER_ADMIN_ROLE,
 } from "@kaneo/permissions";
 import bcrypt from "bcryptjs";
 import { betterAuth } from "better-auth";
@@ -32,6 +35,10 @@ import {
   organization,
 } from "better-auth/plugins";
 import type { AccessControl } from "better-auth/plugins/access";
+import {
+  adminAc as instanceAdminAc,
+  userAc as instanceUserAc,
+} from "better-auth/plugins/admin/access";
 import type { UserWithAnonymous } from "better-auth/plugins/anonymous";
 import { config } from "dotenv-mono";
 import { and, count, eq, inArray, sql } from "drizzle-orm";
@@ -46,6 +53,7 @@ import { chatConversationTable, chatMemberTable } from "./database/schema";
 import { sendWelcomeEmail } from "./email/welcome";
 import { publishEvent } from "./events";
 import deleteAccountData from "./user/controllers/delete-account-data";
+import { canCreateWorkspace } from "./utils/can-create-workspace";
 import { canGrantRole, getRoleOfMembership } from "./utils/can-grant-role";
 import { checkRegistrationAllowed } from "./utils/check-registration-allowed";
 import { checkWorkspaceName } from "./utils/check-workspace-name";
@@ -59,6 +67,7 @@ import { isCloud } from "./utils/is-cloud";
 import { isDisposableEmail } from "./utils/is-disposable-email";
 import { isLocalSignInPath } from "./utils/is-local-sign-in-path";
 import { isRegistrationDisabled } from "./utils/registration-settings";
+import { syncWorkspaceRoleMirrorFor } from "./utils/sync-workspace-role-mirror";
 import { verifyTurnstile } from "./utils/verify-turnstile";
 
 config();
@@ -70,8 +79,6 @@ const isPasswordRegistrationDisabled =
 const isLoginFormDisabled = process.env.DISABLE_LOGIN_FORM === "true";
 const isEmailOtpSignInDisabled =
   process.env.DISABLE_EMAIL_OTP_SIGN_IN === "true";
-const isWorkspaceCreationDisabled =
-  process.env.DISABLE_WORKSPACE_CREATION === "true";
 
 function normalizeInvitationId(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined;
@@ -325,11 +332,10 @@ export const auth = betterAuth({
       // accepts our custom statement.
       ac: ac as unknown as AccessControl,
       // Only `owner` stays static so its permissions can never be edited away
-      // from the workspace creator. `viewer`, `member`, and `admin` are
-      // seeded into `workspace_role` per workspace and resolved via
-      // dynamic access control, so admins can fully override (replace) their
-      // permissions per workspace. See `seedDefaultWorkspaceRoles` + the
-      // afterCreateOrganization hook.
+      // from the workspace creator. Every other role comes from the instance
+      // catalog (`instance_role`), mirrored into each workspace's
+      // `workspace_role` rows so Better Auth's dynamic access control can
+      // resolve it. See `sync-workspace-role-mirror.ts`.
       roles: { owner },
       dynamicAccessControl: {
         enabled: true,
@@ -378,31 +384,11 @@ export const auth = betterAuth({
           },
         },
       },
-      // When `DISABLE_WORKSPACE_CREATION` is set, only instance admins
-      // (`user.role === "admin"`) may create workspaces — mirrors the
-      // implicit-exemption shape of `DISABLE_REGISTRATION` above. This
-      // check runs before any workspace membership exists, so only the
-      // instance-wide role is meaningful here; per-workspace roles
-      // (owner/admin/member/viewer) don't apply until after a workspace
-      // is joined.
-      //
-      // `user` here comes from the session, which may be served out of
-      // the cookie cache (see `session.cookieCache` below). The
-      // first-user bootstrap promotes the user to admin in
-      // `databaseHooks.user.create.after`, but that happens after
-      // `signUpEmail` has already returned/cached the pre-promotion
-      // role, so a cached session can still say `role: "user"` for up
-      // to `cookieCache.maxAge`. Re-read the role from the database
-      // instead of trusting the (possibly stale) cached role.
-      allowUserToCreateOrganization: isWorkspaceCreationDisabled
-        ? async (user) => {
-            const [freshUser] = await db
-              .select({ role: schema.userTable.role })
-              .from(schema.userTable)
-              .where(eq(schema.userTable.id, user.id));
-            return freshUser?.role === "admin";
-          }
-        : true,
+      // Only instance admins (`super-admin` and `admin`) may create a
+      // workspace. This runs before any workspace membership exists, so only
+      // the instance-wide role is meaningful here; per-workspace roles
+      // (owner/admin/member/viewer) don't apply until a workspace is joined.
+      allowUserToCreateOrganization: (user) => canCreateWorkspace(user.id),
       // Better Auth defaults this to `true`, which blocks any user whose email
       // is not verified from accepting/rejecting an invitation. TeamOS does not
       // verify emails on signup (and guest/anonymous users are unverified by
@@ -418,36 +404,14 @@ export const auth = betterAuth({
           }
         },
         afterCreateOrganization: async ({ organization, user }) => {
-          // Seed the editable default roles for this workspace. Each
-          // role's permissions are derived from the compiled-in defaults
-          // in `@kaneo/permissions`; admins can later replace them in the
-          // Roles UI. We skip names that somehow already exist (this hook
-          // is best-effort idempotent; the boot-time backfill is the
-          // belt-and-braces path).
+          // Give the new workspace its copy of the instance role catalog.
+          // Only Better Auth reads these rows; TeamOS resolves permissions
+          // from the catalog itself, so a failure here cannot widen access.
           try {
-            const existing = await db
-              .select({ role: schema.workspaceRoleTable.role })
-              .from(schema.workspaceRoleTable)
-              .where(
-                eq(schema.workspaceRoleTable.workspaceId, organization.id),
-              );
-            const taken = new Set(existing.map((r) => r.role));
-            const now = new Date();
-            const rows = DEFAULT_ROLE_NAMES.filter(
-              (name) => !taken.has(name),
-            ).map((name) => ({
-              workspaceId: organization.id,
-              role: name,
-              permission: JSON.stringify(defaultRolePayloads[name]),
-              createdAt: now,
-              updatedAt: now,
-            }));
-            if (rows.length > 0) {
-              await db.insert(schema.workspaceRoleTable).values(rows);
-            }
+            await syncWorkspaceRoleMirrorFor(organization.id);
           } catch (error) {
             console.error(
-              "Failed to seed default workspace roles for workspace",
+              "Failed to mirror the role catalog into workspace",
               organization.id,
               error,
             );
@@ -617,7 +581,17 @@ export const auth = betterAuth({
     }),
     adminPlugin({
       defaultRole: "user",
-      adminRoles: ["admin"],
+      // The admin plugin ships `admin` and `user` only, and refuses an
+      // `adminRoles` entry it doesn't know. `super-admin` carries the same
+      // Better Auth capabilities as `admin`; what separates the two is the
+      // `/admin/set-role` guard above, which is ours. The plugin resolves
+      // permissions straight from `roles`, so it needs no matching `ac`.
+      roles: {
+        [SUPER_ADMIN_ROLE]: instanceAdminAc,
+        [INSTANCE_ADMIN_ROLE]: instanceAdminAc,
+        user: instanceUserAc,
+      },
+      adminRoles: [...INSTANCE_ADMIN_ROLES],
     }),
     openAPI(),
   ],
@@ -693,7 +667,7 @@ export const auth = betterAuth({
             return;
           }
 
-          // Promote the first user to instance admin atomically.
+          // Promote the first user to instance super-admin atomically.
           //
           // A previous version of this code checked the user count in
           // the `before` hook and returned `role: "admin"`, but the
@@ -721,11 +695,11 @@ export const auth = betterAuth({
             // This hook runs after the user row is inserted, so the
             // just-created user is included in the count. If they are
             // the only row in the table, this is a fresh-instance
-            // bootstrap and they get promoted to admin.
+            // bootstrap and they get promoted to super-admin.
             if (totalUserCount === 1) {
               await tx
                 .update(schema.userTable)
-                .set({ role: "admin" })
+                .set({ role: SUPER_ADMIN_ROLE })
                 .where(eq(schema.userTable.id, user.id));
             }
           });
@@ -774,6 +748,60 @@ export const auth = betterAuth({
         }
       }
 
+      // Roles are defined once in the instance catalog, and `workspace_role`
+      // is only a mirror of it. Better Auth's own role endpoints would write
+      // that mirror directly and put the two out of step, so they are closed;
+      // /instance/roles is the way in.
+      if (
+        ctx.path === "/organization/create-role" ||
+        ctx.path === "/organization/update-role" ||
+        ctx.path === "/organization/delete-role"
+      ) {
+        throw new APIError("FORBIDDEN", {
+          message:
+            "Roles are managed for the whole instance in Settings > Roles, not per workspace.",
+        });
+      }
+
+      // Instance tiers are the keys to the whole instance, so only a
+      // super-admin hands them out. Better Auth's admin plugin otherwise
+      // lets any `adminRoles` holder set any role, so a plain `admin` could
+      // promote themselves to super-admin.
+      if (ctx.path === "/admin/set-role") {
+        const session = await getSessionFromCtx(ctx, {
+          disableRefresh: true,
+        }).catch(() => null);
+        if (!session) {
+          throw new APIError("UNAUTHORIZED", { message: "Sign in first." });
+        }
+        // The session may come from the cookie cache, so read the role the
+        // database holds now rather than the one it held five minutes ago.
+        const [caller] = await db
+          .select({ role: schema.userTable.role })
+          .from(schema.userTable)
+          .where(eq(schema.userTable.id, session.user.id));
+        if (!isSuperAdminRole(caller?.role)) {
+          throw new APIError("FORBIDDEN", {
+            message: "Only a super-admin can change instance roles.",
+          });
+        }
+
+        // Nobody can demote the last super-admin: only a super-admin gets
+        // here, so the instance loses its last one exactly when the caller
+        // demotes themselves.
+        const rawRole = ctx.body?.role;
+        const nextRoles = Array.isArray(rawRole) ? rawRole : [rawRole];
+        if (
+          ctx.body?.userId === session.user.id &&
+          !nextRoles.includes(SUPER_ADMIN_ROLE)
+        ) {
+          throw new APIError("BAD_REQUEST", {
+            message:
+              "Promote another super-admin before giving up your own role.",
+          });
+        }
+      }
+
       if (
         ctx.path === "/organization/invite-member" ||
         ctx.path === "/organization/update-member-role"
@@ -798,8 +826,9 @@ export const auth = betterAuth({
             workspaceId,
             userId: session.user.id,
             role,
-            isInstanceAdmin:
-              (session.user as { role?: string | null }).role === "admin",
+            isInstanceAdmin: isInstanceAdminRole(
+              (session.user as { role?: string | null }).role,
+            ),
           });
         // Changing a role must also be allowed for the member's current
         // role, or a weaker role could demote an admin.

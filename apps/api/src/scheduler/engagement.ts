@@ -148,10 +148,10 @@ async function membersOf(
   return members;
 }
 
-async function seesEveryone(workspaceId: string, members: Member[]) {
+async function seesEveryone(members: Member[]) {
   const canSee = new Map<string, boolean>();
   for (const role of new Set(members.map((m) => m.role))) {
-    const statements = await getRoleStatements(workspaceId, role);
+    const statements = await getRoleStatements(role);
     canSee.set(role, Boolean(statements?.people?.includes("read_all")));
   }
   return members.filter((m) => canSee.get(m.role));
@@ -485,7 +485,7 @@ async function runWorkspace(workspaceId: string, now: Date) {
 
   // Weekly: the first workday after a day off (Sunday in a Sunday–Thursday
   // week, Monday in a Monday–Friday one), for people who see everyone.
-  const managers = (await seesEveryone(workspaceId, members)).filter(
+  const managers = (await seesEveryone(members)).filter(
     (m) =>
       !m.onLeave &&
       startsWorkWeek(m.schedule, today) &&

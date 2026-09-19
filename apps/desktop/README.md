@@ -13,8 +13,9 @@ What the shell adds is what a browser tab cannot do:
   arriving. "Quit TeamOS" in the tray menu is the way out.
 - **Starting with the computer**, on by default and toggled from the tray.
 
-Default instance: `https://teamos.sentosh.com`. The tray's **Change instance…**
-points it somewhere else.
+Instance: `https://teamos.sentosh.com`, fixed at build time. The app offers no
+way to point itself at another server; `TEAMOS_INSTANCE_URL` overrides it for a
+development run only.
 
 ## Signing in
 
@@ -63,13 +64,13 @@ shipped instances exactly four commands:
 | `desktop_set_badge` | Sets the unread count on the badge and tray tooltip |
 | `desktop_is_foreground` | Answers whether the window is in front of the user |
 
-`desktop_info` and `desktop_set_instance_url` are deliberately **not** on that
-list: a page loaded from an instance cannot read or change which server the app
-points at. Only the shell's own setup window can.
+That is the whole IPC surface — there is no command to read or change which
+server the app points at, from a page or from the tray. Everything else the app
+does (the tray, hiding on close, start at login) is Rust only and reachable from
+no page at all.
 
-An instance typed into **Change instance…** is granted the same four at runtime.
-Anything the app does on its own — the tray, hiding on close, start at login —
-is Rust only and reachable from no page at all.
+A non-default `TEAMOS_INSTANCE_URL` is granted the same four at runtime, so a
+development host works without editing this file.
 
 ## Building
 
@@ -95,7 +96,7 @@ together before cutting a build.
 
 ### Pointing a build at a different server
 
-Installs get the default and change it from the tray. For a development run,
+An installed app is fixed to its build-time instance. For a development run,
 `TEAMOS_INSTANCE_URL` overrides it without touching the saved config:
 
 ```bash
@@ -108,7 +109,7 @@ IPC works against a local `pnpm dev` without any extra setup.
 `TEAMOS_DESKTOP_DATA_DIR` moves the config so a development run does not disturb
 an installed app.
 
-To change the default for everyone, edit `DEFAULT_INSTANCE_URL` in
+To ship a build for a different server, edit `DEFAULT_INSTANCE_URL` in
 `src-tauri/src/config.rs` and add the origin to `capabilities/instance.json`.
 
 ## Distributing to the team
@@ -142,6 +143,19 @@ Not set up. Unsigned builds warn on first run:
   `bundle.windows.certificateThumbprint` removes it.
 - **macOS**: right-click → Open the first time. Proper removal needs an Apple
   Developer ID and notarization.
+
+## Icons
+
+Generated from the web app's `apps/web/public/favicon.svg`, so the desktop
+window, taskbar, tray, installer and the browser tab all show one mark:
+
+```bash
+npx @tauri-apps/cli@2 icon ../web/public/favicon.svg -o src-tauri/icons
+rm -rf src-tauri/icons/android src-tauri/icons/ios        src-tauri/icons/Square*Logo.png src-tauri/icons/StoreLogo.png
+```
+
+The mobile and Microsoft Store sizes are pruned because this app ships for
+Windows and macOS only.
 
 ## Known limitations
 

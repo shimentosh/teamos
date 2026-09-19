@@ -10,6 +10,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { useChatConversations } from "@/hooks/chat";
+import { useWorkspacePermission } from "@/hooks/use-workspace-permission";
 import { cn } from "@/lib/cn";
 import { ConversationList } from "./conversation-list";
 import { ConversationView } from "./conversation-view";
@@ -41,6 +42,8 @@ export function ChatPanel({
 }: Props) {
   const { t } = useTranslation();
   const { data: conversations = [] } = useChatConversations(workspaceId);
+  const { canCreateChannels } = useWorkspacePermission();
+  const canAddChannel = canCreateChannels();
   const [dialog, setDialog] = useState<NewConversationMode | null>(null);
   const active = conversations.find((c) => c.id === activeId) ?? null;
   const widget = variant === "widget";
@@ -61,7 +64,9 @@ export function ChatPanel({
       conversations={conversations}
       activeId={activeId}
       onSelect={onSelect}
-      onNewChannel={() => setDialog({ kind: "channel" })}
+      onNewChannel={
+        canAddChannel ? () => setDialog({ kind: "channel" }) : undefined
+      }
       onNewMessage={() => setDialog({ kind: "dm" })}
     />
   );
@@ -78,6 +83,14 @@ export function ChatPanel({
           kind: "add",
           conversationId: active.id,
           existingIds: active.members.map((m) => m.id),
+        })
+      }
+      onEditChannel={() =>
+        setDialog({
+          kind: "edit",
+          conversationId: active.id,
+          name: active.name ?? "",
+          isPrivate: active.isPrivate,
         })
       }
       leading={
@@ -104,13 +117,15 @@ export function ChatPanel({
         <EmptyDescription>{t("chat:pickDescription")}</EmptyDescription>
       </EmptyHeader>
       <div className="flex gap-2">
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => setDialog({ kind: "channel" })}
-        >
-          {t("chat:newChannel")}
-        </Button>
+        {canAddChannel && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setDialog({ kind: "channel" })}
+          >
+            {t("chat:newChannel")}
+          </Button>
+        )}
         <Button size="sm" onClick={() => setDialog({ kind: "dm" })}>
           {t("chat:newMessage")}
         </Button>

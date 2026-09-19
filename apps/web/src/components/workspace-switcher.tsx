@@ -1,9 +1,8 @@
+import { isInstanceAdminRole } from "@kaneo/permissions";
 import { useNavigate } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { AskTeamOsButton } from "@/components/ai/ask-teamos";
-import NotificationDropdown from "@/components/notification/notification-dropdown";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +18,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { UserAvatar } from "@/components/user-avatar";
 import { shortcuts } from "@/constants/shortcuts";
 import useGetConfig from "@/hooks/queries/config/use-get-config";
 import useActiveWorkspace from "@/hooks/queries/workspace/use-active-workspace";
@@ -42,7 +40,7 @@ export function WorkspaceSwitcher() {
   const { data: workspaces } = useGetWorkspaces();
   const { data: session } = authClient.useSession();
   const { data: config } = useGetConfig();
-  const isAdmin = session?.user?.role === "admin";
+  const isAdmin = isInstanceAdminRole(session?.user?.role);
   const canCreateWorkspace =
     isAdmin || (config !== undefined && !config.disableWorkspaceCreation);
   const navigate = useNavigate();
@@ -201,14 +199,6 @@ export function WorkspaceSwitcher() {
             </DropdownMenu>
           </SidebarMenuItem>
         </SidebarMenu>
-
-        <div className="flex items-center gap-1">
-          <AskTeamOsButton />
-          <NotificationDropdown />
-          <div className="h-8 w-8 shrink-0">
-            <UserAvatar />
-          </div>
-        </div>
       </div>
 
       <CreateWorkspaceModal

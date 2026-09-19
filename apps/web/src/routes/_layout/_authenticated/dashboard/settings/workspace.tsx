@@ -11,7 +11,6 @@ import {
   CreditCard,
   ScrollText,
   Settings,
-  Shield,
   Tag,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -87,11 +86,6 @@ function RouteComponent() {
       title: t("company:title"),
       url: "/dashboard/settings/workspace/company",
       icon: Building2,
-    },
-    {
-      title: t("settings:workspaceRoles.title", { defaultValue: "Roles" }),
-      url: "/dashboard/settings/workspace/roles",
-      icon: Shield,
     },
     {
       title: t("settings:workspaceLabels.title", { defaultValue: "Labels" }),

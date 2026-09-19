@@ -24,7 +24,7 @@ async function workspaceAdmins(workspaceId: string, except: string) {
     .where(eq(workspaceUserTable.workspaceId, workspaceId));
   const manages = new Map<string, boolean>();
   for (const role of new Set(members.map((m) => m.role))) {
-    const statements = await getRoleStatements(workspaceId, role);
+    const statements = await getRoleStatements(role);
     manages.set(
       role,
       Boolean(statements?.workspace?.includes("manage_settings")),

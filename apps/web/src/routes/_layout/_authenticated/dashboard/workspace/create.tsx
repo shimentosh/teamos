@@ -1,5 +1,6 @@
+import { isInstanceAdminRole } from "@kaneo/permissions";
 import { useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { Building2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -14,6 +15,14 @@ import { toast } from "@/lib/toast";
 export const Route = createFileRoute(
   "/_layout/_authenticated/dashboard/workspace/create",
 )({
+  // Only instance admins can create a workspace. The API refuses everyone
+  // else anyway; this is about not handing them a form that cannot submit.
+  beforeLoad: async () => {
+    const session = await authClient.getSession();
+    if (!isInstanceAdminRole(session?.data?.user?.role)) {
+      throw redirect({ to: "/onboarding" });
+    }
+  },
   component: RouteComponent,
 });
 

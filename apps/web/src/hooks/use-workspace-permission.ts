@@ -40,6 +40,9 @@ const CAPABILITIES = {
   uploadFiles: { file: ["upload"] },
   readReports: { report: ["read"] },
   manageFiles: { file: ["manage"] },
+  createChannels: { channel: ["create"] },
+  updateChannels: { channel: ["update"] },
+  deleteChannels: { channel: ["delete"] },
 } as const satisfies Record<string, Record<string, string[]>>;
 
 type Capability = keyof typeof CAPABILITIES;
@@ -126,6 +129,9 @@ export function useWorkspacePermission() {
       canUploadFiles: () => can.uploadFiles,
       canReadReports: () => can.readReports,
       canManageFiles: () => can.manageFiles,
+      canCreateChannels: () => can.createChannels,
+      canUpdateChannels: () => can.updateChannels,
+      canDeleteChannels: () => can.deleteChannels,
       // Escape hatch for ad-hoc permission checks (uncached). Prefer adding
       // a capability above.
       hasPermission: async (permissions: Record<string, string[]>) => {

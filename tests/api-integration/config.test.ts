@@ -15,6 +15,8 @@ describe("API integration: config", () => {
       disablePasswordRegistration: false,
       disableEmailOtpSignIn: false,
       disableLoginForm: false,
+      // Creating a workspace is reserved for instance admins.
+      disableWorkspaceCreation: true,
       customOAuthAutoLogin: false,
       isDemoMode: false,
       hasGuestAccess: true,

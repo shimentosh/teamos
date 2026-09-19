@@ -57,7 +57,7 @@ const livePeopleRoute = createRoute({
   tags: ["People"],
   summary: "Who is working in what, now",
   description:
-    "Each member's live state from the desktop app (active, idle, paused, offline), clock-in and running timer. The app in front is shown for yourself, and for everyone with activity:read_all.",
+    "Each member's live state (active, idle, paused, offline), clock-in and running timer. The desktop app reports what someone is doing; without it, having used TeamOS in the last two minutes counts as active. The app in front is shown for yourself, and for everyone with activity:read_all.",
   middleware: [workspaceAccess.fromQuery()] as const,
   request: { query: workspaceQuery },
   responses: {

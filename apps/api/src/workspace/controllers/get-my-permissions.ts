@@ -45,7 +45,7 @@ async function getMyPermissions(c: Context, workspaceId: string) {
       .map((r) => r.trim())
       .filter(Boolean);
     const statements = await Promise.all(
-      roles.map((role) => getRoleStatements(workspaceId, role)),
+      roles.map((role) => getRoleStatements(role)),
     );
     resolved = merge(
       statements.filter(

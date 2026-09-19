@@ -320,7 +320,15 @@
 			},
 			"validation": {
 				"workspaceNameRequired": "Nazwa obszaru roboczego jest wymagana"
-			}
+			},
+			"waitingInvitePending_few": "You have {{count}} pending invitations.",
+			"waitingInvitePending_many": "You have {{count}} pending invitations.",
+			"waitingInvitePending_one": "You have {{count}} pending invitation.",
+			"waitingInvitePending_other": "You have {{count}} pending invitations.",
+			"waitingSignOut": "Sign out",
+			"waitingSubtitle": "Only an admin can create a workspace here. Ask one to invite you, and it will show up on this page.",
+			"waitingTitle": "Waiting for an invitation",
+			"waitingViewInvitations": "View invitations"
 		},
 		"profileSetup": {
 			"pageTitle": "Uzupełnij profil",
@@ -2130,6 +2138,20 @@
 						"description": "Change members' roles, up to their own permissions.",
 						"label": "Change roles"
 					}
+				},
+				"channel": {
+					"create": {
+						"description": "Start new chat channels in this workspace.",
+						"label": "Create channels"
+					},
+					"delete": {
+						"description": "Delete any channel and its messages. Everyone can always delete the channels they created.",
+						"label": "Delete everyone's channels"
+					},
+					"update": {
+						"description": "Rename any channel and change who can see it. Everyone can always edit the channels they created.",
+						"label": "Edit everyone's channels"
+					}
 				}
 			},
 			"resources": {
@@ -2145,7 +2167,8 @@
 				"request": "Leave & expenses",
 				"file": "Files",
 				"invitation": "Invitations",
-				"member": "Members"
+				"member": "Members",
+				"channel": "Chat channels"
 			},
 			"saveChanges": "Zapisz zmiany",
 			"sectionSubtitle": "Edytuj role domyślne lub dodaj własną. Członkowie zachowują przypisaną nazwę roli podczas edycji.",
@@ -3689,7 +3712,8 @@
 			"none": "No matches",
 			"hint": "Type a name to mention",
 			"typeForTasks": "Keep typing to find tasks"
-		}
+		},
+		"editChannel": "Edit channel"
 	},
 	"emailLog": {
 		"all": "All",
@@ -4593,5 +4617,22 @@
 			"subtitle": "Signing in opens your browser, where TeamOS already knows you.",
 			"title": "Sign in to TeamOS"
 		}
+	},
+	"instancePeople": {
+		"columns": {
+			"person": "Person",
+			"tier": "Instance tier"
+		},
+		"error": "Couldn't change that tier",
+		"loading": "Loading people...",
+		"navTitle": "People",
+		"saved": "Tier updated",
+		"subtitle": "Everyone with an account on this server, and the tier they hold. Admins can create workspaces and see every workspace; only a super-admin can change a tier.",
+		"tiers": {
+			"admin": "Admin",
+			"super-admin": "Super admin",
+			"user": "Member"
+		},
+		"title": "Instance people"
 	}
 }

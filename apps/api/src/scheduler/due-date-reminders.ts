@@ -101,7 +101,7 @@ async function managersOf(workspaceId: string) {
     .where(eq(workspaceUserTable.workspaceId, workspaceId));
   const canSee = new Map<string, boolean>();
   for (const role of new Set(members.map((m) => m.role))) {
-    const statements = await getRoleStatements(workspaceId, role);
+    const statements = await getRoleStatements(role);
     // The email names the task, so they must be able to see every task too:
     // a custom HR role can read all people without reading all tasks.
     canSee.set(

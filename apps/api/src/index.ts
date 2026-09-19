@@ -45,6 +45,7 @@ import githubIntegration, {
 import getInstanceStatus from "./instance/controllers/get-instance-status";
 import instanceEmail, { watchEmailSettings } from "./instance-settings";
 import instanceRegistration from "./instance-settings/registration";
+import instanceRoles from "./instance-settings/roles";
 import invitation from "./invitation";
 import label from "./label";
 import linkPreview from "./link-preview";
@@ -90,7 +91,7 @@ import { migrateNotificationPreferencesSchema } from "./utils/migrate-notificati
 import { migrateSessionColumn } from "./utils/migrate-session-column";
 import { migrateWorkspaceUserEmail } from "./utils/migrate-workspace-user-email";
 import { normalizeApiServerUrl } from "./utils/openapi-spec";
-import { seedDefaultWorkspaceRoles } from "./utils/seed-default-workspace-roles";
+import { seedAndSyncRoles } from "./utils/sync-workspace-role-mirror";
 import { validateWorkspaceAccess } from "./utils/validate-workspace-access";
 import workflowRule from "./workflow-rule";
 import workspace from "./workspace";
@@ -691,6 +692,7 @@ export function createApp() {
     "/instance/registration",
     instanceRegistration,
   );
+  const instanceRolesApi = api.route("/instance/roles", instanceRoles);
   const emailTemplatesApi = api.route("/email-templates", emailTemplates);
   const notificationPolicyApi = api.route(
     "/notification-policy",
@@ -851,6 +853,7 @@ export function createApp() {
     expenseCategoryApi,
     instanceEmailApi,
     instanceRegistrationApi,
+    instanceRolesApi,
     emailTemplatesApi,
     notificationPolicyApi,
     genericWebhookIntegrationApi,
@@ -922,7 +925,7 @@ export async function runStartupTasks() {
   await migrateNotificationPreferencesSchema();
   await migrateGitHubIntegration();
   await migrateColumns();
-  await seedDefaultWorkspaceRoles();
+  await seedAndSyncRoles();
 
   initializePlugins();
   watchEmailSettings();
@@ -992,6 +995,7 @@ const {
   expenseCategoryApi,
   instanceEmailApi,
   instanceRegistrationApi,
+  instanceRolesApi,
   emailTemplatesApi,
   notificationPolicyApi,
   genericWebhookIntegrationApi,
@@ -1082,6 +1086,7 @@ export type AppType =
   | typeof expenseCategoryApi
   | typeof instanceEmailApi
   | typeof instanceRegistrationApi
+  | typeof instanceRolesApi
   | typeof emailTemplatesApi
   | typeof notificationPolicyApi
   | typeof workflowRuleApi

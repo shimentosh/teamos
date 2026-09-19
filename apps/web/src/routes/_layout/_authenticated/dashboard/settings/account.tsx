@@ -1,3 +1,4 @@
+import { isInstanceAdminRole, isSuperAdminRole } from "@kaneo/permissions";
 import {
   createFileRoute,
   Link,
@@ -12,6 +13,8 @@ import {
   Mail,
   Monitor,
   Settings,
+  Shield,
+  ShieldCheck,
   User,
   UserPlus,
 } from "lucide-react";
@@ -42,11 +45,13 @@ function RouteComponent() {
   const { user } = useAuth();
   const location = useLocation();
   const isActivePath = (path: string) => location.pathname === path;
-  // Server-wide settings belong to the instance admin (the first person who
-  // signed up here). Everyone else never sees the group; the API refuses them
-  // either way.
+  // Server-wide settings belong to the instance admins (super-admin and
+  // admin). Everyone else never sees the group; the API refuses them either
+  // way.
   const { data: session } = authClient.useSession();
-  const isInstanceAdmin = session?.user?.role === "admin";
+  const isInstanceAdmin = isInstanceAdminRole(session?.user?.role);
+  // Only the super-admin hands out instance tiers.
+  const isSuperAdmin = isSuperAdminRole(session?.user?.role);
   const menuItems = [
     {
       title: t("settings:information"),
@@ -140,6 +145,40 @@ function RouteComponent() {
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu className="gap-0.5">
+                  {isSuperAdmin && (
+                    <SidebarMenuItem>
+                      <Button
+                        render={
+                          <Link to="/dashboard/settings/account/people" />
+                        }
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                          "h-8 w-full justify-start gap-2 rounded-lg px-2 text-sm font-normal text-sidebar-foreground/80",
+                          isActivePath("/dashboard/settings/account/people") &&
+                            "bg-sidebar-accent text-sidebar-accent-foreground",
+                        )}
+                      >
+                        <ShieldCheck className="h-4 w-4" />
+                        <span>{t("instancePeople:navTitle")}</span>
+                      </Button>
+                    </SidebarMenuItem>
+                  )}
+                  <SidebarMenuItem>
+                    <Button
+                      render={<Link to="/dashboard/settings/account/roles" />}
+                      variant="ghost"
+                      size="sm"
+                      className={cn(
+                        "h-8 w-full justify-start gap-2 rounded-lg px-2 text-sm font-normal text-sidebar-foreground/80",
+                        isActivePath("/dashboard/settings/account/roles") &&
+                          "bg-sidebar-accent text-sidebar-accent-foreground",
+                      )}
+                    >
+                      <Shield className="h-4 w-4" />
+                      <span>{t("settings:workspaceRoles.title")}</span>
+                    </Button>
+                  </SidebarMenuItem>
                   <SidebarMenuItem>
                     <Button
                       render={

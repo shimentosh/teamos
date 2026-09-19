@@ -158,6 +158,17 @@ export function useChatActions(workspaceId: string) {
         chatApi.addMembers(workspaceId, id, userIds),
       onSuccess: refresh,
     }),
+    updateChannel: useMutation({
+      mutationFn: ({
+        id,
+        ...input
+      }: {
+        id: string;
+        name?: string;
+        isPrivate?: boolean;
+      }) => chatApi.updateChannel(workspaceId, id, input),
+      onSuccess: refresh,
+    }),
     deleteChannel: useMutation({
       mutationFn: (id: string) => chatApi.deleteChannel(workspaceId, id),
       onSuccess: refresh,

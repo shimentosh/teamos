@@ -45,8 +45,10 @@ import { Route as LayoutAuthenticatedDashboardSettingsAccountDevicesRouteImport 
 import { Route as LayoutAuthenticatedDashboardSettingsAccountEmailRouteImport } from './routes/_layout/_authenticated/dashboard/settings/account/email'
 import { Route as LayoutAuthenticatedDashboardSettingsAccountInformationRouteImport } from './routes/_layout/_authenticated/dashboard/settings/account/information'
 import { Route as LayoutAuthenticatedDashboardSettingsAccountNotificationsRouteImport } from './routes/_layout/_authenticated/dashboard/settings/account/notifications'
+import { Route as LayoutAuthenticatedDashboardSettingsAccountPeopleRouteImport } from './routes/_layout/_authenticated/dashboard/settings/account/people'
 import { Route as LayoutAuthenticatedDashboardSettingsAccountPreferencesRouteImport } from './routes/_layout/_authenticated/dashboard/settings/account/preferences'
 import { Route as LayoutAuthenticatedDashboardSettingsAccountRegistrationRouteImport } from './routes/_layout/_authenticated/dashboard/settings/account/registration'
+import { Route as LayoutAuthenticatedDashboardSettingsAccountRolesRouteImport } from './routes/_layout/_authenticated/dashboard/settings/account/roles'
 import { Route as LayoutAuthenticatedDashboardSettingsAccountStorageRouteImport } from './routes/_layout/_authenticated/dashboard/settings/account/storage'
 import { Route as LayoutAuthenticatedDashboardSettingsWorkspaceAuditRouteImport } from './routes/_layout/_authenticated/dashboard/settings/workspace/audit'
 import { Route as LayoutAuthenticatedDashboardSettingsWorkspaceBillingRouteImport } from './routes/_layout/_authenticated/dashboard/settings/workspace/billing'
@@ -55,7 +57,6 @@ import { Route as LayoutAuthenticatedDashboardSettingsWorkspaceEmailRouteImport 
 import { Route as LayoutAuthenticatedDashboardSettingsWorkspaceGeneralRouteImport } from './routes/_layout/_authenticated/dashboard/settings/workspace/general'
 import { Route as LayoutAuthenticatedDashboardSettingsWorkspaceLabelsRouteImport } from './routes/_layout/_authenticated/dashboard/settings/workspace/labels'
 import { Route as LayoutAuthenticatedDashboardSettingsWorkspaceNotificationsRouteImport } from './routes/_layout/_authenticated/dashboard/settings/workspace/notifications'
-import { Route as LayoutAuthenticatedDashboardSettingsWorkspaceRolesRouteImport } from './routes/_layout/_authenticated/dashboard/settings/workspace/roles'
 import { Route as LayoutAuthenticatedDashboardWorkspaceWorkspaceIdIndexRouteImport } from './routes/_layout/_authenticated/dashboard/workspace/$workspaceId/index'
 import { Route as LayoutAuthenticatedDashboardWorkspaceWorkspaceIdAttendanceRouteImport } from './routes/_layout/_authenticated/dashboard/workspace/$workspaceId/attendance'
 import { Route as LayoutAuthenticatedDashboardWorkspaceWorkspaceIdChatRouteImport } from './routes/_layout/_authenticated/dashboard/workspace/$workspaceId/chat'
@@ -279,6 +280,12 @@ const LayoutAuthenticatedDashboardSettingsAccountNotificationsRoute =
     path: '/notifications',
     getParentRoute: () => LayoutAuthenticatedDashboardSettingsAccountRoute,
   } as any)
+const LayoutAuthenticatedDashboardSettingsAccountPeopleRoute =
+  LayoutAuthenticatedDashboardSettingsAccountPeopleRouteImport.update({
+    id: '/people',
+    path: '/people',
+    getParentRoute: () => LayoutAuthenticatedDashboardSettingsAccountRoute,
+  } as any)
 const LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute =
   LayoutAuthenticatedDashboardSettingsAccountPreferencesRouteImport.update({
     id: '/preferences',
@@ -289,6 +296,12 @@ const LayoutAuthenticatedDashboardSettingsAccountRegistrationRoute =
   LayoutAuthenticatedDashboardSettingsAccountRegistrationRouteImport.update({
     id: '/registration',
     path: '/registration',
+    getParentRoute: () => LayoutAuthenticatedDashboardSettingsAccountRoute,
+  } as any)
+const LayoutAuthenticatedDashboardSettingsAccountRolesRoute =
+  LayoutAuthenticatedDashboardSettingsAccountRolesRouteImport.update({
+    id: '/roles',
+    path: '/roles',
     getParentRoute: () => LayoutAuthenticatedDashboardSettingsAccountRoute,
   } as any)
 const LayoutAuthenticatedDashboardSettingsAccountStorageRoute =
@@ -337,12 +350,6 @@ const LayoutAuthenticatedDashboardSettingsWorkspaceNotificationsRoute =
   LayoutAuthenticatedDashboardSettingsWorkspaceNotificationsRouteImport.update({
     id: '/notifications',
     path: '/notifications',
-    getParentRoute: () => LayoutAuthenticatedDashboardSettingsWorkspaceRoute,
-  } as any)
-const LayoutAuthenticatedDashboardSettingsWorkspaceRolesRoute =
-  LayoutAuthenticatedDashboardSettingsWorkspaceRolesRouteImport.update({
-    id: '/roles',
-    path: '/roles',
     getParentRoute: () => LayoutAuthenticatedDashboardSettingsWorkspaceRoute,
   } as any)
 const LayoutAuthenticatedDashboardWorkspaceWorkspaceIdIndexRoute =
@@ -572,8 +579,10 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings/account/email': typeof LayoutAuthenticatedDashboardSettingsAccountEmailRoute
   '/dashboard/settings/account/information': typeof LayoutAuthenticatedDashboardSettingsAccountInformationRoute
   '/dashboard/settings/account/notifications': typeof LayoutAuthenticatedDashboardSettingsAccountNotificationsRoute
+  '/dashboard/settings/account/people': typeof LayoutAuthenticatedDashboardSettingsAccountPeopleRoute
   '/dashboard/settings/account/preferences': typeof LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute
   '/dashboard/settings/account/registration': typeof LayoutAuthenticatedDashboardSettingsAccountRegistrationRoute
+  '/dashboard/settings/account/roles': typeof LayoutAuthenticatedDashboardSettingsAccountRolesRoute
   '/dashboard/settings/account/storage': typeof LayoutAuthenticatedDashboardSettingsAccountStorageRoute
   '/dashboard/settings/workspace/audit': typeof LayoutAuthenticatedDashboardSettingsWorkspaceAuditRoute
   '/dashboard/settings/workspace/billing': typeof LayoutAuthenticatedDashboardSettingsWorkspaceBillingRoute
@@ -582,7 +591,6 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings/workspace/general': typeof LayoutAuthenticatedDashboardSettingsWorkspaceGeneralRoute
   '/dashboard/settings/workspace/labels': typeof LayoutAuthenticatedDashboardSettingsWorkspaceLabelsRoute
   '/dashboard/settings/workspace/notifications': typeof LayoutAuthenticatedDashboardSettingsWorkspaceNotificationsRoute
-  '/dashboard/settings/workspace/roles': typeof LayoutAuthenticatedDashboardSettingsWorkspaceRolesRoute
   '/dashboard/workspace/$workspaceId/attendance': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdAttendanceRoute
   '/dashboard/workspace/$workspaceId/chat': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdChatRoute
   '/dashboard/workspace/$workspaceId/dashboard': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdDashboardRoute
@@ -640,8 +648,10 @@ export interface FileRoutesByTo {
   '/dashboard/settings/account/email': typeof LayoutAuthenticatedDashboardSettingsAccountEmailRoute
   '/dashboard/settings/account/information': typeof LayoutAuthenticatedDashboardSettingsAccountInformationRoute
   '/dashboard/settings/account/notifications': typeof LayoutAuthenticatedDashboardSettingsAccountNotificationsRoute
+  '/dashboard/settings/account/people': typeof LayoutAuthenticatedDashboardSettingsAccountPeopleRoute
   '/dashboard/settings/account/preferences': typeof LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute
   '/dashboard/settings/account/registration': typeof LayoutAuthenticatedDashboardSettingsAccountRegistrationRoute
+  '/dashboard/settings/account/roles': typeof LayoutAuthenticatedDashboardSettingsAccountRolesRoute
   '/dashboard/settings/account/storage': typeof LayoutAuthenticatedDashboardSettingsAccountStorageRoute
   '/dashboard/settings/workspace/audit': typeof LayoutAuthenticatedDashboardSettingsWorkspaceAuditRoute
   '/dashboard/settings/workspace/billing': typeof LayoutAuthenticatedDashboardSettingsWorkspaceBillingRoute
@@ -650,7 +660,6 @@ export interface FileRoutesByTo {
   '/dashboard/settings/workspace/general': typeof LayoutAuthenticatedDashboardSettingsWorkspaceGeneralRoute
   '/dashboard/settings/workspace/labels': typeof LayoutAuthenticatedDashboardSettingsWorkspaceLabelsRoute
   '/dashboard/settings/workspace/notifications': typeof LayoutAuthenticatedDashboardSettingsWorkspaceNotificationsRoute
-  '/dashboard/settings/workspace/roles': typeof LayoutAuthenticatedDashboardSettingsWorkspaceRolesRoute
   '/dashboard/workspace/$workspaceId/attendance': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdAttendanceRoute
   '/dashboard/workspace/$workspaceId/chat': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdChatRoute
   '/dashboard/workspace/$workspaceId/dashboard': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdDashboardRoute
@@ -715,8 +724,10 @@ export interface FileRoutesById {
   '/_layout/_authenticated/dashboard/settings/account/email': typeof LayoutAuthenticatedDashboardSettingsAccountEmailRoute
   '/_layout/_authenticated/dashboard/settings/account/information': typeof LayoutAuthenticatedDashboardSettingsAccountInformationRoute
   '/_layout/_authenticated/dashboard/settings/account/notifications': typeof LayoutAuthenticatedDashboardSettingsAccountNotificationsRoute
+  '/_layout/_authenticated/dashboard/settings/account/people': typeof LayoutAuthenticatedDashboardSettingsAccountPeopleRoute
   '/_layout/_authenticated/dashboard/settings/account/preferences': typeof LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute
   '/_layout/_authenticated/dashboard/settings/account/registration': typeof LayoutAuthenticatedDashboardSettingsAccountRegistrationRoute
+  '/_layout/_authenticated/dashboard/settings/account/roles': typeof LayoutAuthenticatedDashboardSettingsAccountRolesRoute
   '/_layout/_authenticated/dashboard/settings/account/storage': typeof LayoutAuthenticatedDashboardSettingsAccountStorageRoute
   '/_layout/_authenticated/dashboard/settings/workspace/audit': typeof LayoutAuthenticatedDashboardSettingsWorkspaceAuditRoute
   '/_layout/_authenticated/dashboard/settings/workspace/billing': typeof LayoutAuthenticatedDashboardSettingsWorkspaceBillingRoute
@@ -725,7 +736,6 @@ export interface FileRoutesById {
   '/_layout/_authenticated/dashboard/settings/workspace/general': typeof LayoutAuthenticatedDashboardSettingsWorkspaceGeneralRoute
   '/_layout/_authenticated/dashboard/settings/workspace/labels': typeof LayoutAuthenticatedDashboardSettingsWorkspaceLabelsRoute
   '/_layout/_authenticated/dashboard/settings/workspace/notifications': typeof LayoutAuthenticatedDashboardSettingsWorkspaceNotificationsRoute
-  '/_layout/_authenticated/dashboard/settings/workspace/roles': typeof LayoutAuthenticatedDashboardSettingsWorkspaceRolesRoute
   '/_layout/_authenticated/dashboard/workspace/$workspaceId/attendance': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdAttendanceRoute
   '/_layout/_authenticated/dashboard/workspace/$workspaceId/chat': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdChatRoute
   '/_layout/_authenticated/dashboard/workspace/$workspaceId/dashboard': typeof LayoutAuthenticatedDashboardWorkspaceWorkspaceIdDashboardRoute
@@ -789,8 +799,10 @@ export interface FileRouteTypes {
     | '/dashboard/settings/account/email'
     | '/dashboard/settings/account/information'
     | '/dashboard/settings/account/notifications'
+    | '/dashboard/settings/account/people'
     | '/dashboard/settings/account/preferences'
     | '/dashboard/settings/account/registration'
+    | '/dashboard/settings/account/roles'
     | '/dashboard/settings/account/storage'
     | '/dashboard/settings/workspace/audit'
     | '/dashboard/settings/workspace/billing'
@@ -799,7 +811,6 @@ export interface FileRouteTypes {
     | '/dashboard/settings/workspace/general'
     | '/dashboard/settings/workspace/labels'
     | '/dashboard/settings/workspace/notifications'
-    | '/dashboard/settings/workspace/roles'
     | '/dashboard/workspace/$workspaceId/attendance'
     | '/dashboard/workspace/$workspaceId/chat'
     | '/dashboard/workspace/$workspaceId/dashboard'
@@ -857,8 +868,10 @@ export interface FileRouteTypes {
     | '/dashboard/settings/account/email'
     | '/dashboard/settings/account/information'
     | '/dashboard/settings/account/notifications'
+    | '/dashboard/settings/account/people'
     | '/dashboard/settings/account/preferences'
     | '/dashboard/settings/account/registration'
+    | '/dashboard/settings/account/roles'
     | '/dashboard/settings/account/storage'
     | '/dashboard/settings/workspace/audit'
     | '/dashboard/settings/workspace/billing'
@@ -867,7 +880,6 @@ export interface FileRouteTypes {
     | '/dashboard/settings/workspace/general'
     | '/dashboard/settings/workspace/labels'
     | '/dashboard/settings/workspace/notifications'
-    | '/dashboard/settings/workspace/roles'
     | '/dashboard/workspace/$workspaceId/attendance'
     | '/dashboard/workspace/$workspaceId/chat'
     | '/dashboard/workspace/$workspaceId/dashboard'
@@ -931,8 +943,10 @@ export interface FileRouteTypes {
     | '/_layout/_authenticated/dashboard/settings/account/email'
     | '/_layout/_authenticated/dashboard/settings/account/information'
     | '/_layout/_authenticated/dashboard/settings/account/notifications'
+    | '/_layout/_authenticated/dashboard/settings/account/people'
     | '/_layout/_authenticated/dashboard/settings/account/preferences'
     | '/_layout/_authenticated/dashboard/settings/account/registration'
+    | '/_layout/_authenticated/dashboard/settings/account/roles'
     | '/_layout/_authenticated/dashboard/settings/account/storage'
     | '/_layout/_authenticated/dashboard/settings/workspace/audit'
     | '/_layout/_authenticated/dashboard/settings/workspace/billing'
@@ -941,7 +955,6 @@ export interface FileRouteTypes {
     | '/_layout/_authenticated/dashboard/settings/workspace/general'
     | '/_layout/_authenticated/dashboard/settings/workspace/labels'
     | '/_layout/_authenticated/dashboard/settings/workspace/notifications'
-    | '/_layout/_authenticated/dashboard/settings/workspace/roles'
     | '/_layout/_authenticated/dashboard/workspace/$workspaceId/attendance'
     | '/_layout/_authenticated/dashboard/workspace/$workspaceId/chat'
     | '/_layout/_authenticated/dashboard/workspace/$workspaceId/dashboard'
@@ -1235,6 +1248,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAuthenticatedDashboardSettingsAccountNotificationsRouteImport
       parentRoute: typeof LayoutAuthenticatedDashboardSettingsAccountRoute
     }
+    '/_layout/_authenticated/dashboard/settings/account/people': {
+      id: '/_layout/_authenticated/dashboard/settings/account/people'
+      path: '/people'
+      fullPath: '/dashboard/settings/account/people'
+      preLoaderRoute: typeof LayoutAuthenticatedDashboardSettingsAccountPeopleRouteImport
+      parentRoute: typeof LayoutAuthenticatedDashboardSettingsAccountRoute
+    }
     '/_layout/_authenticated/dashboard/settings/account/preferences': {
       id: '/_layout/_authenticated/dashboard/settings/account/preferences'
       path: '/preferences'
@@ -1247,6 +1267,13 @@ declare module '@tanstack/react-router' {
       path: '/registration'
       fullPath: '/dashboard/settings/account/registration'
       preLoaderRoute: typeof LayoutAuthenticatedDashboardSettingsAccountRegistrationRouteImport
+      parentRoute: typeof LayoutAuthenticatedDashboardSettingsAccountRoute
+    }
+    '/_layout/_authenticated/dashboard/settings/account/roles': {
+      id: '/_layout/_authenticated/dashboard/settings/account/roles'
+      path: '/roles'
+      fullPath: '/dashboard/settings/account/roles'
+      preLoaderRoute: typeof LayoutAuthenticatedDashboardSettingsAccountRolesRouteImport
       parentRoute: typeof LayoutAuthenticatedDashboardSettingsAccountRoute
     }
     '/_layout/_authenticated/dashboard/settings/account/storage': {
@@ -1303,13 +1330,6 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/dashboard/settings/workspace/notifications'
       preLoaderRoute: typeof LayoutAuthenticatedDashboardSettingsWorkspaceNotificationsRouteImport
-      parentRoute: typeof LayoutAuthenticatedDashboardSettingsWorkspaceRoute
-    }
-    '/_layout/_authenticated/dashboard/settings/workspace/roles': {
-      id: '/_layout/_authenticated/dashboard/settings/workspace/roles'
-      path: '/roles'
-      fullPath: '/dashboard/settings/workspace/roles'
-      preLoaderRoute: typeof LayoutAuthenticatedDashboardSettingsWorkspaceRolesRouteImport
       parentRoute: typeof LayoutAuthenticatedDashboardSettingsWorkspaceRoute
     }
     '/_layout/_authenticated/dashboard/workspace/$workspaceId/': {
@@ -1497,8 +1517,10 @@ interface LayoutAuthenticatedDashboardSettingsAccountRouteChildren {
   LayoutAuthenticatedDashboardSettingsAccountEmailRoute: typeof LayoutAuthenticatedDashboardSettingsAccountEmailRoute
   LayoutAuthenticatedDashboardSettingsAccountInformationRoute: typeof LayoutAuthenticatedDashboardSettingsAccountInformationRoute
   LayoutAuthenticatedDashboardSettingsAccountNotificationsRoute: typeof LayoutAuthenticatedDashboardSettingsAccountNotificationsRoute
+  LayoutAuthenticatedDashboardSettingsAccountPeopleRoute: typeof LayoutAuthenticatedDashboardSettingsAccountPeopleRoute
   LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute: typeof LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute
   LayoutAuthenticatedDashboardSettingsAccountRegistrationRoute: typeof LayoutAuthenticatedDashboardSettingsAccountRegistrationRoute
+  LayoutAuthenticatedDashboardSettingsAccountRolesRoute: typeof LayoutAuthenticatedDashboardSettingsAccountRolesRoute
   LayoutAuthenticatedDashboardSettingsAccountStorageRoute: typeof LayoutAuthenticatedDashboardSettingsAccountStorageRoute
 }
 
@@ -1516,10 +1538,14 @@ const LayoutAuthenticatedDashboardSettingsAccountRouteChildren: LayoutAuthentica
       LayoutAuthenticatedDashboardSettingsAccountInformationRoute,
     LayoutAuthenticatedDashboardSettingsAccountNotificationsRoute:
       LayoutAuthenticatedDashboardSettingsAccountNotificationsRoute,
+    LayoutAuthenticatedDashboardSettingsAccountPeopleRoute:
+      LayoutAuthenticatedDashboardSettingsAccountPeopleRoute,
     LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute:
       LayoutAuthenticatedDashboardSettingsAccountPreferencesRoute,
     LayoutAuthenticatedDashboardSettingsAccountRegistrationRoute:
       LayoutAuthenticatedDashboardSettingsAccountRegistrationRoute,
+    LayoutAuthenticatedDashboardSettingsAccountRolesRoute:
+      LayoutAuthenticatedDashboardSettingsAccountRolesRoute,
     LayoutAuthenticatedDashboardSettingsAccountStorageRoute:
       LayoutAuthenticatedDashboardSettingsAccountStorageRoute,
   }
@@ -1561,7 +1587,6 @@ interface LayoutAuthenticatedDashboardSettingsWorkspaceRouteChildren {
   LayoutAuthenticatedDashboardSettingsWorkspaceGeneralRoute: typeof LayoutAuthenticatedDashboardSettingsWorkspaceGeneralRoute
   LayoutAuthenticatedDashboardSettingsWorkspaceLabelsRoute: typeof LayoutAuthenticatedDashboardSettingsWorkspaceLabelsRoute
   LayoutAuthenticatedDashboardSettingsWorkspaceNotificationsRoute: typeof LayoutAuthenticatedDashboardSettingsWorkspaceNotificationsRoute
-  LayoutAuthenticatedDashboardSettingsWorkspaceRolesRoute: typeof LayoutAuthenticatedDashboardSettingsWorkspaceRolesRoute
 }
 
 const LayoutAuthenticatedDashboardSettingsWorkspaceRouteChildren: LayoutAuthenticatedDashboardSettingsWorkspaceRouteChildren =
@@ -1580,8 +1605,6 @@ const LayoutAuthenticatedDashboardSettingsWorkspaceRouteChildren: LayoutAuthenti
       LayoutAuthenticatedDashboardSettingsWorkspaceLabelsRoute,
     LayoutAuthenticatedDashboardSettingsWorkspaceNotificationsRoute:
       LayoutAuthenticatedDashboardSettingsWorkspaceNotificationsRoute,
-    LayoutAuthenticatedDashboardSettingsWorkspaceRolesRoute:
-      LayoutAuthenticatedDashboardSettingsWorkspaceRolesRoute,
   }
 
 const LayoutAuthenticatedDashboardSettingsWorkspaceRouteWithChildren =

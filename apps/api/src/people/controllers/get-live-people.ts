@@ -9,6 +9,7 @@ import {
   userTable,
   workspaceUserTable,
 } from "../../database/schema";
+import { webPresentUserIds } from "../../utils/web-presence";
 
 type LiveState = "active" | "idle" | "paused" | "offline";
 
@@ -68,6 +69,9 @@ export default async function getLivePeople(
       ),
   ]);
 
+  // Using TeamOS is presence too, for everyone without the desktop app.
+  const active = webPresentUserIds(now.getTime() - ONLINE_WINDOW_MS);
+
   // A person's freshest device speaks for them.
   const deviceOf = new Map<string, (typeof devices)[number]>();
   for (const d of devices) {
@@ -82,8 +86,12 @@ export default async function getLivePeople(
     const fresh =
       device?.lastSeenAt &&
       now.getTime() - device.lastSeenAt.getTime() < ONLINE_WINDOW_MS;
+    // The desktop app knows what someone is doing, so it speaks first; a
+    // browser only says they are here, which is enough to not be offline.
     const state: LiveState = !fresh
-      ? "offline"
+      ? active.has(m.userId)
+        ? "active"
+        : "offline"
       : device.lastState === "idle" || device.lastState === "paused"
         ? device.lastState
         : "active";

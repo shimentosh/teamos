@@ -1,5 +1,5 @@
 import { Check } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/components/providers/auth-provider/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,13 @@ import { PersonAvatar } from "./chat-shared";
 export type NewConversationMode =
   | { kind: "channel" }
   | { kind: "dm" }
-  | { kind: "add"; conversationId: string; existingIds: string[] };
+  | { kind: "add"; conversationId: string; existingIds: string[] }
+  | {
+      kind: "edit";
+      conversationId: string;
+      name: string;
+      isPrivate: boolean;
+    };
 
 type Props = {
   workspaceId: string;
@@ -47,6 +53,13 @@ export function NewConversationDialog({
   const [isPrivate, setIsPrivate] = useState(false);
   const [search, setSearch] = useState("");
   const [picked, setPicked] = useState<string[]>([]);
+
+  // Editing starts from the channel as it stands today.
+  useEffect(() => {
+    if (mode?.kind !== "edit") return;
+    setName(mode.name);
+    setIsPrivate(mode.isPrivate);
+  }, [mode]);
 
   const reset = () => {
     setName("");
@@ -89,9 +102,10 @@ export function NewConversationDialog({
   const pending =
     actions.createChannel.isPending ||
     actions.openDm.isPending ||
-    actions.addMembers.isPending;
-  const canSubmit =
-    mode?.kind === "channel" ? name.trim().length > 0 : picked.length > 0;
+    actions.addMembers.isPending ||
+    actions.updateChannel.isPending;
+  const naming = mode?.kind === "channel" || mode?.kind === "edit";
+  const canSubmit = naming ? name.trim().length > 0 : picked.length > 0;
 
   const submit = async () => {
     if (!mode || !canSubmit) return;
@@ -103,6 +117,12 @@ export function NewConversationDialog({
           memberIds: picked,
         });
         onOpened(id);
+      } else if (mode.kind === "edit") {
+        await actions.updateChannel.mutateAsync({
+          id: mode.conversationId,
+          name,
+          isPrivate,
+        });
       } else if (mode.kind === "dm") {
         const { id } = await actions.openDm.mutateAsync(picked);
         onOpened(id);
@@ -121,9 +141,11 @@ export function NewConversationDialog({
   const title =
     mode?.kind === "channel"
       ? t("chat:newChannel")
-      : mode?.kind === "dm"
-        ? t("chat:newMessage")
-        : t("chat:addPeople");
+      : mode?.kind === "edit"
+        ? t("chat:editChannel")
+        : mode?.kind === "dm"
+          ? t("chat:newMessage")
+          : t("chat:addPeople");
 
   return (
     <Dialog open={mode !== null} onOpenChange={(next) => !next && close()}>
@@ -132,7 +154,7 @@ export function NewConversationDialog({
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <DialogPanel className="space-y-3">
-          {mode?.kind === "channel" && (
+          {naming && (
             <>
               <Input
                 autoFocus
@@ -162,61 +184,65 @@ export function NewConversationDialog({
           {mode?.kind === "dm" && (
             <p className="text-xs text-muted-foreground">{t("chat:dmHint")}</p>
           )}
-          <Input
-            autoFocus={mode?.kind !== "channel"}
-            placeholder={t("chat:searchPeople")}
-            aria-label={t("chat:searchPeople")}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <div className="max-h-64 overflow-y-auto rounded-lg border border-border">
-            {people.length === 0 ? (
-              <p className="p-4 text-center text-xs text-muted-foreground">
-                {t("chat:noPeople")}
-              </p>
-            ) : (
-              people.map((m) => {
-                const selected = picked.includes(m.userId);
-                return (
-                  <button
-                    key={m.userId}
-                    type="button"
-                    aria-pressed={selected}
-                    onClick={() => toggle(m.userId)}
-                    className={cn(
-                      "flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm hover:bg-accent/60",
-                      selected && "bg-accent/40",
-                    )}
-                  >
-                    <PersonAvatar
-                      name={m.user.name ?? null}
-                      image={m.user.image ?? null}
-                      online={online.has(m.userId)}
-                    />
-                    <span className="min-w-0 flex-1 truncate">
-                      {m.user.name}
-                      <span className="ms-2 text-xs text-muted-foreground">
-                        {m.user.email}
-                      </span>
-                    </span>
-                    <span
-                      className={cn(
-                        "shrink-0 text-xs",
-                        online.has(m.userId)
-                          ? "text-emerald-500"
-                          : "text-muted-foreground",
-                      )}
-                    >
-                      {online.has(m.userId)
-                        ? t("chat:online")
-                        : t("chat:offline")}
-                    </span>
-                    {selected && <Check className="size-4 text-primary" />}
-                  </button>
-                );
-              })
-            )}
-          </div>
+          {mode?.kind !== "edit" && (
+            <>
+              <Input
+                autoFocus={mode?.kind !== "channel"}
+                placeholder={t("chat:searchPeople")}
+                aria-label={t("chat:searchPeople")}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <div className="max-h-64 overflow-y-auto rounded-lg border border-border">
+                {people.length === 0 ? (
+                  <p className="p-4 text-center text-xs text-muted-foreground">
+                    {t("chat:noPeople")}
+                  </p>
+                ) : (
+                  people.map((m) => {
+                    const selected = picked.includes(m.userId);
+                    return (
+                      <button
+                        key={m.userId}
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => toggle(m.userId)}
+                        className={cn(
+                          "flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm hover:bg-accent/60",
+                          selected && "bg-accent/40",
+                        )}
+                      >
+                        <PersonAvatar
+                          name={m.user.name ?? null}
+                          image={m.user.image ?? null}
+                          online={online.has(m.userId)}
+                        />
+                        <span className="min-w-0 flex-1 truncate">
+                          {m.user.name}
+                          <span className="ms-2 text-xs text-muted-foreground">
+                            {m.user.email}
+                          </span>
+                        </span>
+                        <span
+                          className={cn(
+                            "shrink-0 text-xs",
+                            online.has(m.userId)
+                              ? "text-emerald-500"
+                              : "text-muted-foreground",
+                          )}
+                        >
+                          {online.has(m.userId)
+                            ? t("chat:online")
+                            : t("chat:offline")}
+                        </span>
+                        {selected && <Check className="size-4 text-primary" />}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </>
+          )}
         </DialogPanel>
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={close}>
@@ -229,9 +255,11 @@ export function NewConversationDialog({
           >
             {mode?.kind === "channel"
               ? t("chat:create")
-              : mode?.kind === "dm"
-                ? t("chat:start")
-                : t("chat:add")}
+              : mode?.kind === "edit"
+                ? t("chat:save")
+                : mode?.kind === "dm"
+                  ? t("chat:start")
+                  : t("chat:add")}
           </Button>
         </DialogFooter>
       </DialogPopup>

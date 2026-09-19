@@ -20,7 +20,7 @@ async function setup() {
     role: "owner",
   });
   // About who may act on a task, not who sees it: members see the board.
-  await grantSeeAllTasks(workspace.id);
+  await grantSeeAllTasks();
   const bob = await addWorkspaceMember(workspace.id, "member", "Bob");
   const { project, columns } = await createProjectFixture({
     workspaceId: workspace.id,

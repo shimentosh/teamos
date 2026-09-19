@@ -1,31 +1,23 @@
-// Who has TeamOS open right now, per workspace: every open workspace page
-// keeps the chat event stream connected, so an open stream means online.
-// Kept in memory, which is exact for a single API instance. With several
-// instances behind Redis each only knows its own streams.
-const open = new Map<string, Map<string, number>>();
+// Who is using TeamOS right now. Every open page keeps calling the API, so a
+// recent signed-in request is the one presence signal that does not depend on
+// a WebSocket or an event stream surviving a restart or getting through a
+// reverse proxy. Kept in memory, which is exact for a single API instance;
+// with several instances each only knows its own callers.
+const lastSeen = new Map<string, number>();
 
-/** Marks the user online in the workspace until the returned fn is called. */
-export function markWebPresence(workspaceId: string, userId: string) {
-  let users = open.get(workspaceId);
-  if (!users) {
-    users = new Map();
-    open.set(workspaceId, users);
-  }
-  users.set(userId, (users.get(userId) ?? 0) + 1);
-
-  let released = false;
-  return () => {
-    if (released) return;
-    released = true;
-    const current = open.get(workspaceId);
-    const count = (current?.get(userId) ?? 0) - 1;
-    if (!current) return;
-    if (count > 0) current.set(userId, count);
-    else current.delete(userId);
-    if (current.size === 0) open.delete(workspaceId);
-  };
+/** Marks the person as using TeamOS right now. */
+export function markWebPresence(userId: string, now = Date.now()) {
+  lastSeen.set(userId, now);
 }
 
-export function webPresentUserIds(workspaceId: string) {
-  return new Set(open.get(workspaceId)?.keys() ?? []);
+/** Ids of people who called the API since `since`. */
+export function webPresentUserIds(since: number) {
+  const present = new Set<string>();
+  for (const [userId, seen] of lastSeen) {
+    if (seen > since) present.add(userId);
+    // Someone who stopped calling is gone for good until they come back, so
+    // the entry is dropped rather than kept for the lifetime of the process.
+    else lastSeen.delete(userId);
+  }
+  return present;
 }

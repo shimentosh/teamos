@@ -64,6 +64,17 @@ export const chatApi = {
         json: { workspaceId, userIds },
       }),
     ),
+  updateChannel: async (
+    workspaceId: string,
+    id: string,
+    input: { name?: string; isPrivate?: boolean },
+  ) =>
+    unwrap(
+      await client.chat[":id"].$patch({
+        param: { id },
+        json: { workspaceId, ...input },
+      }),
+    ),
   deleteChannel: async (workspaceId: string, id: string) =>
     unwrap(
       await client.chat[":id"].$delete({

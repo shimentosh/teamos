@@ -1,3 +1,4 @@
+import { isInstanceAdminRole } from "@kaneo/permissions";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -37,10 +38,10 @@ function RouteComponent() {
   const isAdmin = Boolean(canManageWorkspace());
   const showWorkspace = tab === "workspace" && isAdmin;
   const showTemplates = tab === "templates";
-  // The instance admin (first person to sign up on this server) sets up
-  // delivery for everyone; workspace admins only see their workspace's mail.
+  // Instance admins set up delivery for everyone; workspace admins only see
+  // their workspace's mail.
   const { data: session } = authClient.useSession();
-  const isInstanceAdmin = session?.user?.role === "admin";
+  const isInstanceAdmin = isInstanceAdminRole(session?.user?.role);
   const [status, setStatus] = useState<EmailStatus | undefined>(undefined);
 
   const mine = useMyEmailLog(

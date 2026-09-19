@@ -275,6 +275,101 @@ describe("chat", () => {
     expect(removed.status).toBe(200);
   });
 
+  it("keeps creating a channel to roles that carry channel:create", async () => {
+    const { alice, workspaceId } = await setup();
+    const watcher = await addWorkspaceMember(workspaceId, "viewer", "Vic");
+
+    const refused = await requestAs(watcher)("/chat/channels", {
+      method: "POST",
+      body: { workspaceId, name: "standup" },
+    });
+    expect(refused.status).toBe(403);
+
+    const created = await requestAs(alice)("/chat/channels", {
+      method: "POST",
+      body: { workspaceId, name: "standup" },
+    });
+    expect(created.status).toBe(200);
+  });
+
+  it("lets whoever made a channel rename it and close it off", async () => {
+    const { alice, bob, workspaceId } = await setup();
+    const channel = await requestAs(alice)("/chat/channels", {
+      method: "POST",
+      body: { workspaceId, name: "design" },
+    });
+    await requestAs(alice)("/chat/channels", {
+      method: "POST",
+      body: { workspaceId, name: "random" },
+    });
+
+    const taken = await requestAs(alice)(`/chat/${channel.json.id}`, {
+      method: "PATCH",
+      body: { workspaceId, name: "Random" },
+    });
+    expect(taken.status).toBe(409);
+
+    const renamed = await requestAs(alice)(`/chat/${channel.json.id}`, {
+      method: "PATCH",
+      body: { workspaceId, name: "#design-team", isPrivate: true },
+    });
+    expect(renamed.status).toBe(200);
+
+    const own = await requestAs(alice)(`/chat?workspaceId=${workspaceId}`);
+    expect(
+      own.json.find((c: { id: string }) => c.id === channel.json.id),
+    ).toMatchObject({ name: "design-team", isPrivate: true });
+
+    // Bob could see the open channel; now it is private and out of his list.
+    const list = await requestAs(bob)(`/chat?workspaceId=${workspaceId}`);
+    expect(list.json.map((c: { name: string }) => c.name)).toEqual(["random"]);
+
+    const dm = await requestAs(alice)("/chat/dms", {
+      method: "POST",
+      body: { workspaceId, userIds: [bob.id] },
+    });
+    const renamedDm = await requestAs(alice)(`/chat/${dm.json.id}`, {
+      method: "PATCH",
+      body: { workspaceId, name: "not a channel" },
+    });
+    expect(renamedDm.status).toBe(400);
+  });
+
+  it("reaches other people's channels only with channel:update and :delete", async () => {
+    const { alice, bob, workspaceId } = await setup();
+    const boss = await addWorkspaceMember(workspaceId, "admin", "Ada");
+    const channel = await requestAs(alice)("/chat/channels", {
+      method: "POST",
+      body: { workspaceId, name: "design" },
+    });
+
+    const refusedRename = await requestAs(bob)(`/chat/${channel.json.id}`, {
+      method: "PATCH",
+      body: { workspaceId, name: "bobs-channel" },
+    });
+    expect(refusedRename.status).toBe(403);
+
+    const refusedDelete = await requestAs(bob)(
+      `/chat/${channel.json.id}?workspaceId=${workspaceId}`,
+      { method: "DELETE" },
+    );
+    expect(refusedDelete.status).toBe(403);
+
+    const renamed = await requestAs(boss)(`/chat/${channel.json.id}`, {
+      method: "PATCH",
+      body: { workspaceId, name: "design-review" },
+    });
+    expect(renamed.status).toBe(200);
+
+    const deleted = await requestAs(boss)(
+      `/chat/${channel.json.id}?workspaceId=${workspaceId}`,
+      { method: "DELETE" },
+    );
+    expect(deleted.status).toBe(200);
+    const list = await requestAs(alice)(`/chat?workspaceId=${workspaceId}`);
+    expect(list.json).toEqual([]);
+  });
+
   it("streams new messages and typing to the other members over SSE", async () => {
     const { owner, alice, bob, workspaceId } = await setup();
     const dm = await requestAs(alice)("/chat/dms", {

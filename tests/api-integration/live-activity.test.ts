@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import db, { schema } from "../../apps/api/src/database";
 import { createApp } from "../../apps/api/src/index";
+import { markWebPresence } from "../../apps/api/src/utils/web-presence";
 import { addWorkspaceMember, requestAs } from "./helpers/company";
 import { resetTestDatabase } from "./helpers/database";
 import {
@@ -19,6 +20,7 @@ async function pair(user: User, workspaceId: string) {
     method: "POST",
     body: { workspaceId },
   });
+  expect(code.status, JSON.stringify(code.json)).toBe(200);
   const { app } = createApp();
   const paired = await app.request("/api/agent/device/pair", {
     method: "POST",
@@ -80,9 +82,12 @@ describe("live activity", () => {
       app: null,
       domain: null,
     });
+    // Bob has been using TeamOS, so he is here, but with no desktop app
+    // there is nothing to show him working in.
     expect(await liveOf(owner, workspace.id, bob.id)).toMatchObject({
-      state: "offline",
+      state: "active",
       hasDesktopApp: false,
+      app: null,
     });
   });
 
@@ -117,6 +122,58 @@ describe("live activity", () => {
     const { user, workspace } = await createWorkspaceMember({ role: "owner" });
     const beat = await pair(user, workspace.id);
     expect((await beat({ state: "idle" })).status).toBe(200);
+    expect(await liveOf(user, workspace.id, user.id)).toMatchObject({
+      state: "idle",
+    });
+  });
+
+  it("counts someone using TeamOS as active without the desktop app", async () => {
+    const { user: owner, workspace } = await createWorkspaceMember({
+      role: "owner",
+    });
+    const alice = await addWorkspaceMember(workspace.id, "member", "Alice");
+
+    expect(await liveOf(owner, workspace.id, alice.id)).toMatchObject({
+      state: "offline",
+      hasDesktopApp: false,
+    });
+
+    markWebPresence(alice.id);
+    expect(await liveOf(owner, workspace.id, alice.id)).toMatchObject({
+      state: "active",
+      hasDesktopApp: false,
+      app: null,
+    });
+    const presence = await requestAs(owner)(
+      `/chat/presence?workspaceId=${workspace.id}`,
+    );
+    expect(presence.json.online).toContain(alice.id);
+
+    // Stopped calling a few minutes ago: away, not here.
+    markWebPresence(alice.id, Date.now() - 5 * 60_000);
+    expect(await liveOf(owner, workspace.id, alice.id)).toMatchObject({
+      state: "offline",
+    });
+  });
+
+  it("keeps someone using TeamOS out of workspaces they don't belong to", async () => {
+    const { user: owner, workspace } = await createWorkspaceMember({
+      role: "owner",
+    });
+    const { user: outsider } = await createWorkspaceMember({ role: "owner" });
+    markWebPresence(outsider.id);
+
+    const presence = await requestAs(owner)(
+      `/chat/presence?workspaceId=${workspace.id}`,
+    );
+    expect(presence.json.online).not.toContain(outsider.id);
+  });
+
+  it("lets the desktop app speak over a browser that is also open", async () => {
+    const { user, workspace } = await createWorkspaceMember({ role: "owner" });
+    const beat = await pair(user, workspace.id);
+    markWebPresence(user.id);
+    await beat({ state: "idle" });
     expect(await liveOf(user, workspace.id, user.id)).toMatchObject({
       state: "idle",
     });

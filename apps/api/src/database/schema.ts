@@ -291,6 +291,32 @@ export const invitationTable = pgTable(
   ],
 );
 
+// The instance-wide role catalog: what each role may do, defined once for the
+// whole server rather than per workspace. This is the source of truth for
+// every permission check; `workspace_role` below is a derived mirror that
+// exists only because Better Auth's organization plugin resolves its own
+// endpoint permissions from per-organization rows.
+export const instanceRoleTable = pgTable(
+  "instance_role",
+  {
+    id: text("id")
+      .$defaultFn(() => createId())
+      .primaryKey(),
+    role: text("role").notNull().unique("instance_role_role_unique"),
+    permission: text("permission").notNull(),
+    updatedBy: text("updated_by").references(() => userTable.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "date" })
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [index("instance_role_role_idx").on(table.role)],
+);
+
 export const workspaceRoleTable = pgTable(
   "workspace_role",
   {

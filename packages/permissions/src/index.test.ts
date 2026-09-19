@@ -6,12 +6,45 @@ import {
   coversPermissions,
   DEFAULT_ROLE_NAMES,
   defaultRolePayloads,
+  INSTANCE_ADMIN_ROLE,
+  INSTANCE_ADMIN_ROLES,
+  isInstanceAdminRole,
+  isSuperAdminRole,
   manager,
   member,
   owner,
+  SUPER_ADMIN_ROLE,
   statement,
   viewer,
 } from "./index";
+
+describe("instance tiers", () => {
+  it("treats super-admin and admin as instance admins", () => {
+    expect(INSTANCE_ADMIN_ROLES).toEqual([
+      SUPER_ADMIN_ROLE,
+      INSTANCE_ADMIN_ROLE,
+    ]);
+    expect(isInstanceAdminRole(SUPER_ADMIN_ROLE)).toBe(true);
+    expect(isInstanceAdminRole(INSTANCE_ADMIN_ROLE)).toBe(true);
+  });
+
+  it("treats everyone else as a plain user", () => {
+    for (const role of ["user", "member", "owner", "", null, undefined]) {
+      expect(isInstanceAdminRole(role)).toBe(false);
+    }
+  });
+
+  it("reserves the super-admin tier for the one role", () => {
+    expect(isSuperAdminRole(SUPER_ADMIN_ROLE)).toBe(true);
+    expect(isSuperAdminRole(INSTANCE_ADMIN_ROLE)).toBe(false);
+    expect(isSuperAdminRole(null)).toBe(false);
+  });
+
+  it("keeps the instance tiers out of the workspace role catalog", () => {
+    expect(DEFAULT_ROLE_NAMES).not.toContain(SUPER_ADMIN_ROLE);
+    expect(builtInRoles).not.toHaveProperty(SUPER_ADMIN_ROLE);
+  });
+});
 
 describe("@kaneo/permissions statement surface", () => {
   it("exposes TeamOS's resource statements alongside better-auth defaults", () => {
@@ -64,8 +97,9 @@ describe("built-in role privileges", () => {
     expect(member.statements.task).not.toContain("delete");
     // Members see the tasks assigned to them, not the whole workspace.
     expect(member.statements.task).not.toContain("read_all");
-    expect(member.statements.project).toContain("create");
-    expect(member.statements.project).not.toContain("delete");
+    // Projects are opened by a role that carries project:create, not by
+    // everyone; a member joins the projects they are put on.
+    expect(member.statements.project).toEqual(["read"]);
     expect(member.statements.workspace).toEqual(["read"]);
   });
 
@@ -156,6 +190,23 @@ describe("default-role seed payloads", () => {
     // role object's statements are decoupled (we only mutated the copy).
     expect(memberPayload.task).toContain("__test_marker");
     expect(member.statements.task).not.toContain("__test_marker");
+  });
+});
+
+describe("chat channel permissions", () => {
+  it("lets everyone who works here start a channel", () => {
+    expect(statement.channel).toEqual(["create", "update", "delete"]);
+    expect(member.statements.channel).toEqual(["create"]);
+    expect(
+      (viewer.statements as Record<string, unknown>).channel,
+    ).toBeUndefined();
+  });
+
+  it("keeps other people's channels to managers and above", () => {
+    for (const role of [manager, admin, owner]) {
+      expect(role.statements.channel).toEqual(["create", "update", "delete"]);
+    }
+    expect(member.statements.channel).not.toContain("delete");
   });
 });
 

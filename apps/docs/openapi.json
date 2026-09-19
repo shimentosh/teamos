@@ -53,7 +53,8 @@
             "type": "boolean"
           },
           "disableWorkspaceCreation": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "True when only instance admins may create a workspace, which is always the case."
           },
           "isDemoMode": {
             "type": "boolean"
@@ -3163,7 +3164,7 @@
           },
           "present": {
             "type": "number",
-            "description": "Clocked in, or with the desktop app online."
+            "description": "Clocked in, or online in a browser or the desktop app."
           },
           "tasksDueToday": {
             "type": "number"
@@ -4614,7 +4615,7 @@
           },
           "online": {
             "type": "boolean",
-            "description": "A paired desktop app reported in during the last two minutes. Presence only, not work time."
+            "description": "Used TeamOS, or had a paired desktop app report in, during the last two minutes. Presence only, not work time."
           }
         },
         "required": [
@@ -6979,6 +6980,53 @@
           "envDisabled",
           "updatedAt",
           "updatedByName"
+        ]
+      },
+      "InstanceRoleList": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/InstanceRole"
+        }
+      },
+      "InstanceRole": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "permission": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Granted actions by resource."
+          },
+          "isDefault": {
+            "type": "boolean",
+            "description": "A built-in name: editable, but reserved and undeletable."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "permission",
+          "isDefault",
+          "createdAt",
+          "updatedAt"
         ]
       },
       "EmailTemplate": {
@@ -15291,7 +15339,7 @@
           "Chat"
         ],
         "summary": "Who is online",
-        "description": "Ids of workspace members online now: TeamOS open in a browser, or the desktop app reporting in.",
+        "description": "Ids of workspace members online now: used TeamOS recently, or the desktop app reporting in.",
         "parameters": [
           {
             "schema": {
@@ -15384,7 +15432,7 @@
           "Chat"
         ],
         "summary": "Create a channel",
-        "description": "Open channels can be joined by anyone in the workspace; private ones only by the people added.",
+        "description": "Open channels can be joined by anyone in the workspace; private ones only by the people added. Needs channel:create.",
         "requestBody": {
           "required": true,
           "content": {
@@ -15445,6 +15493,16 @@
           },
           "401": {
             "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "Missing channel:create",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           },
           "409": {
             "description": "A channel with that name already exists",
@@ -15748,13 +15806,113 @@
       }
     },
     "/chat/{id}": {
+      "patch": {
+        "operationId": "updateChatChannel",
+        "tags": [
+          "Chat"
+        ],
+        "summary": "Rename a channel or change who can see it",
+        "description": "Whoever created the channel, or anyone with channel:update. Making a channel private hides it from everyone who has not been added.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "workspaceId": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80,
+                    "example": "design-team"
+                  },
+                  "isPrivate": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "workspaceId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatId"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Direct messages can't be renamed",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "Not the creator, and missing channel:update",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A channel with that name already exists",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
       "delete": {
         "operationId": "deleteChatChannel",
         "tags": [
           "Chat"
         ],
         "summary": "Delete a channel",
-        "description": "Deletes the channel and its messages. Whoever created it, or anyone with workspace:manage_settings.",
+        "description": "Deletes the channel and its messages. Whoever created it, or anyone with channel:delete.",
         "parameters": [
           {
             "schema": {
@@ -15788,7 +15946,7 @@
             "description": "Missing or invalid credentials"
           },
           "403": {
-            "description": "Not the creator, and missing workspace:manage_settings",
+            "description": "Not the creator, and missing channel:delete",
             "content": {
               "text/plain": {
                 "schema": {
@@ -21641,7 +21799,7 @@
           "People"
         ],
         "summary": "Who is working in what, now",
-        "description": "Each member's live state from the desktop app (active, idle, paused, offline), clock-in and running timer. The app in front is shown for yourself, and for everyone with activity:read_all.",
+        "description": "Each member's live state (active, idle, paused, offline), clock-in and running timer. The desktop app reports what someone is doing; without it, having used TeamOS in the last two minutes counts as active. The app in front is shown for yourself, and for everyone with activity:read_all.",
         "parameters": [
           {
             "schema": {
@@ -27432,6 +27590,266 @@
           },
           "403": {
             "description": "Not the instance admin",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/instance/roles": {
+      "get": {
+        "operationId": "listInstanceRoles",
+        "tags": [
+          "Instance"
+        ],
+        "summary": "List roles",
+        "description": "The instance-wide role catalog. One definition per role name, used by every workspace. Instance admin only.",
+        "responses": {
+          "200": {
+            "description": "The role catalog",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceRoleList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "Not an instance admin",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createInstanceRole",
+        "tags": [
+          "Instance"
+        ],
+        "summary": "Create a role",
+        "description": "Adds a role to the catalog. Unknown resources and actions are dropped. Instance admin only.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string"
+                  },
+                  "permission": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "description": "Granted actions by resource."
+                  }
+                },
+                "required": [
+                  "role",
+                  "permission"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The new role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceRole"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or reserved name, or the catalog is full",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "Not an instance admin",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A role with that name already exists",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/instance/roles/{role}": {
+      "patch": {
+        "operationId": "updateInstanceRole",
+        "tags": [
+          "Instance"
+        ],
+        "summary": "Change what a role may do",
+        "description": "Replaces the role's permissions everywhere at once. Instance admin only.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "role",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "permission": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "description": "Granted actions by resource."
+                  }
+                },
+                "required": [
+                  "permission"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceRole"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "Not an instance admin",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such role",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteInstanceRole",
+        "tags": [
+          "Instance"
+        ],
+        "summary": "Delete a role",
+        "description": "Removes a role from the catalog and from every workspace. Refused while anyone still holds it, and for the built-in names. Instance admin only.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "role",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The remaining catalog",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceRoleList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A built-in role, or still in use",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials"
+          },
+          "403": {
+            "description": "Not an instance admin",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such role",
             "content": {
               "text/plain": {
                 "schema": {

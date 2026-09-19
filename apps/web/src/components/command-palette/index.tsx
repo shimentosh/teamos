@@ -1,3 +1,4 @@
+import { isInstanceAdminRole } from "@kaneo/permissions";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { ArrowDownIcon, ArrowUpIcon, CornerDownLeftIcon } from "lucide-react";
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
@@ -26,6 +27,7 @@ import { shortcuts } from "@/constants/shortcuts";
 import useGetConfig from "@/hooks/queries/config/use-get-config";
 import useActiveWorkspace from "@/hooks/queries/workspace/use-active-workspace";
 import { useRegisterShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { useWorkspacePermission } from "@/hooks/use-workspace-permission";
 import { authClient } from "@/lib/auth-client";
 import { useUserPreferencesStore } from "@/store/user-preferences";
 import CreateProjectModal from "../shared/modals/create-project-modal";
@@ -51,9 +53,13 @@ function CommandPalette() {
   const { data: workspace } = useActiveWorkspace();
   const { data: session } = authClient.useSession();
   const { data: config } = useGetConfig();
-  const isAdmin = session?.user?.role === "admin";
+  const isAdmin = isInstanceAdminRole(session?.user?.role);
   const canCreateWorkspace =
     isAdmin || (config !== undefined && !config.disableWorkspaceCreation);
+  // Creating a project is a role permission; the sidebar and the projects page
+  // already hide it, so the palette should too.
+  const { canCreateProjects } = useWorkspacePermission();
+  const canCreateProject = Boolean(canCreateProjects());
   const [open, setOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
@@ -143,12 +149,16 @@ function CommandPalette() {
             shortcut: `${shortcuts.task.prefix} ${shortcuts.task.create}`,
             onRun: () => setIsCreateTaskOpen(true),
           },
-          {
-            value: "create-project",
-            label: t("navigation:commandPalette.createProject"),
-            shortcut: `${shortcuts.project.prefix} ${shortcuts.project.create}`,
-            onRun: () => setIsCreateProjectOpen(true),
-          },
+          ...(canCreateProject
+            ? [
+                {
+                  value: "create-project",
+                  label: t("navigation:commandPalette.createProject"),
+                  shortcut: `${shortcuts.project.prefix} ${shortcuts.project.create}`,
+                  onRun: () => setIsCreateProjectOpen(true),
+                },
+              ]
+            : []),
         ],
       },
       {
@@ -195,7 +205,7 @@ function CommandPalette() {
         ],
       },
     ],
-    [navigate, setTheme, t, workspace?.id, canCreateWorkspace],
+    [navigate, setTheme, t, workspace?.id, canCreateWorkspace, canCreateProject],
   );
 
   const shortcutHandlers = useMemo(() => {

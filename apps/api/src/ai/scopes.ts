@@ -33,8 +33,10 @@ const TASKS: Statements = {
 
 // Everything the role allows, except money, the audit trail, workspace
 // settings and people management: those stay with humans unless an owner
-// makes a key by hand.
+// makes a key by hand. Deleting a channel takes its whole history with it,
+// so that stays with humans too.
 const HELD_BACK: Record<string, string[] | "all"> = {
+  channel: ["delete"],
   payroll: "all",
   audit: "all",
   activity: "all",

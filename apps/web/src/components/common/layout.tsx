@@ -2,6 +2,7 @@ import type React from "react";
 import type { ReactNode } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ChatWidget } from "@/components/chat/chat-widget";
+import { HeaderActions } from "@/components/common/header-actions";
 import { DemoAlert } from "@/components/demo-alert";
 import { TimerNoteDialog } from "@/components/time/timer-note-dialog";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -29,11 +30,12 @@ function LayoutHeader({ children, className }: HeaderProps) {
   return (
     <header
       className={cn(
-        "flex h-10 shrink-0 gap-2 transition-[width,height] ease-in-out group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-8 border-b border-border bg-card p-2",
+        "sticky top-0 z-20 flex h-10 shrink-0 gap-2 transition-[width,height] ease-in-out group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-8 border-b border-border bg-card p-2",
         className,
       )}
     >
       {children}
+      <HeaderActions />
     </header>
   );
 }

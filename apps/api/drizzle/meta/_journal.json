@@ -561,6 +561,41 @@
 			"when": 1789767847814,
 			"tag": "0079_ancient_vargas",
 			"breakpoints": true
+		},
+		{
+			"idx": 80,
+			"version": "7",
+			"when": 1789768447814,
+			"tag": "0080_grant_chat_channel_permissions",
+			"breakpoints": true
+		},
+		{
+			"idx": 81,
+			"version": "7",
+			"when": 1789768447815,
+			"tag": "0081_super_admin_role",
+			"breakpoints": true
+		},
+		{
+			"idx": 82,
+			"version": "7",
+			"when": 1789833350068,
+			"tag": "0082_youthful_slipstream",
+			"breakpoints": true
+		},
+		{
+			"idx": 83,
+			"version": "7",
+			"when": 1789833350069,
+			"tag": "0083_seed_instance_roles",
+			"breakpoints": true
+		},
+		{
+			"idx": 84,
+			"version": "7",
+			"when": 1789833350070,
+			"tag": "0084_member_cannot_create_projects",
+			"breakpoints": true
 		}
 	]
 }
